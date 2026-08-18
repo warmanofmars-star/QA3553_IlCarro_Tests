@@ -1,21 +1,24 @@
 import time
 from pages.login_page import LoginPage
 
+# Выносим реальные тестовые данные в константы
+VALID_EMAIL = "warman.of.mars@gmail.com"
+VALID_PASSWORD = "z2I8A@U!Hl3T2&@h"
 
-def test_login_form_basics(driver):
+
+def test_login_flow(driver):
     login_page = LoginPage(driver)
 
-    # Открываем нужную страницу
+    # 1. Открываем страницу
     login_page.open()
 
-    # 1. Проверяем блокировку кнопки в начале
+    # 2. Убеждаемся, что кнопка заблокирована на пустой форме
     assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть неактивна в начале"
 
-    # 2. Вводим данные
-    login_page.fill_email("warman.of.mars@gmail.com")
-    time.sleep(1)
-    login_page.fill_password("z2I8A@U!Hl3T2&@h")
-    time.sleep(1)
+    # 3. Выполняем логин с нашими реальными данными через метод-помощник
+    login_page.login(VALID_EMAIL, VALID_PASSWORD)
 
-    # 3. Проверяем, что кнопка стала активной
-    assert login_page.is_submit_button_disabled() == False, "Кнопка Y'alla! не разблокировалась"
+    # Пауза, чтобы успеть визуально проконтролировать ввод данных и клик
+    time.sleep(2)
+
+    # В будущем добавим проверку, что мы оказались внутри

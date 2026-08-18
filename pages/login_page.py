@@ -8,7 +8,6 @@ class LoginPage:
     def __init__(self, driver):
         self.driver = driver
 
-    # Метод для открытия конкретно страницы Login
     def open(self):
         self.driver.get("https://icarro-v1.netlify.app/login")
 
@@ -21,6 +20,15 @@ class LoginPage:
         password_field = self.driver.find_element(*self.PASSWORD_INPUT)
         password_field.clear()
         password_field.send_keys(password)
+
+    def submit_login(self):
+        self.driver.find_element(*self.SUBMIT_BTN).click()
+
+    # Helper
+    def login(self, email, password):
+        self.fill_email(email)
+        self.fill_password(password)
+        self.submit_login()
 
     def is_submit_button_disabled(self):
         submit_btn = self.driver.find_element(*self.SUBMIT_BTN)
