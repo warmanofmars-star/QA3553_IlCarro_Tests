@@ -1,12 +1,12 @@
 from selenium.webdriver.common.by import By
-
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 class LoginPage:
     EMAIL_INPUT = (By.CSS_SELECTOR, "input[name='username']")
     PASSWORD_INPUT = (By.CSS_SELECTOR, "input[name='password']")
     SUBMIT_BTN = (By.CSS_SELECTOR, "button[type='submit']")
-
-    # НОВЫЙ ЛОКАТОР: ищем заголовок h3 с точным текстом
     SUCCESS_MSG = (By.XPATH, "//h3[text()='You are logged in success']")
 
     def __init__(self, driver):
@@ -37,6 +37,14 @@ class LoginPage:
         submit_btn = self.driver.find_element(*self.SUBMIT_BTN)
         return not submit_btn.is_enabled()
 
-    # НОВЫЙ МЕТОД: получаем текст из всплывающего окна
-    def get_success_message_text(self):
-        return self.driver.find_element(*self.SUCCESS_MSG).text
+    # МЕТОД, адаптированный под сообщение об успехе
+    def is_success_message_visible(self):
+        try:
+            # Ждем максимум 5 секунд, пока элемент не станет видимым
+            WebDriverWait(self.driver, timeout=5).until(
+                EC.visibility_of_element_located(self.SUCCESS_MSG)
+            )
+            return True
+        except TimeoutException:
+            # Если за 5 секунд элемент не стал видимым, возвращаем False
+            return False
