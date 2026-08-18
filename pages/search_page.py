@@ -9,8 +9,6 @@ class SearchPage:
     CITY_INPUT = (By.ID, "city")
     DATES_INPUT = (By.ID, "dates")
     SUBMIT_BTN = (By.CSS_SELECTOR, "button[type='submit']")
-
-    # Новый локатор для всплывающего календаря
     CALENDAR_POPOVER = (By.CSS_SELECTOR, ".daterange-popover")
 
     def __init__(self, driver):
@@ -28,12 +26,16 @@ class SearchPage:
     def click_dates_input(self):
         self.driver.find_element(*self.DATES_INPUT).click()
 
+    # Новый комплексный метод (Helper), по аналогии с login()
+    def search_cars(self, city_name):
+        self.fill_city(city_name)
+        self.click_dates_input()
+
     # --- ПРОВЕРКИ ---
     def is_submit_button_disabled(self):
         submit_btn = self.driver.find_element(*self.SUBMIT_BTN)
         return not submit_btn.is_enabled()
 
-    # Умное ожидание для календаря
     def is_calendar_visible(self):
         try:
             WebDriverWait(self.driver, timeout=5).until(

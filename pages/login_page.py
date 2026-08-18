@@ -13,8 +13,8 @@ class LoginPage:
     SUCCESS_MSG = (By.XPATH, "//h3[text()='You are logged in success']")
 
     # Гибкие локаторы через contains()
-    LOGOUT_BTN = (By.XPATH, "//a[contains(text(), 'Log out')]")
-    OK_BTN = (By.XPATH, "//button[contains(text(), 'OK')]")
+    LOGOUT_BTN = (By.XPATH, "//*[contains(@class, 'navigation-link') and contains(., 'Log out')]")
+    OK_BTN = (By.XPATH, "//*[contains(text(), 'OK')]")
 
     def __init__(self, driver):
         self.driver = driver
@@ -38,7 +38,10 @@ class LoginPage:
 
     # Новый клик по кнопке OK
     def click_ok_button(self):
-        self.driver.find_element(*self.OK_BTN).click()
+        # Ждем до 5 секунд, пока кнопка не станет кликабельной, и только потом кликаем
+        WebDriverWait(self.driver, timeout=5).until(
+            EC.element_to_be_clickable(self.OK_BTN)
+        ).click()
 
     # Комплексный метод логина
     def login(self, email, password):
