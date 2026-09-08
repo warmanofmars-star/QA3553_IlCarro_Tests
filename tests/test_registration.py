@@ -1,36 +1,30 @@
-import random
-import uuid
-
-from models.user import User
+import pytest
+import allure
 from pages.registration_page import RegistrationPage
+from data.data_generator import UserGenerator
 
 
-# --- НОВЫЙ ТЕСТ: Проверка навигации (меню) ---
+@allure.epic("UI Testing")
+@allure.feature("Registration Page")
+@allure.story("Navigation")
+@allure.severity(allure.severity_level.NORMAL)
+# --- ТЕСТ 1: Проверка навигации (меню) ---
 def test_navigation_to_registration(driver):
     registration_page = RegistrationPage(driver)
-
-    # Заходим на главную и кликаем по кнопке в верхнем меню
     registration_page.open_main_page()
     registration_page.click_registration_button_in_menu()
 
-    # Проверяем, что URL изменился на правильный
-    current_url = registration_page.get_current_url()
-    assert "register" in current_url, f"Переход из меню не удался. Текущий URL: {current_url}"
+    assert "register" in registration_page.get_current_url(), "Переход из меню не удался"
 
 
-# --- ТВОИ ТЕСТЫ ДЛЯ ФОРМЫ (Атомарные) ---
+@allure.epic("UI Testing")
+@allure.feature("Registration Page")
+@allure.story("Positive Registration")
+@allure.severity(allure.severity_level.BLOCKER)
+# --- ПОЗИТИВНЫЙ ТЕСТ ---
 def test_registration_success(driver):
     registration_page = RegistrationPage(driver)
-    random_suffix = uuid.uuid4().hex[:8]
-
-    user = User(
-        name="Tonny",
-        last_name="Molly",
-        email=f"tony_{random_suffix}@gmail.com",
-        password="Password123$"
-    )
-
-    print(random_suffix)
+    user = UserGenerator.get_random_user()
 
     registration_page.open_registration_form()
     registration_page.fill_registration_form(user)
@@ -42,137 +36,57 @@ def test_registration_success(driver):
     registration_page.close_window()
 
 
-def test_registration_with_empty_name(driver):
+# ===========================================================================
+# ПАРАМЕТРИЗОВАННЫЙ НЕГАТИВНЫЙ ТЕСТ (6 проверок в 1 функции!)
+# ===========================================================================
+@allure.epic("UI Testing")
+@allure.feature("Registration Page")
+@allure.story("Negative Registration")
+@allure.severity(allure.severity_level.CRITICAL)
+@pytest.mark.parametrize("field_name, invalid_value, expected_error", [
+    ("name", "", "Name is required"),
+    ("last_name", "", "Last name is required"),
+    ("email", "tonygmail.com", "Wrong email format"),
+    ("email", "", "Email is required"),
+    ("password", "P123$", "Password must contain minimum 6 symbols"),
+    ("password", "", "Password is required")
+])
+def test_registration_negative_fields(driver, field_name, invalid_value, expected_error):
     registration_page = RegistrationPage(driver)
 
-    user = User(
-        name="",
-        last_name="Molly",
-        email="tony@gmail.com",
-        password="Password123$"
-    )
+    # Динамически создаем словарь с "битым" полем и передаем его в генератор
+    kwargs = {field_name: invalid_value}
+    user = UserGenerator.get_random_user(**kwargs)
 
     registration_page.open_registration_form()
     registration_page.fill_registration_form(user)
     registration_page.check_policy()
-    registration_page.submit_registration()
 
-    assert registration_page.error_message_text() == "Name is required", "Ошибка пустого имени не появилась"
-    assert registration_page.submit_button_disabled() == True, "Кнопка Y'alla! не заблокировалась при пустом имени"
+    # Универсальный клик в пустоту для вызова onBlur валидации во всех сценариях
+    registration_page.click_empty_space()
 
-
-def test_registration_with_empty_last_name(driver):
-    registration_page = RegistrationPage(driver)
-
-    user = User(
-        name="Tony",
-        last_name="",
-        email="tony@gmail.com",
-        password="Password123$"
-    )
-
-    registration_page.open_registration_form()
-    registration_page.fill_registration_form(user)
-    registration_page.check_policy()
-    registration_page.submit_registration()
-
-    assert registration_page.error_message_text() == "Last name is required", "Ошибка пустой фамилии не появилась"
-    assert registration_page.submit_button_disabled() == True, "Кнопка не заблокировалась при пустой фамилии"
+    assert registration_page.error_message_text() == expected_error, f"Ожидалась ошибка '{expected_error}'"
+    assert registration_page.submit_button_disabled() == True, "Кнопка Y'alla! не заблокировалась"
 
 
-def test_registration_with_wrong_email(driver):
-    registration_page = RegistrationPage(driver)
-
-    user = User(
-        name="Tony",
-        last_name="Molly",
-        email="tonygmail.com",
-        password="Password123$"
-    )
-
-    registration_page.open_registration_form()
-    registration_page.fill_registration_form(user)
-    registration_page.check_policy()
-    registration_page.submit_registration()
-
-    assert registration_page.error_message_text() == "Wrong email format", "Ошибка формата email не появилась"
-    assert registration_page.submit_button_disabled() == True, "Кнопка не заблокировалась при кривом email"
-
-
-def test_registration_with_empty_email(driver):
-    registration_page = RegistrationPage(driver)
-
-    user = User(
-        name="Tony",
-        last_name="Molly",
-        email="",
-        password="Password123$"
-    )
-
-    registration_page.open_registration_form()
-    registration_page.fill_registration_form(user)
-    registration_page.check_policy()
-    registration_page.submit_registration()
-
-    assert registration_page.error_message_text() == "Email is required", "Ошибка пустого email не появилась"
-    assert registration_page.submit_button_disabled() == True, "Кнопка не заблокировалась при пустом email"
-
-
-def test_registration_with_wrong_password(driver):
-    registration_page = RegistrationPage(driver)
-
-    user = User(
-        name="Tony",
-        last_name="Molly",
-        email="tony@gmail.com",
-        password="P123$"
-    )
-
-    registration_page.open_registration_form()
-    registration_page.fill_registration_form(user)
-    registration_page.check_policy()
-    registration_page.submit_registration()
-
-    assert registration_page.error_message_text() == "Password must contain minimum 6 symbols", "Ошибка короткого пароля не появилась"
-    assert registration_page.submit_button_disabled() == True, "Кнопка не заблокировалась при коротком пароле"
-
-
-def test_registration_with_empty_password(driver):
-    registration_page = RegistrationPage(driver)
-
-    user = User(
-        name="Tony",
-        last_name="Molly",
-        email="tony@gmail.com",
-        password=""
-    )
-
-    registration_page.open_registration_form()
-    registration_page.fill_registration_form(user)
-    registration_page.check_policy()
-    registration_page.submit_registration()
-
-    assert registration_page.error_message_text() == "Password is required", "Ошибка пустого пароля не появилась"
-    assert registration_page.submit_button_disabled() == True, "Кнопка не заблокировалась при пустом пароле"
-
-
+# --- НЕГАТИВНЫЙ ТЕСТ: ЧЕКБОКС (Отдельный флоу) ---
+@allure.epic("UI Testing")
+@allure.feature("Registration Page")
+@allure.story("Negative Registration - Checkbox")
+@allure.severity(allure.severity_level.NORMAL)
 def test_registration_without_check_box(driver):
     registration_page = RegistrationPage(driver)
-
-    user = User(
-        name="Tony",
-        last_name="Molly",
-        email="tony@gmail.com",
-        password="Password133$"
-    )
+    user = UserGenerator.get_random_user()
 
     registration_page.open_registration_form()
     registration_page.fill_registration_form(user)
 
-    # Кликаем дважды, чтобы в итоге чекбокс остался пустым
+    # Двойной клик оставляет чекбокс пустым
     registration_page.check_policy()
     registration_page.check_policy()
-    registration_page.submit_registration()
+
+    # СНИМАЕМ ФОКУС: кликаем в пустоту
+    registration_page.click_empty_space()
 
     assert registration_page.error_message_text() == "You must accept the terms", "Ошибка чекбокса не появилась"
     assert registration_page.submit_button_disabled() == True, "Кнопка не заблокировалась без чекбокса"

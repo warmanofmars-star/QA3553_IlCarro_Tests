@@ -1,46 +1,33 @@
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from pages.base_page import BasePage
 
 
-class SearchPage:
+class SearchPage(BasePage):
+    ENDPOINT = "/search?page=0&size=10"
+
     # --- ЛОКАТОРЫ ---
     CITY_INPUT = (By.ID, "city")
     DATES_INPUT = (By.ID, "dates")
     SUBMIT_BTN = (By.CSS_SELECTOR, "button[type='submit']")
     CALENDAR_POPOVER = (By.CSS_SELECTOR, ".daterange-popover")
 
-    def __init__(self, driver):
-        self.driver = driver
-
     # --- ДЕЙСТВИЯ ---
     def open(self):
-        self.driver.get("https://icarro-v1.netlify.app/search?page=0&size=10")
+        self.open_url(self.ENDPOINT)
 
     def fill_city(self, city_name):
-        city_field = self.driver.find_element(*self.CITY_INPUT)
-        city_field.clear()
-        city_field.send_keys(city_name)
+        self.fill(self.CITY_INPUT, city_name)
 
     def click_dates_input(self):
-        self.driver.find_element(*self.DATES_INPUT).click()
+        self.click(self.DATES_INPUT)
 
-    # Новый комплексный метод (Helper), по аналогии с login()
     def search_cars(self, city_name):
         self.fill_city(city_name)
         self.click_dates_input()
 
     # --- ПРОВЕРКИ ---
     def is_submit_button_disabled(self):
-        submit_btn = self.driver.find_element(*self.SUBMIT_BTN)
-        return not submit_btn.is_enabled()
+        return self.is_element_disabled(self.SUBMIT_BTN)
 
     def is_calendar_visible(self):
-        try:
-            WebDriverWait(self.driver, timeout=5).until(
-                EC.visibility_of_element_located(self.CALENDAR_POPOVER)
-            )
-            return True
-        except TimeoutException:
-            return False
+        return self.is_element_visible(self.CALENDAR_POPOVER)

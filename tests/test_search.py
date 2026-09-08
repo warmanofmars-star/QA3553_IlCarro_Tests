@@ -1,9 +1,13 @@
+import allure
 from pages.search_page import SearchPage
 
 # Тестовые данные выносим в константы
 VALID_CITY = "Haifa"
 
-
+@allure.epic("UI Testing")
+@allure.feature("Search Page")
+@allure.story("Search Cars Basic Flow")
+@allure.severity(allure.severity_level.CRITICAL)
 def test_search_form_basics(driver):
     search_page = SearchPage(driver)
 

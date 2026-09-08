@@ -1,13 +1,19 @@
+import os
+import allure
 from pages.login_page import LoginPage
 
-# Тестовые данные
-VALID_EMAIL = "warman.of.mars@gmail.com"
-VALID_PASSWORD = "z2I8A@U!Hl3T2&@h"
+# Тестовые данные берем из защищенного .env
+VALID_EMAIL = os.getenv("USER_EMAIL")
+VALID_PASSWORD = os.getenv("USER_PASSWORD")
+
 INVALID_EMAIL_FORMAT = "123"
 UNREGISTERED_EMAIL = "fake_user_12345@gmail.com"
 
 
-# 1. Позитивный тест
+@allure.epic("UI Testing")
+@allure.feature("Login Page")
+@allure.story("Positive Login")
+@allure.severity(allure.severity_level.BLOCKER)
 def test_login_success(driver):
     login_page = LoginPage(driver)
     login_page.open()
@@ -18,7 +24,10 @@ def test_login_success(driver):
     assert login_page.is_logout_button_visible() == True, "Кнопка 'Log out' не найдена"
 
 
-# 2. Негативный тест: Неверный формат Email (Фронтенд)
+@allure.epic("UI Testing")
+@allure.feature("Login Page")
+@allure.story("Negative Login - Frontend Validation")
+@allure.severity(allure.severity_level.NORMAL)
 def test_login_invalid_email_format(driver):
     login_page = LoginPage(driver)
     login_page.open()
@@ -30,7 +39,10 @@ def test_login_invalid_email_format(driver):
     assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована"
 
 
-# 3. Негативный тест: Пустое поле Password (Фронтенд)
+@allure.epic("UI Testing")
+@allure.feature("Login Page")
+@allure.story("Negative Login - Frontend Validation")
+@allure.severity(allure.severity_level.NORMAL)
 def test_login_empty_password(driver):
     login_page = LoginPage(driver)
     login_page.open()
@@ -43,7 +55,10 @@ def test_login_empty_password(driver):
     assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована"
 
 
-# 4. Негативный тест: Неверный логин/пароль или нет в базе (Бэкенд)
+@allure.epic("UI Testing")
+@allure.feature("Login Page")
+@allure.story("Negative Login - Backend Validation")
+@allure.severity(allure.severity_level.CRITICAL)
 def test_login_unregistered_user(driver):
     login_page = LoginPage(driver)
     login_page.open()
@@ -54,7 +69,10 @@ def test_login_unregistered_user(driver):
     assert login_page.is_login_failed_message_visible() == True, "Сообщение 'Login failed' не появилось"
 
 
-# 5. Негативный тест: Верный Email, но неверный пароль (Бэкенд)
+@allure.epic("UI Testing")
+@allure.feature("Login Page")
+@allure.story("Negative Login - Backend Validation")
+@allure.severity(allure.severity_level.CRITICAL)
 def test_login_wrong_password(driver):
     login_page = LoginPage(driver)
     login_page.open()
@@ -62,5 +80,4 @@ def test_login_wrong_password(driver):
     # Вводим настоящий email, но намеренно ложный пароль
     login_page.login(VALID_EMAIL, "WrongPassword123!")
 
-    # Проверяем, что сервер нас отшил и показал модалку
     assert login_page.is_login_failed_message_visible() == True, "Сообщение 'Login failed' не появилось при неверном пароле"

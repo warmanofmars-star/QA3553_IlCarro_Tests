@@ -1,65 +1,55 @@
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from pages.base_page import BasePage
 
-
-class RegistrationPage:
+class RegistrationPage(BasePage):
+    # --- ЛОКАТОРЫ ---
     NAV_REGISTRATION_BTN = (By.CSS_SELECTOR, "[href='/register']")
     NAME_INPUT = (By.CSS_SELECTOR, "[name='firstName']")
     LAST_NAME_INPUT = (By.CSS_SELECTOR, "[name='lastName']")
     EMAIL_INPUT = (By.CSS_SELECTOR, "[name='username']")
     PASSWORD_INPUT = (By.CSS_SELECTOR, "[name='password']")
     YALLA_BTN = (By.XPATH, "//button[text()='Y’alla!']")
-    CHECK_BOX = (By.ID,"terms-of-use")
+    CHECK_BOX = (By.ID, "terms-of-use")
     CONFIRMATION_TEXT = (By.CSS_SELECTOR, "h3")
     CONFIRMATION_TEXT_1 = (By.CSS_SELECTOR, "p")
     OK_BTN = (By.XPATH, "//*[text()='OK']")
     ERROR_MESSAGE = (By.CLASS_NAME, "error")
 
-
-    def __init__(self,driver):
-        self.driver = driver
-
-        # --- НАВИГАЦИЯ (Для проверки меню) ---
+    # --- НАВИГАЦИЯ ---
     def open_main_page(self):
-        self.driver.get("https://icarro-v1.netlify.app/")
+        self.open_url("/")
 
     def click_registration_button_in_menu(self):
-        self.driver.find_element(*self.NAV_REGISTRATION_BTN).click()
+        self.click(self.NAV_REGISTRATION_BTN)
 
     def get_current_url(self):
-            # Встроенный метод Selenium, который возвращает текущий адрес из адресной строки
         return self.driver.current_url
 
-        # --- АТОМАРНЫЙ ПУТЬ (Для тестов самой формы) ---
     def open_registration_form(self):
-            # Открываем форму напрямую. Быстро и надежно!
-        self.driver.get("https://icarro-v1.netlify.app/register")
+        self.open_url("/register")
 
-
-
-
+    # --- ДЕЙСТВИЯ С ФОРМОЙ ---
     def fill_name(self, name):
-        self.driver.find_element(*self.NAME_INPUT).clear()
-        self.driver.find_element(*self.NAME_INPUT).send_keys(name)
+        self.fill(self.NAME_INPUT, name)
 
     def fill_last_name(self, last_name):
-        self.driver.find_element(*self.LAST_NAME_INPUT).clear()
-        self.driver.find_element(*self.LAST_NAME_INPUT).send_keys(last_name)
+        self.fill(self.LAST_NAME_INPUT, last_name)
 
     def fill_email(self, email):
-        self.driver.find_element(*self.EMAIL_INPUT).clear()
-        self.driver.find_element(*self.EMAIL_INPUT).send_keys(email)
+        self.fill(self.EMAIL_INPUT, email)
 
     def fill_password(self, password):
-        self.driver.find_element(*self.PASSWORD_INPUT).clear()
-        self.driver.find_element(*self.PASSWORD_INPUT).send_keys(password)
+        self.fill(self.PASSWORD_INPUT, password)
 
     def submit_registration(self):
-        self.driver.find_element(*self.YALLA_BTN).click()
+        self.click(self.YALLA_BTN)
 
     def check_policy(self):
-        self.driver.find_element(*self.CHECK_BOX).click()
+        self.click(self.CHECK_BOX)
+
+    def click_empty_space(self):
+        # Кликаем по заголовку страницы (h1), чтобы снять фокус с чекбокса
+        self.click((By.CSS_SELECTOR, "h1"))
 
     def fill_registration_form(self, user):
         self.fill_name(user.name)
@@ -67,28 +57,18 @@ class RegistrationPage:
         self.fill_email(user.email)
         self.fill_password(user.password)
 
+    def close_window(self):
+        self.click(self.OK_BTN)
+
+    # --- ПРОВЕРКИ И ЧТЕНИЕ ТЕКСТА ---
     def confirmation_text(self):
-        # return self.driver.find_element(*self.CONFIRMATION_TEXT).text
-        element = WebDriverWait(self.driver, timeout=5).until(
-            EC.visibility_of_element_located(self.CONFIRMATION_TEXT))
-        return element.text
+        return self.get_text(self.CONFIRMATION_TEXT)
 
     def confirmation_text_1(self):
-        # return self.driver.find_element(*self.CONFIRMATION_TEXT).text
-        element = WebDriverWait(self.driver, timeout=5).until(
-            EC.visibility_of_element_located(self.CONFIRMATION_TEXT_1))
-        return element.text
-
-    def close_window(self):
-        self.driver.find_element(*self.OK_BTN).click()
+        return self.get_text(self.CONFIRMATION_TEXT_1)
 
     def error_message_text(self):
-        element = WebDriverWait(self.driver, 5).until(
-            EC.visibility_of_element_located(self.ERROR_MESSAGE))
-        return element.text
+        return self.get_text(self.ERROR_MESSAGE)
 
     def submit_button_disabled(self):
-        element = WebDriverWait(self.driver, 5).until(
-            EC.presence_of_element_located(self.YALLA_BTN)
-        )
-        return element.get_attribute("disabled") is not None
+        return self.is_element_disabled(self.YALLA_BTN)
