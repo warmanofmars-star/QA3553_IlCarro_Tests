@@ -7,6 +7,7 @@
 HEADLESS_MODE=true
 USER_EMAIL=warman.of.mars@gmail.com
 USER_PASSWORD=z2I8A@U!Hl3T2&@h
+ENABLE_CONSOLE_LOGS=true
 
 ============================================================
 📄 FILE: .\conftest.py
@@ -30,6 +31,9 @@ def driver():
     if os.environ.get('CI') == 'true' or is_headless:
         options.add_argument('--headless')
         options.add_argument('--window-size=1920,1080')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--disable-gpu')
 
     driver = webdriver.Edge(options=options)
 
@@ -108,11 +112,17 @@ print("Готово! Файл full_project_for_ai_ilcaro.txt создан.")
 name: IlCarro UI Tests
 
 on:
-  workflow_dispatch: # Добавляет кнопку ручного запуска в интерфейсе GitHub
+  workflow_dispatch:
+
+# РАЗРЕШАЕМ РОБОТУ ПИСАТЬ В РЕПОЗИТОРИЙ (Для создания ветки gh-pages)
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   test:
-    runs-on: ubuntu-latest # Поднимаем виртуальный сервер на Linux
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -133,13 +143,11 @@ jobs:
 
       - name: Run Pytest
         env:
-          # Забираем секреты из настроек репозитория
           USER_EMAIL: ${{ secrets.USER_EMAIL }}
           USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
-          # Принудительно включаем невидимый режим для сервера
           HEADLESS_MODE: "true"
-        run: pytest tests/ --clean-alluredir --alluredir=allure-results
-        continue-on-error: true # Идем дальше, даже если тесты упали (чтобы собрать отчет)
+        run: pytest tests/ -n auto --clean-alluredir --alluredir=allure-results
+        continue-on-error: true
 
       - name: Generate Allure Report
         uses: simple-elf/allure-report-action@master
@@ -158,6 +166,18 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: allure-history
+
+      # --- ОТПРАВКА УВЕДОМЛЕНИЯ В ТЕЛЕГРАМ ---
+      - name: Send Telegram Notification
+        uses: appleboy/telegram-action@master
+        if: always()
+        with:
+            to: ${{ secrets.TELEGRAM_TO }}
+            token: ${{ secrets.TELEGRAM_TOKEN }}
+            message: |
+              🤖 Автотесты IlCarro завершены!
+              📊 Посмотреть Allure-отчет можно по ссылке:
+              👉 https://warmanofmars-star.github.io/QA3553_IlCarro_Tests/
 
 ============================================================
 📄 FILE: .\data\data_generator.py
@@ -236,59 +256,75 @@ class User:
 📄 FILE: .\pages\base_page.py
 ============================================================
 
+import allure
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
+# Импортируем наш инженерный логгер
+from utils.logger import get_logger
+
+# Инициализируем логгер один раз для всего базового класса
+logger = get_logger()
+
 
 class BasePage:
-    # Базовый URL выносим сюда, чтобы потом легко менять окружения
     BASE_URL = "https://icarro-v1.netlify.app"
     DEFAULT_TIMEOUT = 5
 
     def __init__(self, driver):
         self.driver = driver
 
+    @allure.step("Открытие URL: {path}")
     def open_url(self, path=""):
-        """Открывает указанный путь относительно базового URL"""
-        self.driver.get(f"{self.BASE_URL}{path}")
+        full_url = f"{self.BASE_URL}{path}"
+        logger.info(f"Переходим по ссылке: {full_url}")
+        self.driver.get(full_url)
 
+    @allure.step("Поиск элемента: {locator}")
     def find(self, locator):
-        """Ищет элемент с ожиданием его появления в DOM"""
+        logger.info(f"Ищем элемент: {locator}")
         return WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
             EC.presence_of_element_located(locator)
         )
 
+    @allure.step("Клик по элементу: {locator}")
     def click(self, locator):
-        """Ждет кликабельности и кликает"""
+        logger.info(f"Кликаем по элементу: {locator}")
         element = WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
             EC.element_to_be_clickable(locator)
         )
         element.click()
 
+    @allure.step("Ввод текста '{value}' в поле: {locator}")
     def fill(self, locator, value):
-        """Очищает поле и вводит текст"""
+        logger.info(f"Вводим текст '{value}' в поле: {locator}")
         element = self.find(locator)
         element.clear()
         element.send_keys(value)
 
+    @allure.step("Проверка видимости элемента: {locator}")
     def is_element_visible(self, locator):
-        """Безопасная проверка видимости элемента (возвращает True/False)"""
+        logger.info(f"Проверяем видимость элемента: {locator}")
         try:
             WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
                 EC.visibility_of_element_located(locator)
             )
             return True
         except TimeoutException:
+            # Если элемент не появился, пишем warning в консоль/файл
+            logger.warning(f"Элемент {locator} не появился в течение {self.DEFAULT_TIMEOUT} сек.")
             return False
 
+    @allure.step("Проверка блокировки элемента: {locator}")
     def is_element_disabled(self, locator):
-        """Проверяет, заблокирован ли элемент (например, кнопка)"""
+        logger.info(f"Проверяем блокировку элемента: {locator}")
         element = self.find(locator)
         return not element.is_enabled()
 
+    @allure.step("Получение текста из элемента: {locator}")
     def get_text(self, locator):
-        """Ожидает появления элемента и возвращает его текст"""
+        logger.info(f"Получаем текст из элемента: {locator}")
         element = self.find(locator)
         return element.text
 
@@ -702,5 +738,66 @@ def test_search_form_basics(driver):
 
 ============================================================
 📄 FILE: .\tests\__init__.py
+============================================================
+
+
+
+============================================================
+📄 FILE: .\utils\logger.py
+============================================================
+
+import logging
+import os
+import sys
+from dotenv import load_dotenv
+
+load_dotenv()
+
+COLORS = {
+    'WARNING': '\033[93m',
+    'INFO': '\033[94m',
+    'DEBUG': '\033[92m',
+    'CRITICAL': '\033[91m',
+    'ERROR': '\033[91m',
+    'ENDC': '\033[0m'
+}
+
+
+class ColorFormatter(logging.Formatter):
+    def format(self, record):
+        log_message = super().format(record)
+        return f"{COLORS.get(record.levelname, '')}{log_message}{COLORS['ENDC']}"
+
+
+def get_logger(name="IlCarro"):
+    logger = logging.getLogger(name)
+
+    if logger.handlers:
+        return logger
+
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+
+    formatter_file = logging.Formatter('%(asctime)s - [%(process)d] - %(levelname)s - %(message)s',
+                                       datefmt='%Y-%m-%d %H:%M:%S')
+
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
+
+    # Уникальный файл лога для каждого процесса при параллельном запуске
+    file_handler = logging.FileHandler(f'logs/test_run_{os.getpid()}.log', encoding='utf-8')
+    file_handler.setFormatter(formatter_file)
+    logger.addHandler(file_handler)
+
+    if os.getenv('ENABLE_CONSOLE_LOGS', 'true').lower() == 'true':
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(
+            ColorFormatter('%(asctime)s - [%(process)d] - %(levelname)s - %(message)s', datefmt='%H:%M:%S'))
+        logger.addHandler(console_handler)
+
+    return logger
+
+============================================================
+📄 FILE: .\utils\__init__.py
 ============================================================
 
