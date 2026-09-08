@@ -1,9 +1,0 @@
-[94m18:24:31 - [2670] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/login[0m
-[94m18:24:32 - [2670] - INFO - Вводим текст 'warman.of.mars@gmail.com' в поле: ('css selector', "input[name='username']")[0m
-[94m18:24:32 - [2670] - INFO - Ищем элемент: ('css selector', "input[name='username']")[0m
-[94m18:24:32 - [2670] - INFO - Вводим текст 'z2I8A@U!Hl3T2&@h' в поле: ('css selector', "input[name='password']")[0m
-[94m18:24:32 - [2670] - INFO - Ищем элемент: ('css selector', "input[name='password']")[0m
-[94m18:24:33 - [2670] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
-[94m18:24:33 - [2670] - INFO - Проверяем видимость элемента: ('xpath', "//h3[text()='You are logged in success']")[0m
-[94m18:24:33 - [2670] - INFO - Кликаем по элементу: ('xpath', "//*[contains(text(), 'OK')]")[0m
-[94m18:24:34 - [2670] - INFO - Проверяем видимость элемента: ('xpath', "//*[contains(@class, 'navigation-link') and contains(., 'Log out')]")[0m
