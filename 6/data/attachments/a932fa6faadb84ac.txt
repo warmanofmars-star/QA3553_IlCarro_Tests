@@ -1,0 +1,7 @@
+INFO     IlCarro:base_page.py:23 Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+INFO     IlCarro:base_page.py:63 Проверяем блокировку элемента: ('css selector', "button[type='submit']")
+INFO     IlCarro:base_page.py:28 Ищем элемент: ('css selector', "button[type='submit']")
+INFO     IlCarro:base_page.py:43 Вводим текст 'Haifa' в поле: ('id', 'city')
+INFO     IlCarro:base_page.py:28 Ищем элемент: ('id', 'city')
+INFO     IlCarro:base_page.py:35 Кликаем по элементу: ('id', 'dates')
+INFO     IlCarro:base_page.py:50 Проверяем видимость элемента: ('css selector', '.daterange-popover')
