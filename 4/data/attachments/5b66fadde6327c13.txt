@@ -1,0 +1,7 @@
+[94m18:24:33 - [2673] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/login[0m
+[94m18:24:34 - [2673] - INFO - Вводим текст 'fake_user_12345@gmail.com' в поле: ('css selector', "input[name='username']")[0m
+[94m18:24:34 - [2673] - INFO - Ищем элемент: ('css selector', "input[name='username']")[0m
+[94m18:24:35 - [2673] - INFO - Вводим текст 'z2I8A@U!Hl3T2&@h' в поле: ('css selector', "input[name='password']")[0m
+[94m18:24:35 - [2673] - INFO - Ищем элемент: ('css selector', "input[name='password']")[0m
+[94m18:24:35 - [2673] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
+[94m18:24:36 - [2673] - INFO - Проверяем видимость элемента: ('xpath', "//h3[contains(text(), 'Login failed')]")[0m

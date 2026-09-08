@@ -1,0 +1,2 @@
+INFO     IlCarro:base_page.py:23 Переходим по ссылке: https://icarro-v1.netlify.app/
+INFO     IlCarro:base_page.py:35 Кликаем по элементу: ('css selector', "[href='/register']")
