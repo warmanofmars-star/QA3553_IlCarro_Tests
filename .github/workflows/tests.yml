@@ -35,7 +35,7 @@ jobs:
           USER_EMAIL: ${{ secrets.USER_EMAIL }}
           USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
           HEADLESS_MODE: "true"
-        run: pytest tests/ api_tests/ -n auto --clean-alluredir --reruns 2 --reruns-delay 2 --alluredir=allure-results
+        run: pytest tests/ -n auto --clean-alluredir --alluredir=allure-results
         continue-on-error: true
 
       - name: Generate Allure Report

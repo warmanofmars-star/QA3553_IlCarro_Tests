@@ -167,6 +167,15 @@ jobs:
           publish_branch: gh-pages
           publish_dir: allure-history
 
+      - name: Upload Test Logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pytest-test-logs         # Имя архива, который можно будет скачать
+          path: logs/                    # Путь к нашей папке с логами
+          retention-days: 7              # Сколько дней хранить архив на сервере GitHub
+
+
       # --- ОТПРАВКА УВЕДОМЛЕНИЯ В ТЕЛЕГРАМ ---
       - name: Send Telegram Notification
         uses: appleboy/telegram-action@master
