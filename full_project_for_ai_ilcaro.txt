@@ -1,0 +1,706 @@
+
+
+============================================================
+📄 FILE: .\.env
+============================================================
+
+HEADLESS_MODE=true
+USER_EMAIL=warman.of.mars@gmail.com
+USER_PASSWORD=z2I8A@U!Hl3T2&@h
+
+============================================================
+📄 FILE: .\conftest.py
+============================================================
+
+import os
+import pytest
+import allure
+from selenium import webdriver
+from selenium.webdriver.edge.options import Options
+from dotenv import load_dotenv
+
+# Загружаем переменные из .env
+load_dotenv()
+
+@pytest.fixture
+def driver():
+    options = Options()
+    is_headless = os.getenv('HEADLESS_MODE', 'false').lower() == 'true'
+
+    if os.environ.get('CI') == 'true' or is_headless:
+        options.add_argument('--headless')
+        options.add_argument('--window-size=1920,1080')
+
+    driver = webdriver.Edge(options=options)
+
+    if not (os.environ.get('CI') == 'true' or is_headless):
+        driver.maximize_window()
+
+    driver.implicitly_wait(5)
+    yield driver
+    driver.quit()
+
+# --- НОВЫЙ БЛОК: АВТОМАТИЧЕСКИЕ СКРИНШОТЫ ---
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """
+    Хук, который вызывается после каждой фазы теста.
+    Если тест падает, делает скриншот и крепит его в Allure.
+    """
+    outcome = yield
+    report = outcome.get_result()
+
+    # Проверяем, что тест упал именно на этапе выполнения (call)
+    if report.when == 'call' and report.failed:
+        # Достаем веб-драйвер из фикстуры
+        driver = item.funcargs.get('driver')
+
+        if driver:
+            test_name = item.name.replace("/", "_").replace("::", "_")
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name=f"Скриншот ошибки: {test_name}",
+                attachment_type=allure.attachment_type.PNG
+            )
+
+============================================================
+📄 FILE: .\merge_code.py
+============================================================
+
+import os
+
+# Исключаем мусорные папки
+IGNORE_DIRS = ['.venv', '.git', '__pycache__', '.pytest_cache', 'assets', 'screenshots']
+
+with open('full_project_for_ai_ilcaro.txt', 'w', encoding='utf-8') as outfile:
+    for root, dirs, files in os.walk('.'):
+        # Убираем ненужные папки из обхода
+        dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
+
+        for file in files:
+            # Берем только код, конфиги и ридми
+            if file.endswith(('.py', '.yml', '.env', '.md')):
+                filepath = os.path.join(root, file)
+
+                outfile.write(f"\n\n{'=' * 60}\n")
+                outfile.write(f"📄 FILE: {filepath}\n")
+                outfile.write(f"{'=' * 60}\n\n")
+
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as infile:
+                        outfile.write(infile.read())
+                except Exception as e:
+                    outfile.write(f"Ошибка чтения файла: {e}\n")
+
+print("Готово! Файл full_project_for_ai_ilcaro.txt создан.")
+
+
+============================================================
+📄 FILE: .\README.md
+============================================================
+
+# QA3553_IlCarro_Tests
+
+============================================================
+📄 FILE: .\.github\workflows\tests.yml
+============================================================
+
+name: IlCarro UI Tests
+
+on:
+  workflow_dispatch: # Добавляет кнопку ручного запуска в интерфейсе GitHub
+
+jobs:
+  test:
+    runs-on: ubuntu-latest # Поднимаем виртуальный сервер на Linux
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup Edge (Headless)
+        uses: browser-actions/setup-edge@v1
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Pytest
+        env:
+          # Забираем секреты из настроек репозитория
+          USER_EMAIL: ${{ secrets.USER_EMAIL }}
+          USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+          # Принудительно включаем невидимый режим для сервера
+          HEADLESS_MODE: "true"
+        run: pytest tests/ --clean-alluredir --alluredir=allure-results
+        continue-on-error: true # Идем дальше, даже если тесты упали (чтобы собрать отчет)
+
+      - name: Generate Allure Report
+        uses: simple-elf/allure-report-action@master
+        if: always()
+        id: allure-report
+        with:
+          allure_results: allure-results
+          gh_pages: gh-pages
+          allure_report: allure-report
+          allure_history: allure-history
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: always()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
+
+============================================================
+📄 FILE: .\data\data_generator.py
+============================================================
+
+import random
+import string
+from faker import Faker
+from models.user import User
+
+# Инициализируем Faker один раз
+fake = Faker('en_US')
+
+class UserGenerator:
+
+    @staticmethod
+    def generate_valid_password():
+        """Генерирует валидный пароль: минимум 8 символов, 1 большая, 1 маленькая, 1 цифра, 1 спецсимвол"""
+        upper = random.choice(string.ascii_uppercase)
+        lower = random.choice(string.ascii_lowercase)
+        digit = random.choice(string.digits)
+        special = random.choice("@$#^&*!")
+
+        # Добиваем длину до 9 символов случайными буквами/цифрами
+        rest = ''.join(random.choices(string.ascii_letters + string.digits, k=5))
+
+        password_list = list(upper + lower + digit + special + rest)
+        random.shuffle(password_list)
+
+        return ''.join(password_list)
+
+    @classmethod
+    def get_random_user(cls, **overrides) -> User:
+        """
+        Генерирует случайного валидного юзера.
+        Позволяет точечно ломать любые поля через **overrides.
+        Например: get_random_user(name="")
+        """
+        data = {
+            "name": fake.first_name(),
+            "last_name": fake.last_name(),
+            "email": fake.unique.email(),  # Уникальный email "из коробки", uuid больше не нужен
+            "password": cls.generate_valid_password()
+        }
+
+        # Если мы передали какие-то кривые данные для негативного теста - заменяем ими валидные
+        data.update(overrides)
+
+        # Распаковываем словарь прямо в модель User
+        return User(**data)
+
+============================================================
+📄 FILE: .\data\__init__.py
+============================================================
+
+
+
+============================================================
+📄 FILE: .\models\user.py
+============================================================
+
+class User:
+    def __init__(self, name, last_name, email, password):
+        self.name = name
+        self.last_name = last_name
+        self.email = email
+        self.password = password
+
+============================================================
+📄 FILE: .\models\__init__.py
+============================================================
+
+
+
+============================================================
+📄 FILE: .\pages\base_page.py
+============================================================
+
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+
+
+class BasePage:
+    # Базовый URL выносим сюда, чтобы потом легко менять окружения
+    BASE_URL = "https://icarro-v1.netlify.app"
+    DEFAULT_TIMEOUT = 5
+
+    def __init__(self, driver):
+        self.driver = driver
+
+    def open_url(self, path=""):
+        """Открывает указанный путь относительно базового URL"""
+        self.driver.get(f"{self.BASE_URL}{path}")
+
+    def find(self, locator):
+        """Ищет элемент с ожиданием его появления в DOM"""
+        return WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
+            EC.presence_of_element_located(locator)
+        )
+
+    def click(self, locator):
+        """Ждет кликабельности и кликает"""
+        element = WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
+            EC.element_to_be_clickable(locator)
+        )
+        element.click()
+
+    def fill(self, locator, value):
+        """Очищает поле и вводит текст"""
+        element = self.find(locator)
+        element.clear()
+        element.send_keys(value)
+
+    def is_element_visible(self, locator):
+        """Безопасная проверка видимости элемента (возвращает True/False)"""
+        try:
+            WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
+                EC.visibility_of_element_located(locator)
+            )
+            return True
+        except TimeoutException:
+            return False
+
+    def is_element_disabled(self, locator):
+        """Проверяет, заблокирован ли элемент (например, кнопка)"""
+        element = self.find(locator)
+        return not element.is_enabled()
+
+    def get_text(self, locator):
+        """Ожидает появления элемента и возвращает его текст"""
+        element = self.find(locator)
+        return element.text
+
+============================================================
+📄 FILE: .\pages\login_page.py
+============================================================
+
+from selenium.webdriver.common.by import By
+from pages.base_page import BasePage
+
+
+# Наследуемся от BasePage
+class LoginPage(BasePage):
+    ENDPOINT = "/login"
+
+    # --- ЛОКАТОРЫ ---
+    EMAIL_INPUT = (By.CSS_SELECTOR, "input[name='username']")
+    PASSWORD_INPUT = (By.CSS_SELECTOR, "input[name='password']")
+    SUBMIT_BTN = (By.CSS_SELECTOR, "button[type='submit']")
+
+    SUCCESS_MSG = (By.XPATH, "//h3[text()='You are logged in success']")
+    LOGOUT_BTN = (By.XPATH, "//*[contains(@class, 'navigation-link') and contains(., 'Log out')]")
+    OK_BTN = (By.XPATH, "//*[contains(text(), 'OK')]")
+
+    PAGE_TITLE = (By.CSS_SELECTOR, "h1.title")
+    ERROR_WRONG_EMAIL = (By.XPATH, "//div[contains(text(), 'Wrong email format')]")
+    ERROR_REQUIRED_FIELD = (By.XPATH, "//div[contains(text(), 'is required')]")
+    ERROR_LOGIN_FAILED = (By.XPATH, "//h3[contains(text(), 'Login failed')]")
+
+    # --- ДЕЙСТВИЯ ---
+    def open(self):
+        self.open_url(self.ENDPOINT)  # Используем метод из BasePage
+
+    def fill_email(self, email):
+        self.fill(self.EMAIL_INPUT, email)
+
+    def fill_password(self, password):
+        self.fill(self.PASSWORD_INPUT, password)
+
+    def submit_login(self):
+        self.click(self.SUBMIT_BTN)
+
+    def click_ok_button(self):
+        self.click(self.OK_BTN)
+
+    def login(self, email, password):
+        self.fill_email(email)
+        self.fill_password(password)
+        self.submit_login()
+
+    def click_empty_space(self):
+        self.click(self.PAGE_TITLE)
+
+    # --- ПРОВЕРКИ ---
+    def is_submit_button_disabled(self):
+        return self.is_element_disabled(self.SUBMIT_BTN)
+
+    def is_success_message_visible(self):
+        return self.is_element_visible(self.SUCCESS_MSG)
+
+    def is_logout_button_visible(self):
+        return self.is_element_visible(self.LOGOUT_BTN)
+
+    def is_error_wrong_email_visible(self):
+        return self.is_element_visible(self.ERROR_WRONG_EMAIL)
+
+    def is_error_required_field_visible(self):
+        return self.is_element_visible(self.ERROR_REQUIRED_FIELD)
+
+    def is_login_failed_message_visible(self):
+        return self.is_element_visible(self.ERROR_LOGIN_FAILED)
+
+============================================================
+📄 FILE: .\pages\registration_page.py
+============================================================
+
+from selenium.webdriver.common.by import By
+from pages.base_page import BasePage
+
+class RegistrationPage(BasePage):
+    # --- ЛОКАТОРЫ ---
+    NAV_REGISTRATION_BTN = (By.CSS_SELECTOR, "[href='/register']")
+    NAME_INPUT = (By.CSS_SELECTOR, "[name='firstName']")
+    LAST_NAME_INPUT = (By.CSS_SELECTOR, "[name='lastName']")
+    EMAIL_INPUT = (By.CSS_SELECTOR, "[name='username']")
+    PASSWORD_INPUT = (By.CSS_SELECTOR, "[name='password']")
+    YALLA_BTN = (By.XPATH, "//button[text()='Y’alla!']")
+    CHECK_BOX = (By.ID, "terms-of-use")
+    CONFIRMATION_TEXT = (By.CSS_SELECTOR, "h3")
+    CONFIRMATION_TEXT_1 = (By.CSS_SELECTOR, "p")
+    OK_BTN = (By.XPATH, "//*[text()='OK']")
+    ERROR_MESSAGE = (By.CLASS_NAME, "error")
+
+    # --- НАВИГАЦИЯ ---
+    def open_main_page(self):
+        self.open_url("/")
+
+    def click_registration_button_in_menu(self):
+        self.click(self.NAV_REGISTRATION_BTN)
+
+    def get_current_url(self):
+        return self.driver.current_url
+
+    def open_registration_form(self):
+        self.open_url("/register")
+
+    # --- ДЕЙСТВИЯ С ФОРМОЙ ---
+    def fill_name(self, name):
+        self.fill(self.NAME_INPUT, name)
+
+    def fill_last_name(self, last_name):
+        self.fill(self.LAST_NAME_INPUT, last_name)
+
+    def fill_email(self, email):
+        self.fill(self.EMAIL_INPUT, email)
+
+    def fill_password(self, password):
+        self.fill(self.PASSWORD_INPUT, password)
+
+    def submit_registration(self):
+        self.click(self.YALLA_BTN)
+
+    def check_policy(self):
+        self.click(self.CHECK_BOX)
+
+    def click_empty_space(self):
+        # Кликаем по заголовку страницы (h1), чтобы снять фокус с чекбокса
+        self.click((By.CSS_SELECTOR, "h1"))
+
+    def fill_registration_form(self, user):
+        self.fill_name(user.name)
+        self.fill_last_name(user.last_name)
+        self.fill_email(user.email)
+        self.fill_password(user.password)
+
+    def close_window(self):
+        self.click(self.OK_BTN)
+
+    # --- ПРОВЕРКИ И ЧТЕНИЕ ТЕКСТА ---
+    def confirmation_text(self):
+        return self.get_text(self.CONFIRMATION_TEXT)
+
+    def confirmation_text_1(self):
+        return self.get_text(self.CONFIRMATION_TEXT_1)
+
+    def error_message_text(self):
+        return self.get_text(self.ERROR_MESSAGE)
+
+    def submit_button_disabled(self):
+        return self.is_element_disabled(self.YALLA_BTN)
+
+============================================================
+📄 FILE: .\pages\search_page.py
+============================================================
+
+from selenium.webdriver.common.by import By
+from pages.base_page import BasePage
+
+
+class SearchPage(BasePage):
+    ENDPOINT = "/search?page=0&size=10"
+
+    # --- ЛОКАТОРЫ ---
+    CITY_INPUT = (By.ID, "city")
+    DATES_INPUT = (By.ID, "dates")
+    SUBMIT_BTN = (By.CSS_SELECTOR, "button[type='submit']")
+    CALENDAR_POPOVER = (By.CSS_SELECTOR, ".daterange-popover")
+
+    # --- ДЕЙСТВИЯ ---
+    def open(self):
+        self.open_url(self.ENDPOINT)
+
+    def fill_city(self, city_name):
+        self.fill(self.CITY_INPUT, city_name)
+
+    def click_dates_input(self):
+        self.click(self.DATES_INPUT)
+
+    def search_cars(self, city_name):
+        self.fill_city(city_name)
+        self.click_dates_input()
+
+    # --- ПРОВЕРКИ ---
+    def is_submit_button_disabled(self):
+        return self.is_element_disabled(self.SUBMIT_BTN)
+
+    def is_calendar_visible(self):
+        return self.is_element_visible(self.CALENDAR_POPOVER)
+
+
+============================================================
+📄 FILE: .\pages\__init__.py
+============================================================
+
+
+
+============================================================
+📄 FILE: .\tests\test_login.py
+============================================================
+
+import os
+import allure
+from pages.login_page import LoginPage
+
+# Тестовые данные берем из защищенного .env
+VALID_EMAIL = os.getenv("USER_EMAIL")
+VALID_PASSWORD = os.getenv("USER_PASSWORD")
+
+INVALID_EMAIL_FORMAT = "123"
+UNREGISTERED_EMAIL = "fake_user_12345@gmail.com"
+
+
+@allure.epic("UI Testing")
+@allure.feature("Login Page")
+@allure.story("Positive Login")
+@allure.severity(allure.severity_level.BLOCKER)
+def test_login_success(driver):
+    login_page = LoginPage(driver)
+    login_page.open()
+    login_page.login(VALID_EMAIL, VALID_PASSWORD)
+
+    assert login_page.is_success_message_visible() == True, "Сообщение об успехе не появилось"
+    login_page.click_ok_button()
+    assert login_page.is_logout_button_visible() == True, "Кнопка 'Log out' не найдена"
+
+
+@allure.epic("UI Testing")
+@allure.feature("Login Page")
+@allure.story("Negative Login - Frontend Validation")
+@allure.severity(allure.severity_level.NORMAL)
+def test_login_invalid_email_format(driver):
+    login_page = LoginPage(driver)
+    login_page.open()
+
+    login_page.fill_email(INVALID_EMAIL_FORMAT)
+    login_page.click_empty_space()  # Кликаем мимо, чтобы вызвать ошибку
+
+    assert login_page.is_error_wrong_email_visible() == True, "Текст 'Wrong email format' не появился"
+    assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована"
+
+
+@allure.epic("UI Testing")
+@allure.feature("Login Page")
+@allure.story("Negative Login - Frontend Validation")
+@allure.severity(allure.severity_level.NORMAL)
+def test_login_empty_password(driver):
+    login_page = LoginPage(driver)
+    login_page.open()
+
+    login_page.fill_email(VALID_EMAIL)
+    login_page.fill_password("")  # Оставляем пароль пустым
+    login_page.click_empty_space()
+
+    assert login_page.is_error_required_field_visible() == True, "Текст 'Password is required' не появился"
+    assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована"
+
+
+@allure.epic("UI Testing")
+@allure.feature("Login Page")
+@allure.story("Negative Login - Backend Validation")
+@allure.severity(allure.severity_level.CRITICAL)
+def test_login_unregistered_user(driver):
+    login_page = LoginPage(driver)
+    login_page.open()
+
+    # Пытаемся залогиниться под несуществующим юзером
+    login_page.login(UNREGISTERED_EMAIL, VALID_PASSWORD)
+
+    assert login_page.is_login_failed_message_visible() == True, "Сообщение 'Login failed' не появилось"
+
+
+@allure.epic("UI Testing")
+@allure.feature("Login Page")
+@allure.story("Negative Login - Backend Validation")
+@allure.severity(allure.severity_level.CRITICAL)
+def test_login_wrong_password(driver):
+    login_page = LoginPage(driver)
+    login_page.open()
+
+    # Вводим настоящий email, но намеренно ложный пароль
+    login_page.login(VALID_EMAIL, "WrongPassword123!")
+
+    assert login_page.is_login_failed_message_visible() == True, "Сообщение 'Login failed' не появилось при неверном пароле"
+
+============================================================
+📄 FILE: .\tests\test_registration.py
+============================================================
+
+import pytest
+import allure
+from pages.registration_page import RegistrationPage
+from data.data_generator import UserGenerator
+
+
+@allure.epic("UI Testing")
+@allure.feature("Registration Page")
+@allure.story("Navigation")
+@allure.severity(allure.severity_level.NORMAL)
+# --- ТЕСТ 1: Проверка навигации (меню) ---
+def test_navigation_to_registration(driver):
+    registration_page = RegistrationPage(driver)
+    registration_page.open_main_page()
+    registration_page.click_registration_button_in_menu()
+
+    assert "register" in registration_page.get_current_url(), "Переход из меню не удался"
+
+
+@allure.epic("UI Testing")
+@allure.feature("Registration Page")
+@allure.story("Positive Registration")
+@allure.severity(allure.severity_level.BLOCKER)
+# --- ПОЗИТИВНЫЙ ТЕСТ ---
+def test_registration_success(driver):
+    registration_page = RegistrationPage(driver)
+    user = UserGenerator.get_random_user()
+
+    registration_page.open_registration_form()
+    registration_page.fill_registration_form(user)
+    registration_page.check_policy()
+    registration_page.submit_registration()
+
+    assert registration_page.confirmation_text() == "Registered", "Заголовок об успехе не появился!"
+    assert registration_page.confirmation_text_1() == "You are logged in success", "Текст успешного входа не совпадает!"
+    registration_page.close_window()
+
+
+# ===========================================================================
+# ПАРАМЕТРИЗОВАННЫЙ НЕГАТИВНЫЙ ТЕСТ (6 проверок в 1 функции!)
+# ===========================================================================
+@allure.epic("UI Testing")
+@allure.feature("Registration Page")
+@allure.story("Negative Registration")
+@allure.severity(allure.severity_level.CRITICAL)
+@pytest.mark.parametrize("field_name, invalid_value, expected_error", [
+    ("name", "", "Name is required"),
+    ("last_name", "", "Last name is required"),
+    ("email", "tonygmail.com", "Wrong email format"),
+    ("email", "", "Email is required"),
+    ("password", "P123$", "Password must contain minimum 6 symbols"),
+    ("password", "", "Password is required")
+])
+def test_registration_negative_fields(driver, field_name, invalid_value, expected_error):
+    registration_page = RegistrationPage(driver)
+
+    # Динамически создаем словарь с "битым" полем и передаем его в генератор
+    kwargs = {field_name: invalid_value}
+    user = UserGenerator.get_random_user(**kwargs)
+
+    registration_page.open_registration_form()
+    registration_page.fill_registration_form(user)
+    registration_page.check_policy()
+
+    # Универсальный клик в пустоту для вызова onBlur валидации во всех сценариях
+    registration_page.click_empty_space()
+
+    assert registration_page.error_message_text() == expected_error, f"Ожидалась ошибка '{expected_error}'"
+    assert registration_page.submit_button_disabled() == True, "Кнопка Y'alla! не заблокировалась"
+
+
+# --- НЕГАТИВНЫЙ ТЕСТ: ЧЕКБОКС (Отдельный флоу) ---
+@allure.epic("UI Testing")
+@allure.feature("Registration Page")
+@allure.story("Negative Registration - Checkbox")
+@allure.severity(allure.severity_level.NORMAL)
+def test_registration_without_check_box(driver):
+    registration_page = RegistrationPage(driver)
+    user = UserGenerator.get_random_user()
+
+    registration_page.open_registration_form()
+    registration_page.fill_registration_form(user)
+
+    # Двойной клик оставляет чекбокс пустым
+    registration_page.check_policy()
+    registration_page.check_policy()
+
+    # СНИМАЕМ ФОКУС: кликаем в пустоту
+    registration_page.click_empty_space()
+
+    assert registration_page.error_message_text() == "You must accept the terms", "Ошибка чекбокса не появилась"
+    assert registration_page.submit_button_disabled() == True, "Кнопка не заблокировалась без чекбокса"
+
+============================================================
+📄 FILE: .\tests\test_search.py
+============================================================
+
+import allure
+from pages.search_page import SearchPage
+
+# Тестовые данные выносим в константы
+VALID_CITY = "Haifa"
+
+@allure.epic("UI Testing")
+@allure.feature("Search Page")
+@allure.story("Search Cars Basic Flow")
+@allure.severity(allure.severity_level.CRITICAL)
+def test_search_form_basics(driver):
+    search_page = SearchPage(driver)
+
+    # 1. Открываем страницу поиска
+    search_page.open()
+
+    # 2. Убеждаемся, что кнопка заблокирована
+    assert search_page.is_submit_button_disabled() == True, "Кнопка Yalla! должна быть неактивна в начале"
+
+    # 3. Выполняем действия через новый комплексный метод
+    search_page.search_cars(VALID_CITY)
+
+    # 4. Проверяем, что календарь открылся (используется умное ожидание)
+    assert search_page.is_calendar_visible() == True, "Календарь не открылся после клика по полю дат!"
+
+
+============================================================
+📄 FILE: .\tests\__init__.py
+============================================================
+
