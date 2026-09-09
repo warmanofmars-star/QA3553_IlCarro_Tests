@@ -400,7 +400,6 @@ from selenium.webdriver.common.by import By
 from pages.base_page import BasePage
 
 
-# Наследуемся от BasePage
 class LoginPage(BasePage):
     ENDPOINT = "/login"
 
@@ -408,19 +407,19 @@ class LoginPage(BasePage):
     EMAIL_INPUT = (By.CSS_SELECTOR, "input[name='username']")
     PASSWORD_INPUT = (By.CSS_SELECTOR, "input[name='password']")
     SUBMIT_BTN = (By.CSS_SELECTOR, "button[type='submit']")
-
-    SUCCESS_MSG = (By.XPATH, "//h3[text()='You are logged in success']")
-    LOGOUT_BTN = (By.XPATH, "//*[contains(@class, 'navigation-link') and contains(., 'Log out')]")
     OK_BTN = (By.XPATH, "//*[contains(text(), 'OK')]")
 
+    # Кнопка Logout - это единственный <button> с таким классом в шапке (остальные это ссылки <a>)
+    LOGOUT_BTN = (By.CSS_SELECTOR, "button.navigation-link")
+
+    # Универсальные локаторы сообщений (без хардкода текста)
     PAGE_TITLE = (By.CSS_SELECTOR, "h1.title")
-    ERROR_WRONG_EMAIL = (By.XPATH, "//div[contains(text(), 'Wrong email format')]")
-    ERROR_REQUIRED_FIELD = (By.XPATH, "//div[contains(text(), 'is required')]")
-    ERROR_LOGIN_FAILED = (By.XPATH, "//h3[contains(text(), 'Login failed')]")
+    ERROR_MESSAGE = (By.CSS_SELECTOR, ".error")  # Текст ошибки под полем ввода
+    GLOBAL_MESSAGE = (By.CSS_SELECTOR, "h3")  # Текст в модальном окне (успех/фейл)
 
     # --- ДЕЙСТВИЯ ---
     def open(self):
-        self.open_url(self.ENDPOINT)  # Используем метод из BasePage
+        self.open_url(self.ENDPOINT)
 
     def fill_email(self, email):
         self.fill(self.EMAIL_INPUT, email)
@@ -439,33 +438,29 @@ class LoginPage(BasePage):
         self.fill_password(password)
         self.submit_login()
 
-
-    # --- ПРОВЕРКИ ---
+    # --- ПРОВЕРКИ И ЧТЕНИЕ ТЕКСТА ---
     def is_submit_button_disabled(self):
         return self.is_element_disabled(self.SUBMIT_BTN)
-
-    def is_success_message_visible(self):
-        return self.is_element_visible(self.SUCCESS_MSG)
 
     def is_logout_button_visible(self):
         return self.is_element_visible(self.LOGOUT_BTN)
 
-    def is_error_wrong_email_visible(self):
-        return self.is_element_visible(self.ERROR_WRONG_EMAIL)
+    def get_error_message_text(self):
+        """Читает красную ошибку под полями ввода"""
+        return self.get_text(self.ERROR_MESSAGE)
 
-    def is_error_required_field_visible(self):
-        return self.is_element_visible(self.ERROR_REQUIRED_FIELD)
-
-    def is_login_failed_message_visible(self):
-        return self.is_element_visible(self.ERROR_LOGIN_FAILED)
+    def get_global_message_text(self):
+        """Читает текст из модального окна (успешный вход или ошибка бэкенда)"""
+        return self.get_text(self.GLOBAL_MESSAGE)
 
 ============================================================
 📄 FILE: .\pages\registration_page.py
 ============================================================
 
-import allure
 from selenium.webdriver.common.by import By
+import allure
 from pages.base_page import BasePage
+
 
 class RegistrationPage(BasePage):
     # --- ЛОКАТОРЫ ---
@@ -474,12 +469,15 @@ class RegistrationPage(BasePage):
     LAST_NAME_INPUT = (By.CSS_SELECTOR, "[name='lastName']")
     EMAIL_INPUT = (By.CSS_SELECTOR, "[name='username']")
     PASSWORD_INPUT = (By.CSS_SELECTOR, "[name='password']")
-    YALLA_BTN = (By.XPATH, "//button[text()='Y’alla!']")
     CHECK_BOX = (By.ID, "terms-of-use")
+    ERROR_MESSAGE = (By.CLASS_NAME, "error")
+
+    # ИЗБАВИЛИСЬ ОТ ХАРДКОДА ТЕКСТА:
+    YALLA_BTN = (By.CSS_SELECTOR, "button[type='submit']")
+    OK_BTN = (By.XPATH, "//*[contains(text(), 'OK')]")
+
     CONFIRMATION_TEXT = (By.CSS_SELECTOR, "h3")
     CONFIRMATION_TEXT_1 = (By.CSS_SELECTOR, "p")
-    OK_BTN = (By.XPATH, "//*[text()='OK']")
-    ERROR_MESSAGE = (By.CLASS_NAME, "error")
 
     # --- НАВИГАЦИЯ ---
     def open_main_page(self):
@@ -513,7 +511,6 @@ class RegistrationPage(BasePage):
     @allure.step("Установка чекбокса 'Terms of use' в состояние: {state}")
     def set_policy_checkbox(self, state: bool):
         element = self.find(self.CHECK_BOX)
-        # Если текущее состояние не совпадает с тем, что нам нужно — кликаем
         if element.is_selected() != state:
             self.click(self.CHECK_BOX)
 
@@ -795,10 +792,8 @@ import os
 import allure
 from pages.login_page import LoginPage
 
-# Тестовые данные берем из защищенного .env
 VALID_EMAIL = os.getenv("USER_EMAIL")
 VALID_PASSWORD = os.getenv("USER_PASSWORD")
-
 INVALID_EMAIL_FORMAT = "123"
 UNREGISTERED_EMAIL = "fake_user_12345@gmail.com"
 
@@ -812,7 +807,9 @@ def test_login_success(driver):
     login_page.open()
     login_page.login(VALID_EMAIL, VALID_PASSWORD)
 
-    assert login_page.is_success_message_visible() == True, "Сообщение об успехе не появилось"
+    # Проверяем текст модалки
+    # Проверяем текст модалки
+    assert login_page.get_global_message_text() == "You are logged in success", "Сообщение об успехе не совпадает!"
     login_page.click_ok_button()
     assert login_page.is_logout_button_visible() == True, "Кнопка 'Log out' не найдена"
 
@@ -826,9 +823,9 @@ def test_login_invalid_email_format(driver):
     login_page.open()
 
     login_page.fill_email(INVALID_EMAIL_FORMAT)
-    login_page.remove_focus()  # Кликаем мимо, чтобы вызвать ошибку
+    login_page.remove_focus()  # Используем новый метод из BasePage
 
-    assert login_page.is_error_wrong_email_visible() == True, "Текст 'Wrong email format' не появился"
+    assert login_page.get_error_message_text() == "Wrong email format", "Неверный текст ошибки Email"
     assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована"
 
 
@@ -844,7 +841,7 @@ def test_login_empty_password(driver):
     login_page.fill_password("")  # Оставляем пароль пустым
     login_page.remove_focus()
 
-    assert login_page.is_error_required_field_visible() == True, "Текст 'Password is required' не появился"
+    assert login_page.get_error_message_text() == "Password is required", "Неверный текст ошибки Password"
     assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована"
 
 
@@ -856,10 +853,8 @@ def test_login_unregistered_user(driver):
     login_page = LoginPage(driver)
     login_page.open()
 
-    # Пытаемся залогиниться под несуществующим юзером
     login_page.login(UNREGISTERED_EMAIL, VALID_PASSWORD)
-
-    assert login_page.is_login_failed_message_visible() == True, "Сообщение 'Login failed' не появилось"
+    assert login_page.get_global_message_text() == "Login failed", "Неверный текст ошибки бэкенда"
 
 
 @allure.epic("UI Testing")
@@ -870,10 +865,8 @@ def test_login_wrong_password(driver):
     login_page = LoginPage(driver)
     login_page.open()
 
-    # Вводим настоящий email, но намеренно ложный пароль
     login_page.login(VALID_EMAIL, "WrongPassword123!")
-
-    assert login_page.is_login_failed_message_visible() == True, "Сообщение 'Login failed' не появилось при неверном пароле"
+    assert login_page.get_global_message_text() == "Login failed", "Неверный текст ошибки бэкенда"
 
 ============================================================
 📄 FILE: .\tests\test_registration.py

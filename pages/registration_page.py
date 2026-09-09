@@ -1,6 +1,7 @@
-import allure
 from selenium.webdriver.common.by import By
+import allure
 from pages.base_page import BasePage
+
 
 class RegistrationPage(BasePage):
     # --- ЛОКАТОРЫ ---
@@ -9,12 +10,15 @@ class RegistrationPage(BasePage):
     LAST_NAME_INPUT = (By.CSS_SELECTOR, "[name='lastName']")
     EMAIL_INPUT = (By.CSS_SELECTOR, "[name='username']")
     PASSWORD_INPUT = (By.CSS_SELECTOR, "[name='password']")
-    YALLA_BTN = (By.XPATH, "//button[text()='Y’alla!']")
     CHECK_BOX = (By.ID, "terms-of-use")
+    ERROR_MESSAGE = (By.CLASS_NAME, "error")
+
+    # ИЗБАВИЛИСЬ ОТ ХАРДКОДА ТЕКСТА:
+    YALLA_BTN = (By.CSS_SELECTOR, "button[type='submit']")
+    OK_BTN = (By.XPATH, "//*[contains(text(), 'OK')]")
+
     CONFIRMATION_TEXT = (By.CSS_SELECTOR, "h3")
     CONFIRMATION_TEXT_1 = (By.CSS_SELECTOR, "p")
-    OK_BTN = (By.XPATH, "//*[text()='OK']")
-    ERROR_MESSAGE = (By.CLASS_NAME, "error")
 
     # --- НАВИГАЦИЯ ---
     def open_main_page(self):
@@ -48,7 +52,6 @@ class RegistrationPage(BasePage):
     @allure.step("Установка чекбокса 'Terms of use' в состояние: {state}")
     def set_policy_checkbox(self, state: bool):
         element = self.find(self.CHECK_BOX)
-        # Если текущее состояние не совпадает с тем, что нам нужно — кликаем
         if element.is_selected() != state:
             self.click(self.CHECK_BOX)
 
