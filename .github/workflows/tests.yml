@@ -22,9 +22,6 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Setup Edge (Headless)
-        uses: browser-actions/setup-edge@v1
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
