@@ -69,3 +69,16 @@ class BasePage:
         logger.info(f"Получаем текст из элемента: {locator}")
         element = self.find(locator)
         return element.text
+
+    @allure.step("Проверка невидимости элемента: {locator}")
+    def is_element_invisible(self, locator):
+        logger.info(f"Проверяем исчезновение элемента: {locator}")
+        try:
+            # Ждем, пока элемент физически исчезнет или станет display: none
+            WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
+                EC.invisibility_of_element_located(locator)
+            )
+            return True
+        except TimeoutException:
+            logger.error(f"Элемент {locator} не исчез в течение {self.DEFAULT_TIMEOUT} сек.")
+            return False

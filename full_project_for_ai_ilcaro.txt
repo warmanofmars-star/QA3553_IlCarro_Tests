@@ -190,6 +190,7 @@ jobs:
 
 import random
 import string
+from datetime import datetime, timedelta
 from faker import Faker
 from models.user import User
 
@@ -233,6 +234,45 @@ class UserGenerator:
 
         # Распаковываем словарь прямо в модель User
         return User(**data)
+
+
+class SearchDataGenerator:
+    # Полный фиксированный список городов из выпадающего списка IlCarro
+    CITIES = [
+        "Tel Aviv",
+        "Jerusalem",
+        "Haifa",
+        "Rishon LeZion",
+        "Petah Tikva",
+        "Ashdod",
+        "Netanya",
+        "Beersheba"
+    ]
+
+    @classmethod
+    def get_random_city(cls):
+        return random.choice(cls.CITIES)
+
+    @staticmethod
+    def get_safe_future_dates(min_offset=1, max_offset=10, min_duration=2, max_duration=6):
+        """
+        Генерирует даты в будущем.
+        :param min_offset: Минимальное количество дней от сегодня до начала аренды
+        :param max_offset: Максимальное количество дней до начала аренды
+        :param min_duration: Минимальная длительность поездки
+        :param max_duration: Максимальная длительность поездки
+        """
+        today = datetime.now()
+
+        # Настраиваемое смещение до начала поездки
+        start_offset = random.randint(min_offset, max_offset)
+        start_date = today + timedelta(days=start_offset)
+
+        # Настраиваемая длительность
+        duration = random.randint(min_duration, max_duration)
+        end_date = start_date + timedelta(days=duration)
+
+        return start_date, end_date
 
 ============================================================
 📄 FILE: .\data\__init__.py
@@ -332,6 +372,19 @@ class BasePage:
         logger.info(f"Получаем текст из элемента: {locator}")
         element = self.find(locator)
         return element.text
+
+    @allure.step("Проверка невидимости элемента: {locator}")
+    def is_element_invisible(self, locator):
+        logger.info(f"Проверяем исчезновение элемента: {locator}")
+        try:
+            # Ждем, пока элемент физически исчезнет или станет display: none
+            WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
+                EC.invisibility_of_element_located(locator)
+            )
+            return True
+        except TimeoutException:
+            logger.error(f"Элемент {locator} не исчез в течение {self.DEFAULT_TIMEOUT} сек.")
+            return False
 
 ============================================================
 📄 FILE: .\pages\login_page.py
@@ -485,6 +538,9 @@ class RegistrationPage(BasePage):
 📄 FILE: .\pages\search_page.py
 ============================================================
 
+import allure
+from selenium.webdriver.support.wait import WebDriverWait
+from datetime import datetime
 from selenium.webdriver.common.by import By
 from pages.base_page import BasePage
 
@@ -492,13 +548,25 @@ from pages.base_page import BasePage
 class SearchPage(BasePage):
     ENDPOINT = "/search?page=0&size=10"
 
-    # --- ЛОКАТОРЫ ---
+    # --- СТАТИЧНЫЕ ЛОКАТОРЫ ---:
     CITY_INPUT = (By.ID, "city")
     DATES_INPUT = (By.ID, "dates")
     SUBMIT_BTN = (By.CSS_SELECTOR, "button[type='submit']")
     CALENDAR_POPOVER = (By.CSS_SELECTOR, ".daterange-popover")
+    PREV_MONTH_BTN = (By.CSS_SELECTOR, ".rdrPprevButton")
+    ACTIVE_MONTH_LABEL = (By.CSS_SELECTOR, ".rdrMonthPicker option:checked")
+    TODAY_DAY_MARKER = (By.CSS_SELECTOR, ".rdrDayToday")
 
-    # --- ДЕЙСТВИЯ ---
+    # Кнопка переключения месяца вперед в календаре react-date-range
+    NEXT_MONTH_BTN = (By.CSS_SELECTOR, ".rdrNextButton")
+
+
+    # --- ДЕЙСТВИЯ ---:
+    @staticmethod
+    def get_day_locator(day):
+        xpath = f"//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='{day}']]"
+        return (By.XPATH, xpath)
+
     def open(self):
         self.open_url(self.ENDPOINT)
 
@@ -508,16 +576,65 @@ class SearchPage(BasePage):
     def click_dates_input(self):
         self.click(self.DATES_INPUT)
 
-    def search_cars(self, city_name):
-        self.fill_city(city_name)
+    @allure.step("Клик по кнопке 'Следующий месяц' в календаре")
+    def click_next_month(self):
+        self.click(self.NEXT_MONTH_BTN)
+
+    @allure.step("Клик по кнопке 'Предыдущий месяц' в календаре")
+    def click_prev_month(self):
+        self.click(self.PREV_MONTH_BTN)
+
+    @allure.step("Получение текущего отображаемого месяца")
+    def get_current_month(self):
+        return self.get_text(self.ACTIVE_MONTH_LABEL)
+
+    @allure.step("Выбор дат поездки: с {start_date} по {end_date}")
+    def select_date_range(self, start_date, end_date):
         self.click_dates_input()
 
-    # --- ПРОВЕРКИ ---
+        # Умная логика: если месяц начала поездки больше текущего, перелистываем календарь
+        current_month = datetime.now().month
+        target_month = start_date.month
+
+        # Вычисляем, сколько раз нужно нажать "вперед"
+        months_diff = target_month - current_month
+        if months_diff > 0:
+            for _ in range(months_diff):
+                self.click_next_month()
+
+        # Кликаем по дням
+        self.click(self.get_day_locator(start_date.day))
+        self.click(self.get_day_locator(end_date.day))
+
+    @allure.step("Ожидание смены месяца (завершение анимации)")
+    def wait_for_month_to_change(self, old_month):
+        # Умный вейт: ждем максимум 3 секунды, пока текст месяца перестанет быть равен old_month
+        WebDriverWait(self.driver, 3).until(
+            lambda driver: self.get_current_month() != old_month,
+            message=f"Месяц так и не изменился после клика! Ожидали, что он перестанет быть '{old_month}'"
+        )
+
+
+    # --- ПРОВЕРКИ ---:
     def is_submit_button_disabled(self):
         return self.is_element_disabled(self.SUBMIT_BTN)
 
     def is_calendar_visible(self):
         return self.is_element_visible(self.CALENDAR_POPOVER)
+
+    def is_calendar_invisible(self):
+        return self.is_element_invisible(self.CALENDAR_POPOVER)
+
+    @allure.step("Проверка наличия маркера сегодняшнего дня (голубая полоса)")
+    def is_today_highlighted(self):
+        return self.is_element_visible(self.TODAY_DAY_MARKER)
+
+    @allure.step("Получение текста из поля дат")
+    def get_selected_dates_value(self):
+        # Используем get_attribute("value"), так как это тег <input>
+        element = self.find(self.DATES_INPUT)
+        return element.get_attribute("value")
+
 
 
 ============================================================
@@ -525,6 +642,85 @@ class SearchPage(BasePage):
 ============================================================
 
 
+
+============================================================
+📄 FILE: .\tests\test_calendar.py
+============================================================
+
+import allure
+from pages.search_page import SearchPage
+
+
+@allure.epic("UI Testing")
+@allure.feature("Calendar Component")
+@allure.story("Calendar UI and Dismissal")
+@allure.severity(allure.severity_level.NORMAL)
+def test_calendar_ui_and_close(driver):
+    search_page = SearchPage(driver)
+    search_page.open()
+
+    search_page.click_dates_input()
+    # СИНХРОНИЗАЦИЯ: ждем открытия попапа
+    assert search_page.is_calendar_visible() == True, "Календарь не открылся!"
+
+    assert search_page.is_today_highlighted() == True, "Сегодняшний день не выделен!"
+    search_page.click(search_page.CITY_INPUT)
+    assert search_page.is_calendar_invisible() == True, "Календарь не закрылся!"
+
+
+@allure.epic("UI Testing")
+@allure.feature("Calendar Component")
+@allure.story("Negative Calendar UI - Past Dates Blocked")
+@allure.severity(allure.severity_level.CRITICAL)
+@allure.epic("UI Testing")
+@allure.feature("Calendar Component")
+@allure.story("Negative Calendar UI - Past Dates Blocked")
+@allure.severity(allure.severity_level.CRITICAL)
+def test_calendar_past_navigation_blocked(driver):
+    search_page = SearchPage(driver)
+    search_page.open()
+    search_page.click_dates_input()
+
+    assert search_page.is_calendar_visible() == True, "Календарь не открылся!"
+
+    # 1. Запоминаем текущий месяц
+    initial_month = search_page.get_current_month()
+
+    # 2. ПЫТАЕМСЯ кликнуть "Назад" (в прошлое)
+    search_page.click_prev_month()
+
+    # 3. Проверяем, что месяц никуда не переключился и мы остались в настоящем
+    current_month = search_page.get_current_month()
+    assert initial_month == current_month, f"Баг безопасности! Мы смогли уйти в прошлое: из {initial_month} в {current_month}"
+
+
+@allure.epic("UI Testing")
+@allure.feature("Calendar Component")
+@allure.story("Calendar Navigation")
+@allure.severity(allure.severity_level.NORMAL)
+def test_calendar_month_navigation(driver):
+    search_page = SearchPage(driver)
+    search_page.open()
+    search_page.click_dates_input()
+
+    assert search_page.is_calendar_visible() == True, "Календарь не открылся!"
+
+    initial_month = search_page.get_current_month()
+
+    # 1. Листаем вперед
+    search_page.click_next_month()
+    # ПРОФЕССИОНАЛЬНОЕ ОЖИДАНИЕ: тест пойдет дальше сразу, как только сменится текст
+    search_page.wait_for_month_to_change(initial_month)
+
+    next_month = search_page.get_current_month()
+    assert initial_month != next_month, f"Месяц не изменился! Остался: {initial_month}"
+
+    # 2. Листаем назад
+    search_page.click_prev_month()
+    search_page.wait_for_month_to_change(next_month)
+
+    returned_month = search_page.get_current_month()
+    assert initial_month == returned_month, f"Не вернулись! Ожидали {initial_month}, получили {returned_month}"
 
 ============================================================
 📄 FILE: .\tests\test_login.py
@@ -717,29 +913,39 @@ def test_registration_without_check_box(driver):
 
 import allure
 from pages.search_page import SearchPage
+from data.data_generator import SearchDataGenerator
 
-# Тестовые данные выносим в константы
-VALID_CITY = "Haifa"
 
 @allure.epic("UI Testing")
 @allure.feature("Search Page")
-@allure.story("Search Cars Basic Flow")
+@allure.story("Search Cars Dynamic Flow")
 @allure.severity(allure.severity_level.CRITICAL)
-def test_search_form_basics(driver):
+def test_search_form_dynamic(driver):
     search_page = SearchPage(driver)
 
-    # 1. Открываем страницу поиска
+    city = SearchDataGenerator.get_random_city()
+    start_date, end_date = SearchDataGenerator.get_safe_future_dates()
+
+    # Формируем ожидаемую строку в формате M/D/YYYY - M/D/YYYY (как в UI)
+    expected_dates_str = f"{start_date.month}/{start_date.day}/{start_date.year} - {end_date.month}/{end_date.day}/{end_date.year}"
+
+    with allure.step(f"Тест с параметрами: Город - {city}, Ожидаемые даты в поле: {expected_dates_str}"):
+        pass
+
     search_page.open()
 
-    # 2. Убеждаемся, что кнопка заблокирована
     assert search_page.is_submit_button_disabled() == True, "Кнопка Yalla! должна быть неактивна в начале"
 
-    # 3. Выполняем действия через новый комплексный метод
-    search_page.search_cars(VALID_CITY)
+    search_page.fill_city(city)
+    search_page.select_date_range(start_date, end_date)
 
-    # 4. Проверяем, что календарь открылся (используется умное ожидание)
-    assert search_page.is_calendar_visible() == True, "Календарь не открылся после клика по полю дат!"
+    search_page.click(search_page.CITY_INPUT)  # закрываем календарь
 
+    # --- НОВАЯ ПРОВЕРКА ФОРМАТА ДАТ ---
+    actual_dates_str = search_page.get_selected_dates_value()
+    assert actual_dates_str == expected_dates_str, f"Ошибка в поле дат! Ожидали '{expected_dates_str}', а получили '{actual_dates_str}'"
+
+    assert search_page.is_submit_button_disabled() == False, "Кнопка Yalla! не разблокировалась после ввода данных!"
 
 ============================================================
 📄 FILE: .\tests\__init__.py

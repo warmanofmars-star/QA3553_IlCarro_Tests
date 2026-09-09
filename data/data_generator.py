@@ -1,5 +1,6 @@
 import random
 import string
+from datetime import datetime, timedelta
 from faker import Faker
 from models.user import User
 
@@ -43,3 +44,42 @@ class UserGenerator:
 
         # Распаковываем словарь прямо в модель User
         return User(**data)
+
+
+class SearchDataGenerator:
+    # Полный фиксированный список городов из выпадающего списка IlCarro
+    CITIES = [
+        "Tel Aviv",
+        "Jerusalem",
+        "Haifa",
+        "Rishon LeZion",
+        "Petah Tikva",
+        "Ashdod",
+        "Netanya",
+        "Beersheba"
+    ]
+
+    @classmethod
+    def get_random_city(cls):
+        return random.choice(cls.CITIES)
+
+    @staticmethod
+    def get_safe_future_dates(min_offset=1, max_offset=10, min_duration=2, max_duration=6):
+        """
+        Генерирует даты в будущем.
+        :param min_offset: Минимальное количество дней от сегодня до начала аренды
+        :param max_offset: Максимальное количество дней до начала аренды
+        :param min_duration: Минимальная длительность поездки
+        :param max_duration: Максимальная длительность поездки
+        """
+        today = datetime.now()
+
+        # Настраиваемое смещение до начала поездки
+        start_offset = random.randint(min_offset, max_offset)
+        start_date = today + timedelta(days=start_offset)
+
+        # Настраиваемая длительность
+        duration = random.randint(min_duration, max_duration)
+        end_date = start_date + timedelta(days=duration)
+
+        return start_date, end_date
