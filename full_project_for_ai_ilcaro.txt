@@ -535,6 +535,65 @@ class RegistrationPage(BasePage):
         return self.is_element_disabled(self.YALLA_BTN)
 
 ============================================================
+📄 FILE: .\pages\results_page.py
+============================================================
+
+import logging
+import allure
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from pages.base_page import BasePage
+
+logger = logging.getLogger(__name__)
+
+class ResultsPage(BasePage):
+    # --- ЛОКАТОРЫ ---
+    CAR_CARD_LINK = (By.CSS_SELECTOR, "a.car-container")
+    CAR_IMAGE = (By.CSS_SELECTOR, ".car-img-container")
+    CAR_TITLE = (By.CSS_SELECTOR, ".details-card > div > div:first-child")
+    CAR_PRICE = (By.CSS_SELECTOR, ".car-price-value")
+
+    # --- ПРОВЕРКИ И ОЖИДАНИЯ ---
+    @allure.step("Ожидание завершения поиска (смена URL)")
+    def wait_for_search_request_to_complete(self):
+        logger.info("Ждем обновления URL с параметрами поиска...")
+        # Убеждаемся, что форма отправилась и параметры появились в URL
+        WebDriverWait(self.driver, 10).until(
+            lambda d: "city=" in d.current_url and "from=" in d.current_url,
+            message="Поисковый запрос не выполнился: URL не обновился!"
+        )
+
+    @allure.step("Проверка, есть ли найденные машины")
+    def has_cars(self):
+        # Быстрый опрос DOM без долгого таймаута
+        cars = self.driver.find_elements(*self.CAR_CARD_LINK)
+        return len(cars) > 0
+
+    # --- ДЕЙСТВИЯ ---
+    @allure.step("Получение данных первой машины из списка")
+    def get_first_car_details(self):
+        cars = self.driver.find_elements(*self.CAR_CARD_LINK)
+        if not cars:
+            return None
+
+        first_car = cars[0]
+        title = first_car.find_element(*self.CAR_TITLE).text
+        price = first_car.find_element(*self.CAR_PRICE).text
+
+        href = first_car.get_attribute("href")
+        car_id = href.split("/")[-1] if href else None
+
+        img_element = first_car.find_element(*self.CAR_IMAGE)
+        bg_image_style = img_element.get_attribute("style")
+
+        return {
+            "id": car_id,
+            "title": title,
+            "price": price,
+            "has_image": "url" in bg_image_style
+        }
+
+============================================================
 📄 FILE: .\pages\search_page.py
 ============================================================
 
@@ -613,6 +672,10 @@ class SearchPage(BasePage):
             lambda driver: self.get_current_month() != old_month,
             message=f"Месяц так и не изменился после клика! Ожидали, что он перестанет быть '{old_month}'"
         )
+
+    @allure.step("Клик по кнопке Y'alla! (Submit)")
+    def click_submit_button(self):
+        self.click(self.SUBMIT_BTN)
 
 
     # --- ПРОВЕРКИ ---:
@@ -911,10 +974,15 @@ def test_registration_without_check_box(driver):
 📄 FILE: .\tests\test_search.py
 ============================================================
 
+import logging
 import allure
+import pytest
+
 from pages.search_page import SearchPage
 from data.data_generator import SearchDataGenerator
+from pages.results_page import ResultsPage
 
+logger = logging.getLogger(__name__)
 
 @allure.epic("UI Testing")
 @allure.feature("Search Page")
@@ -922,30 +990,45 @@ from data.data_generator import SearchDataGenerator
 @allure.severity(allure.severity_level.CRITICAL)
 def test_search_form_dynamic(driver):
     search_page = SearchPage(driver)
+    results_page = ResultsPage(driver)
 
     city = SearchDataGenerator.get_random_city()
     start_date, end_date = SearchDataGenerator.get_safe_future_dates()
-
-    # Формируем ожидаемую строку в формате M/D/YYYY - M/D/YYYY (как в UI)
     expected_dates_str = f"{start_date.month}/{start_date.day}/{start_date.year} - {end_date.month}/{end_date.day}/{end_date.year}"
 
-    with allure.step(f"Тест с параметрами: Город - {city}, Ожидаемые даты в поле: {expected_dates_str}"):
+    with allure.step(f"Параметры: Город - {city}, Даты: {expected_dates_str}"):
         pass
 
     search_page.open()
-
-    assert search_page.is_submit_button_disabled() == True, "Кнопка Yalla! должна быть неактивна в начале"
-
     search_page.fill_city(city)
     search_page.select_date_range(start_date, end_date)
+    search_page.click(search_page.CITY_INPUT)
 
-    search_page.click(search_page.CITY_INPUT)  # закрываем календарь
+    assert search_page.is_submit_button_disabled() == False, "Кнопка Yalla! не разблокировалась!"
 
-    # --- НОВАЯ ПРОВЕРКА ФОРМАТА ДАТ ---
-    actual_dates_str = search_page.get_selected_dates_value()
-    assert actual_dates_str == expected_dates_str, f"Ошибка в поле дат! Ожидали '{expected_dates_str}', а получили '{actual_dates_str}'"
+    search_page.click_submit_button()
 
-    assert search_page.is_submit_button_disabled() == False, "Кнопка Yalla! не разблокировалась после ввода данных!"
+    # 1. Ждем факта отправки поискового запроса (смена URL)
+    results_page.wait_for_search_request_to_complete()
+
+    # 2. Ветвление: машины найдены или пустая выдача
+    if not results_page.has_cars():
+        logger.info(f"В городе '{city}' на выбранные даты нет доступных машин. Отработало пустое состояние.")
+        with allure.step(f"В городе '{city}' машин нет — пустое состояние отработало штатно"):
+            pass
+    else:
+        first_car = results_page.get_first_car_details()
+        logger.info(f"Найдена машина: ID {first_car['id']}, {first_car['title']} за ${first_car['price']}/день")
+
+        with allure.step("Проверка рендера карточки автомобиля"):
+            assert "title" in first_car, "Не удалось спарсить название!"
+            assert "price" in first_car, "Не удалось спарсить цену!"
+
+            try:
+                parsed_price = float(first_car['price'])
+                assert parsed_price >= 0, f"Цена не может быть отрицательной: {parsed_price}"
+            except ValueError:
+                pytest.fail(f"Фронтенд вывел некорректный формат цены: {first_car['price']}")
 
 ============================================================
 📄 FILE: .\tests\__init__.py

@@ -74,6 +74,10 @@ class SearchPage(BasePage):
             message=f"Месяц так и не изменился после клика! Ожидали, что он перестанет быть '{old_month}'"
         )
 
+    @allure.step("Клик по кнопке Y'alla! (Submit)")
+    def click_submit_button(self):
+        self.click(self.SUBMIT_BTN)
+
 
     # --- ПРОВЕРКИ ---:
     def is_submit_button_disabled(self):
