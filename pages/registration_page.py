@@ -1,3 +1,4 @@
+import allure
 from selenium.webdriver.common.by import By
 from pages.base_page import BasePage
 
@@ -44,12 +45,12 @@ class RegistrationPage(BasePage):
     def submit_registration(self):
         self.click(self.YALLA_BTN)
 
-    def check_policy(self):
-        self.click(self.CHECK_BOX)
-
-    def click_empty_space(self):
-        # Кликаем по заголовку страницы (h1), чтобы снять фокус с чекбокса
-        self.click((By.CSS_SELECTOR, "h1"))
+    @allure.step("Установка чекбокса 'Terms of use' в состояние: {state}")
+    def set_policy_checkbox(self, state: bool):
+        element = self.find(self.CHECK_BOX)
+        # Если текущее состояние не совпадает с тем, что нам нужно — кликаем
+        if element.is_selected() != state:
+            self.click(self.CHECK_BOX)
 
     def fill_registration_form(self, user):
         self.fill_name(user.name)

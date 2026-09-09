@@ -1,4 +1,5 @@
 import allure
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
@@ -82,3 +83,8 @@ class BasePage:
         except TimeoutException:
             logger.error(f"Элемент {locator} не исчез в течение {self.DEFAULT_TIMEOUT} сек.")
             return False
+
+    @allure.step("Снятие фокуса с элемента (клик по фону)")
+    def remove_focus(self):
+        logger.info("Кликаем по пустому месту (body) для снятия фокуса")
+        self.click((By.CSS_SELECTOR, "body"))

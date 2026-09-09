@@ -41,8 +41,6 @@ class LoginPage(BasePage):
         self.fill_password(password)
         self.submit_login()
 
-    def click_empty_space(self):
-        self.click(self.PAGE_TITLE)
 
     # --- ПРОВЕРКИ ---
     def is_submit_button_disabled(self):

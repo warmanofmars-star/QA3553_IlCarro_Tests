@@ -33,7 +33,7 @@ def test_login_invalid_email_format(driver):
     login_page.open()
 
     login_page.fill_email(INVALID_EMAIL_FORMAT)
-    login_page.click_empty_space()  # Кликаем мимо, чтобы вызвать ошибку
+    login_page.remove_focus()  # Кликаем мимо, чтобы вызвать ошибку
 
     assert login_page.is_error_wrong_email_visible() == True, "Текст 'Wrong email format' не появился"
     assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована"
@@ -49,7 +49,7 @@ def test_login_empty_password(driver):
 
     login_page.fill_email(VALID_EMAIL)
     login_page.fill_password("")  # Оставляем пароль пустым
-    login_page.click_empty_space()
+    login_page.remove_focus()
 
     assert login_page.is_error_required_field_visible() == True, "Текст 'Password is required' не появился"
     assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована"

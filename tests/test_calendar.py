@@ -23,10 +23,6 @@ def test_calendar_ui_and_close(driver):
 @allure.feature("Calendar Component")
 @allure.story("Negative Calendar UI - Past Dates Blocked")
 @allure.severity(allure.severity_level.CRITICAL)
-@allure.epic("UI Testing")
-@allure.feature("Calendar Component")
-@allure.story("Negative Calendar UI - Past Dates Blocked")
-@allure.severity(allure.severity_level.CRITICAL)
 def test_calendar_past_navigation_blocked(driver):
     search_page = SearchPage(driver)
     search_page.open()

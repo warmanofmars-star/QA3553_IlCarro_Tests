@@ -28,7 +28,7 @@ def test_registration_success(driver):
 
     registration_page.open_registration_form()
     registration_page.fill_registration_form(user)
-    registration_page.check_policy()
+    registration_page.set_policy_checkbox(True)
     registration_page.submit_registration()
 
     assert registration_page.confirmation_text() == "Registered", "Заголовок об успехе не появился!"
@@ -60,10 +60,10 @@ def test_registration_negative_fields(driver, field_name, invalid_value, expecte
 
     registration_page.open_registration_form()
     registration_page.fill_registration_form(user)
-    registration_page.check_policy()
+    registration_page.set_policy_checkbox(True)
 
     # Универсальный клик в пустоту для вызова onBlur валидации во всех сценариях
-    registration_page.click_empty_space()
+    registration_page.remove_focus()
 
     assert registration_page.error_message_text() == expected_error, f"Ожидалась ошибка '{expected_error}'"
     assert registration_page.submit_button_disabled() == True, "Кнопка Y'alla! не заблокировалась"
@@ -81,12 +81,12 @@ def test_registration_without_check_box(driver):
     registration_page.open_registration_form()
     registration_page.fill_registration_form(user)
 
-    # Двойной клик оставляет чекбокс пустым
-    registration_page.check_policy()
-    registration_page.check_policy()
+    # Имитируем сомнения: поставили галочку и сразу убрали, чтобы триггернуть валидацию
+    registration_page.set_policy_checkbox(True)
+    registration_page.set_policy_checkbox(False)
 
     # СНИМАЕМ ФОКУС: кликаем в пустоту
-    registration_page.click_empty_space()
+    registration_page.remove_focus()
 
     assert registration_page.error_message_text() == "You must accept the terms", "Ошибка чекбокса не появилась"
     assert registration_page.submit_button_disabled() == True, "Кнопка не заблокировалась без чекбокса"
