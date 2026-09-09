@@ -1,0 +1,6 @@
+INFO     IlCarro:base_page.py:23 Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+INFO     IlCarro:base_page.py:35 Кликаем по элементу: ('id', 'dates')
+INFO     IlCarro:base_page.py:50 Проверяем видимость элемента: ('css selector', '.daterange-popover')
+INFO     IlCarro:base_page.py:50 Проверяем видимость элемента: ('css selector', '.rdrDayToday')
+INFO     IlCarro:base_page.py:35 Кликаем по элементу: ('id', 'city')
+INFO     IlCarro:base_page.py:75 Проверяем исчезновение элемента: ('css selector', '.daterange-popover')

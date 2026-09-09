@@ -1,0 +1,12 @@
+INFO     IlCarro:base_page.py:23 Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+INFO     IlCarro:base_page.py:63 Проверяем блокировку элемента: ('css selector', "button[type='submit']")
+INFO     IlCarro:base_page.py:28 Ищем элемент: ('css selector', "button[type='submit']")
+INFO     IlCarro:base_page.py:43 Вводим текст 'Jerusalem' в поле: ('id', 'city')
+INFO     IlCarro:base_page.py:28 Ищем элемент: ('id', 'city')
+INFO     IlCarro:base_page.py:35 Кликаем по элементу: ('id', 'dates')
+INFO     IlCarro:base_page.py:35 Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='11']]")
+INFO     IlCarro:base_page.py:35 Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='14']]")
+INFO     IlCarro:base_page.py:35 Кликаем по элементу: ('id', 'city')
+INFO     IlCarro:base_page.py:28 Ищем элемент: ('id', 'dates')
+INFO     IlCarro:base_page.py:63 Проверяем блокировку элемента: ('css selector', "button[type='submit']")
+INFO     IlCarro:base_page.py:28 Ищем элемент: ('css selector', "button[type='submit']")

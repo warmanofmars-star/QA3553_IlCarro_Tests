@@ -1,0 +1,15 @@
+[94m13:08:52 - [2639] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/register[0m
+[94m13:08:52 - [2639] - INFO - Вводим текст 'Bryan' в поле: ('css selector', "[name='firstName']")[0m
+[94m13:08:52 - [2639] - INFO - Ищем элемент: ('css selector', "[name='firstName']")[0m
+[94m13:08:53 - [2639] - INFO - Вводим текст 'Guzman' в поле: ('css selector', "[name='lastName']")[0m
+[94m13:08:53 - [2639] - INFO - Ищем элемент: ('css selector', "[name='lastName']")[0m
+[94m13:08:53 - [2639] - INFO - Вводим текст 'laurencoffey@example.org' в поле: ('css selector', "[name='username']")[0m
+[94m13:08:53 - [2639] - INFO - Ищем элемент: ('css selector', "[name='username']")[0m
+[94m13:08:53 - [2639] - INFO - Вводим текст 'P123$' в поле: ('css selector', "[name='password']")[0m
+[94m13:08:53 - [2639] - INFO - Ищем элемент: ('css selector', "[name='password']")[0m
+[94m13:08:53 - [2639] - INFO - Кликаем по элементу: ('id', 'terms-of-use')[0m
+[94m13:08:53 - [2639] - INFO - Кликаем по элементу: ('css selector', 'h1')[0m
+[94m13:08:53 - [2639] - INFO - Получаем текст из элемента: ('class name', 'error')[0m
+[94m13:08:53 - [2639] - INFO - Ищем элемент: ('class name', 'error')[0m
+[94m13:08:53 - [2639] - INFO - Проверяем блокировку элемента: ('xpath', "//button[text()='Y’alla!']")[0m
+[94m13:08:53 - [2639] - INFO - Ищем элемент: ('xpath', "//button[text()='Y’alla!']")[0m

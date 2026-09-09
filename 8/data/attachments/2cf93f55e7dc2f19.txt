@@ -1,7 +1,0 @@
-[94m06:54:56 - [2643] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
-[94m06:54:56 - [2643] - INFO - Проверяем блокировку элемента: ('css selector', "button[type='submit']")[0m
-[94m06:54:56 - [2643] - INFO - Ищем элемент: ('css selector', "button[type='submit']")[0m
-[94m06:54:56 - [2643] - INFO - Вводим текст 'Haifa' в поле: ('id', 'city')[0m
-[94m06:54:56 - [2643] - INFO - Ищем элемент: ('id', 'city')[0m
-[94m06:54:57 - [2643] - INFO - Кликаем по элементу: ('id', 'dates')[0m
-[94m06:54:57 - [2643] - INFO - Проверяем видимость элемента: ('css selector', '.daterange-popover')[0m

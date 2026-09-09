@@ -1,0 +1,12 @@
+[94m13:08:56 - [2639] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
+[94m13:08:56 - [2639] - INFO - Проверяем блокировку элемента: ('css selector', "button[type='submit']")[0m
+[94m13:08:56 - [2639] - INFO - Ищем элемент: ('css selector', "button[type='submit']")[0m
+[94m13:08:56 - [2639] - INFO - Вводим текст 'Jerusalem' в поле: ('id', 'city')[0m
+[94m13:08:56 - [2639] - INFO - Ищем элемент: ('id', 'city')[0m
+[94m13:08:57 - [2639] - INFO - Кликаем по элементу: ('id', 'dates')[0m
+[94m13:08:57 - [2639] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='11']]")[0m
+[94m13:08:57 - [2639] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='14']]")[0m
+[94m13:08:57 - [2639] - INFO - Кликаем по элементу: ('id', 'city')[0m
+[94m13:08:57 - [2639] - INFO - Ищем элемент: ('id', 'dates')[0m
+[94m13:08:57 - [2639] - INFO - Проверяем блокировку элемента: ('css selector', "button[type='submit']")[0m
+[94m13:08:57 - [2639] - INFO - Ищем элемент: ('css selector', "button[type='submit']")[0m
