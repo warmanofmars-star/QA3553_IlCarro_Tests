@@ -3,7 +3,6 @@ import string
 from datetime import datetime, timedelta
 from faker import Faker
 from models.user import User
-from models.car import Car
 from api.car_api import IlCarroAPI
 
 # Инициализируем Faker один раз
@@ -60,8 +59,11 @@ class SearchDataGenerator:
 
             if response.status_code == 200:
                 cities_data = response.json().get("cities", [])
-                # Парсим JSON и вытаскиваем только названия городов
-                real_cities = [city_obj.get("city") for city_obj in cities_data if city_obj.get("city")]
+                # Парсим JSON и вытаскиваем только названия городов, КРОМЕ проблемной Beer Sheva
+                real_cities = [
+                    city_obj.get("city") for city_obj in cities_data
+                    if city_obj.get("city") and city_obj.get("city") != "Beer Sheva"
+                ]
 
                 if real_cities:
                     return random.choice(real_cities)
