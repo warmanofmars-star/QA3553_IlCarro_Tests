@@ -1,9 +1,0 @@
-INFO     IlCarro:base_page.py:24 Переходим по ссылке: https://icarro-v1.netlify.app/login
-INFO     IlCarro:base_page.py:44 Вводим текст '123' в поле: ('css selector', "input[name='username']")
-INFO     IlCarro:base_page.py:29 Ищем элемент: ('css selector', "input[name='username']")
-INFO     IlCarro:base_page.py:89 Кликаем по пустому месту (body) для снятия фокуса
-INFO     IlCarro:base_page.py:36 Кликаем по элементу: ('css selector', 'body')
-INFO     IlCarro:base_page.py:70 Получаем текст из элемента: ('css selector', '.error')
-INFO     IlCarro:base_page.py:29 Ищем элемент: ('css selector', '.error')
-INFO     IlCarro:base_page.py:64 Проверяем блокировку элемента: ('css selector', "button[type='submit']")
-INFO     IlCarro:base_page.py:29 Ищем элемент: ('css selector', "button[type='submit']")

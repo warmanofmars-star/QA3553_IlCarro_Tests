@@ -1,0 +1,8 @@
+[94m16:19:19 - [2441] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
+[94m16:19:19 - [2441] - INFO - Вводим текст 'Tel Aviv' в поле: ('id', 'city')[0m
+[94m16:19:19 - [2441] - INFO - Ищем элемент: ('id', 'city')[0m
+[94m16:19:19 - [2441] - INFO - Кликаем по элементу: ('id', 'dates')[0m
+[94m16:19:19 - [2441] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='13']]")[0m
+[94m16:19:20 - [2441] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='15']]")[0m
+[94m16:19:20 - [2441] - INFO - Кликаем по элементу: ('id', 'city')[0m
+[94m16:19:20 - [2441] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m

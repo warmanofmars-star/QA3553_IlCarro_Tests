@@ -1,0 +1,11 @@
+[94m16:19:24 - [2441] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/login[0m
+[94m16:19:24 - [2441] - INFO - Вводим текст 'warman.of.mars@gmail.com' в поле: ('css selector', "input[name='username']")[0m
+[94m16:19:24 - [2441] - INFO - Ищем элемент: ('css selector', "input[name='username']")[0m
+[94m16:19:25 - [2441] - INFO - Вводим текст '********' в поле: ('css selector', "input[name='password']")[0m
+[94m16:19:25 - [2441] - INFO - Ищем элемент: ('css selector', "input[name='password']")[0m
+[94m16:19:25 - [2441] - INFO - Кликаем по пустому месту (body) для снятия фокуса[0m
+[94m16:19:25 - [2441] - INFO - Кликаем по элементу: ('css selector', 'body')[0m
+[94m16:19:25 - [2441] - INFO - Получаем текст из элемента: ('css selector', '.error')[0m
+[94m16:19:25 - [2441] - INFO - Ищем элемент: ('css selector', '.error')[0m
+[94m16:19:25 - [2441] - INFO - Проверяем блокировку элемента: ('css selector', "button[type='submit']")[0m
+[94m16:19:25 - [2441] - INFO - Ищем элемент: ('css selector', "button[type='submit']")[0m

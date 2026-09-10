@@ -1,8 +1,0 @@
-INFO     IlCarro:base_page.py:24 Переходим по ссылке: https://icarro-v1.netlify.app/login
-INFO     IlCarro:base_page.py:44 Вводим текст 'fake_user_12345@gmail.com' в поле: ('css selector', "input[name='username']")
-INFO     IlCarro:base_page.py:29 Ищем элемент: ('css selector', "input[name='username']")
-INFO     IlCarro:base_page.py:44 Вводим текст 'z2I8A@U!Hl3T2&@h' в поле: ('css selector', "input[name='password']")
-INFO     IlCarro:base_page.py:29 Ищем элемент: ('css selector', "input[name='password']")
-INFO     IlCarro:base_page.py:36 Кликаем по элементу: ('css selector', "button[type='submit']")
-INFO     IlCarro:base_page.py:70 Получаем текст из элемента: ('css selector', 'h3')
-INFO     IlCarro:base_page.py:29 Ищем элемент: ('css selector', 'h3')
