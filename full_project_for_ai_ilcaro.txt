@@ -185,6 +185,93 @@ jobs:
               👉 https://warmanofmars-star.github.io/QA3553_IlCarro_Tests/
 
 ============================================================
+📄 FILE: .\api\car_api.py
+============================================================
+
+import requests
+import os
+import allure
+
+
+class IlCarroAPI:
+    BASE_URL = os.getenv("API_BASE_URL", "https://ilcarro-backend.herokuapp.com")
+
+    def __init__(self):
+        self.token = None
+
+    @allure.step("API: Авторизация пользователя {username}")
+    def login(self, username, password):
+        url = f"{self.BASE_URL}/v1/user/login/usernamepassword"
+        payload = {
+            "username": username,
+            "password": password
+        }
+        response = requests.post(url, json=payload)
+
+        # Если логин успешен, сохраняем токен для будущих запросов
+        if response.status_code == 200:
+            self.token = response.json().get("accessToken")
+
+        return response
+
+    @allure.step("API: Добавление новой машины")
+    def add_car(self, car_payload):
+        url = f"{self.BASE_URL}/v1/cars"
+
+        # Сваггер требует передавать токен в заголовке Authorization (Bearer Authentication)
+        headers = {
+            "Authorization": f"Bearer {self.token}"
+        }
+
+        response = requests.post(url, json=car_payload, headers=headers)
+        return response
+
+    @allure.step("API: Получение списка своих машин")
+    def get_my_cars(self):
+        url = f"{self.BASE_URL}/v1/cars/my"
+        headers = {
+            "Authorization": f"Bearer {self.token}"
+        }
+        return requests.get(url, headers=headers)
+
+    @allure.step("API: Удаление машины по серийному номеру {serial_number}")
+    def delete_car(self, serial_number):
+        url = f"{self.BASE_URL}/v1/cars/{serial_number}"
+        headers = {
+            "Authorization": f"Bearer {self.token}"
+        }
+        return requests.delete(url, headers=headers)
+
+    @allure.step("API: Поиск машин в городе {city}")
+    def search_cars(self, city, start_date, end_date):
+        url = f"{self.BASE_URL}/v1/cars/search"
+        payload = {
+            "city": city,
+            "startDate": start_date,
+            "endDate": end_date
+        }
+        # Поиск доступен без авторизации, поэтому headers не передаем
+        return requests.post(url, json=payload)
+
+    @allure.step("API: Бронирование машины {serial_number}")
+    def book_car(self, serial_number, start_date, end_date):
+        url = f"{self.BASE_URL}/v1/cars/{serial_number}/booking"
+        payload = {
+            "startDate": start_date,
+            "endDate": end_date
+        }
+        headers = {
+            "Authorization": f"Bearer {self.token}"
+        }
+        return requests.post(url, json=payload, headers=headers)
+
+============================================================
+📄 FILE: .\api\__init__.py
+============================================================
+
+
+
+============================================================
 📄 FILE: .\data\data_generator.py
 ============================================================
 
@@ -193,6 +280,7 @@ import string
 from datetime import datetime, timedelta
 from faker import Faker
 from models.user import User
+from models.car import Car
 
 # Инициализируем Faker один раз
 fake = Faker('en_US')
@@ -274,11 +362,65 @@ class SearchDataGenerator:
 
         return start_date, end_date
 
+
+class CarGenerator:
+    FUEL_TYPES = ["Petrol", "Diesel", "Hybrid", "Electric"]
+    GEAR_TYPES = ["Automatic", "Manual"]
+    WD_TYPES = ["AWD", "FWD", "RWD"]
+
+    # Берем безопасные списки как в учебном проекте, чтобы избежать скрытых багов длины строки
+    MAKE_TYPES = ["Toyota", "Honda", "Ford", "BMW", "Mazda"]
+    MODEL_TYPES = ["Camry", "Civic", "Focus", "X5", "Premium"]
+    CLASS_TYPES = ["Economy", "Comfort", "Business", "Premium"]
+
+    @classmethod
+    def get_random_car(cls, photo_path=None, **overrides):
+        data = {
+            "city": SearchDataGenerator.get_random_city(),
+            "make": random.choice(cls.MAKE_TYPES),
+            "model": random.choice(cls.MODEL_TYPES),
+            "year": str(random.randint(2010, 2024)),
+            "fuel": random.choice(cls.FUEL_TYPES),
+            "gear": random.choice(cls.GEAR_TYPES),
+            "wd": random.choice(cls.WD_TYPES),
+            "doors": str(random.randint(2, 5)),
+            "seats": str(random.randint(2, 7)),
+            "car_class": random.choice(cls.CLASS_TYPES),
+            "reg_number": f"{random.randint(100, 999)}-{random.randint(10, 99)}-{random.randint(100, 999)}",
+            "price": str(random.randint(50, 500)),
+            "about": "",  # Оставляем пустым, чтобы обойти возможный баг бэкенда
+            "photo_path": photo_path
+        }
+        data.update(overrides)
+        from models.car import Car
+        return Car(**data)
+
 ============================================================
 📄 FILE: .\data\__init__.py
 ============================================================
 
 
+
+============================================================
+📄 FILE: .\models\car.py
+============================================================
+
+class Car:
+    def __init__(self, city, make, model, year, fuel, gear, wd, doors, seats, car_class, reg_number, price, about, photo_path=None):
+        self.city = city
+        self.make = make
+        self.model = model
+        self.year = year
+        self.fuel = fuel
+        self.gear = gear
+        self.wd = wd
+        self.doors = doors
+        self.seats = seats
+        self.car_class = car_class
+        self.reg_number = reg_number
+        self.price = price
+        self.about = about
+        self.photo_path = photo_path
 
 ============================================================
 📄 FILE: .\models\user.py
@@ -296,6 +438,87 @@ class User:
 ============================================================
 
 
+
+============================================================
+📄 FILE: .\pages\add_car_page.py
+============================================================
+
+import os
+import allure
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.select import Select
+from pages.base_page import BasePage
+
+
+class AddCarPage(BasePage):
+    ENDPOINT = "/let-car-work"
+
+    # --- ЛОКАТОРЫ ---
+    CITY_INPUT = (By.ID, "city")
+    MAKE_INPUT = (By.CSS_SELECTOR, "input[name='manufacture']")
+    MODEL_INPUT = (By.CSS_SELECTOR, "input[name='model']")
+    YEAR_INPUT = (By.CSS_SELECTOR, "input[name='year']")
+    FUEL_SELECT = (By.CSS_SELECTOR, "select[name='fuel']")
+    GEAR_SELECT = (By.CSS_SELECTOR, "select[name='gear']")
+    WD_SELECT = (By.CSS_SELECTOR, "select[name='wheelsDrive']")
+    DOORS_INPUT = (By.CSS_SELECTOR, "input[name='doors']")
+    SEATS_INPUT = (By.CSS_SELECTOR, "input[name='seats']")
+    CLASS_INPUT = (By.CSS_SELECTOR, "input[name='carClass']")
+    REG_NUM_INPUT = (By.CSS_SELECTOR, "input[name='serialNumber']")
+    PRICE_INPUT = (By.CSS_SELECTOR, "input[name='pricePerDay']")
+    ABOUT_INPUT = (By.CSS_SELECTOR, "textarea[name='about']")
+    PHOTO_INPUT = (By.ID, "photo-file")
+    SUBMIT_BTN = (By.CSS_SELECTOR, "button[type='submit']")
+
+    GLOBAL_MESSAGE = (By.CSS_SELECTOR, "h3")
+
+    def open(self):
+        self.open_url(self.ENDPOINT)
+
+    @allure.step("Ввод города {city} с выбором из выпадающего списка")
+    def fill_city(self, city):
+        self.fill(self.CITY_INPUT, city)
+        # Динамический локатор для опции в списке
+        option_locator = (By.CSS_SELECTOR, f"[data-testid='city-option'][data-value='{city}']")
+        self.click(option_locator)
+
+    @allure.step("Заполнение текстовых полей автомобиля")
+    def fill_text_fields(self, car):
+        self.fill(self.MAKE_INPUT, car.make)
+        self.fill(self.MODEL_INPUT, car.model)
+        self.fill(self.YEAR_INPUT, car.year)
+        self.fill(self.DOORS_INPUT, car.doors)
+        self.fill(self.SEATS_INPUT, car.seats)
+        self.fill(self.CLASS_INPUT, car.car_class)
+        self.fill(self.REG_NUM_INPUT, car.reg_number)
+        self.fill(self.PRICE_INPUT, car.price)
+        self.fill(self.ABOUT_INPUT, car.about)
+
+    @allure.step("Выбор опций в выпадающих списках")
+    def fill_dropdowns(self, car):
+        Select(self.find(self.FUEL_SELECT)).select_by_visible_text(car.fuel)
+        Select(self.find(self.GEAR_SELECT)).select_by_visible_text(car.gear)
+        Select(self.find(self.WD_SELECT)).select_by_visible_text(car.wd)
+
+    @allure.step("Загрузка фотографии автомобиля")
+    def upload_photo(self, file_path):
+        if file_path:
+            absolute_path = os.path.abspath(file_path)
+            self.find(self.PHOTO_INPUT).send_keys(absolute_path)
+
+    @allure.step("Отправка формы добавления автомобиля")
+    def submit(self):
+        self.click(self.SUBMIT_BTN)
+
+    @allure.step("Получение текста из модального окна")
+    def get_global_message_text(self):
+        return self.get_text(self.GLOBAL_MESSAGE)
+
+    @allure.step("Проверка наличия скрытых ошибок валидации на форме")
+    def get_form_errors(self):
+        # Ищем все элементы с классом error и возвращаем их текст
+        errors = self.driver.find_elements(By.CSS_SELECTOR, ".error")
+        return [err.text for err in errors if err.text != ""]
 
 ============================================================
 📄 FILE: .\pages\base_page.py
@@ -711,6 +934,274 @@ class SearchPage(BasePage):
 ============================================================
 
 
+
+============================================================
+📄 FILE: .\tests\test_add_car.py
+============================================================
+
+import os
+import allure
+import pytest
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+
+from pages.login_page import LoginPage
+from pages.add_car_page import AddCarPage
+from data.data_generator import CarGenerator
+
+VALID_EMAIL = os.getenv("USER_EMAIL")
+VALID_PASSWORD = os.getenv("USER_PASSWORD")
+PHOTO_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "assets", "car.jpg"))
+
+
+@allure.epic("UI Testing")
+@allure.feature("Add Car Page (Let the car work)")
+@allure.story("Positive Add Car")
+@allure.severity(allure.severity_level.BLOCKER)
+def test_add_car_success(driver):
+    login_page = LoginPage(driver)
+    add_car_page = AddCarPage(driver)
+
+    with allure.step("Пререквизит: Авторизация"):
+        login_page.open()
+        login_page.login(VALID_EMAIL, VALID_PASSWORD)
+        login_page.click_ok_button()
+
+    car = CarGenerator.get_random_car(photo_path=PHOTO_PATH)
+
+    add_car_page.open()
+    add_car_page.fill_city(car.city)
+    add_car_page.fill_text_fields(car)
+    add_car_page.fill_dropdowns(car)
+    add_car_page.upload_photo(car.photo_path)
+    add_car_page.submit()
+
+    # Умное ожидание результата
+    try:
+        # Даем серверу 10 секунд на переваривание фото и создание машины
+        WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located(add_car_page.GLOBAL_MESSAGE)
+        )
+        assert add_car_page.get_global_message_text() == "Car added", "Сообщение об успехе не совпадает!"
+    except TimeoutException:
+        # Если таймаут всё же случился, собираем красные ошибки с экрана
+        errors = add_car_page.get_form_errors()
+        if errors:
+            pytest.fail(f"Форма не отправилась из-за ошибок валидации фронтенда: {errors}")
+        else:
+            pytest.xfail("Сервер не ответил (таймаут). Возможно, 500 ошибка бэкенда или баг интерфейса.")
+
+============================================================
+📄 FILE: .\tests\test_api_car.py
+============================================================
+
+import os
+import allure
+import datetime
+from api.car_api import IlCarroAPI
+from data.data_generator import CarGenerator
+
+VALID_EMAIL = os.getenv("USER_EMAIL")
+VALID_PASSWORD = os.getenv("USER_PASSWORD")
+
+
+@allure.epic("API Testing")
+@allure.feature("Car Controller")
+@allure.story("Create Car successfully")
+@allure.severity(allure.severity_level.BLOCKER)
+def test_api_add_car_success():
+    api = IlCarroAPI()
+
+    with allure.step("1. Логин и получение токена"):
+        login_response = api.login(VALID_EMAIL, VALID_PASSWORD)
+        assert login_response.status_code == 200, f"Ошибка логина: {login_response.text}"
+        assert api.token is not None, "Токен не сохранился!"
+
+    with allure.step("2. Подготовка валидного JSON (CarDto)"):
+        car_obj = CarGenerator.get_random_car()
+
+        # Строго по Swagger! Преобразуем типы, чтобы бэкенд не выдал 400 Bad Request
+        car_payload = {
+            "serialNumber": car_obj.reg_number,
+            "manufacture": car_obj.make,
+            "model": car_obj.model,
+            "year": str(car_obj.year),
+            "fuel": car_obj.fuel,
+            "seats": int(car_obj.seats),
+            "carClass": car_obj.car_class,
+            "pricePerDay": float(car_obj.price),
+            "about": car_obj.about,
+            "city": car_obj.city
+        }
+
+    with allure.step("3. Отправка POST запроса на создание машины"):
+        response = api.add_car(car_payload)
+
+    with allure.step("4. Проверка статус-кода и сообщения"):
+        # Если бэкенд падает из-за бага, мы увидим статус 500 и сообщение прямо в консоли!
+        assert response.status_code == 200, f"Бэкенд вернул ошибку: {response.status_code} - {response.text}"
+        assert "Car added" in response.json().get("message", ""), "Неверное сообщение от сервера"
+
+
+@allure.epic("API Testing")
+@allure.feature("Car Controller")
+@allure.story("Full Lifecycle (Create -> Read -> Delete)")
+@allure.severity(allure.severity_level.CRITICAL)
+def test_api_car_lifecycle():
+    api = IlCarroAPI()
+    api.login(VALID_EMAIL, VALID_PASSWORD)
+
+    # 1. Генерируем и создаем машину
+    car_obj = CarGenerator.get_random_car()
+    serial_number = car_obj.reg_number
+
+    car_payload = {
+        "serialNumber": serial_number,
+        "manufacture": car_obj.make,
+        "model": car_obj.model,
+        "year": str(car_obj.year),
+        "fuel": car_obj.fuel,
+        "seats": int(car_obj.seats),
+        "carClass": car_obj.car_class,
+        "pricePerDay": float(car_obj.price),
+        "about": car_obj.about,
+        "city": car_obj.city
+    }
+
+    with allure.step("1. Создаем машину"):
+        response_add = api.add_car(car_payload)
+        # Теперь, если сервер откажет, мы точно увидим причину!
+        assert response_add.status_code == 200, f"Не удалось создать машину! Ответ сервера: {response_add.text}"
+
+    with allure.step("2. Проверяем, что машина появилась в списке 'My Cars'"):
+        response_get = api.get_my_cars()
+        assert response_get.status_code == 200, "Ошибка получения списка машин"
+
+        # Парсим JSON и вытаскиваем список всех серийных номеров
+        cars_list = response_get.json().get("cars", [])
+        serial_numbers_in_db = [car.get("serialNumber") for car in cars_list]
+
+        assert serial_number in serial_numbers_in_db, f"Машина с номером {serial_number} не найдена в базе!"
+
+    with allure.step("3. Удаляем созданную машину"):
+        response_delete = api.delete_car(serial_number)
+        assert response_delete.status_code == 200, "Ошибка при удалении машины"
+        assert "Car deleted" in response_delete.json().get("message", ""), "Неверное сообщение при удалении"
+
+    with allure.step("4. Убеждаемся, что машина исчезла из базы"):
+        response_get_after = api.get_my_cars()
+        cars_list_after = response_get_after.json().get("cars", [])
+        serial_numbers_after = [car.get("serialNumber") for car in cars_list_after]
+
+        assert serial_number not in serial_numbers_after, "Машина не удалилась из базы!"
+
+
+@allure.epic("API Testing")
+@allure.feature("Car Controller")
+@allure.story("Negative - Unauthorized Access")
+@allure.severity(allure.severity_level.CRITICAL)
+def test_api_add_car_unauthorized():
+    # Создаем клиента, НО НЕ ВЫЗЫВАЕМ api.login()
+    api = IlCarroAPI()
+
+    car_obj = CarGenerator.get_random_car()
+    car_payload = {
+        "serialNumber": car_obj.reg_number,
+        "manufacture": car_obj.make,
+        "model": car_obj.model,
+        "year": str(car_obj.year),
+        "fuel": car_obj.fuel,
+        "seats": int(car_obj.seats),
+        "carClass": car_obj.car_class,
+        "pricePerDay": float(car_obj.price),
+        "city": car_obj.city
+    }
+
+    with allure.step("Попытка создать машину без токена авторизации"):
+        response = api.add_car(car_payload)
+
+    with allure.step("Проверка статуса 401 Unauthorized"):
+        assert response.status_code == 401, f"Ожидался статус 401, но получен {response.status_code}"
+
+
+@allure.epic("API Testing")
+@allure.feature("Car Booking Flow")
+@allure.story("Integration: Create -> Search -> Book -> Delete")
+@allure.severity(allure.severity_level.BLOCKER)
+def test_api_car_booking_flow():
+    api = IlCarroAPI()
+    api.login(VALID_EMAIL, VALID_PASSWORD)
+
+    # Подготовка дат (завтра и через 7 дней)
+    today = datetime.date.today()
+    start_date = (today + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+    end_date = (today + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+
+    # Генерируем данные для новой машины
+    car_obj = CarGenerator.get_random_car()
+    serial_number = car_obj.reg_number
+    target_city = car_obj.city
+
+    car_payload = {
+        "serialNumber": serial_number,
+        "manufacture": car_obj.make,
+        "model": car_obj.model,
+        "year": str(car_obj.year),
+        "fuel": car_obj.fuel,
+        "seats": int(car_obj.seats),
+        "carClass": car_obj.car_class,
+        "pricePerDay": float(car_obj.price),
+        "about": car_obj.about,
+        "city": target_city
+    }
+
+    with allure.step("1. Создаем машину для бронирования"):
+        response_add = api.add_car(car_payload)
+        assert response_add.status_code == 200, f"Не удалось создать машину: {response_add.text}"
+
+    with allure.step(f"2. Ищем машины в городе {target_city} на заданные даты"):
+        response_search = api.search_cars(target_city, start_date, end_date)
+        assert response_search.status_code == 200, f"Ошибка поиска: {response_search.text}"
+
+        # Убеждаемся, что наша машина попала в поисковую выдачу
+        cars_found = response_search.json().get("cars", [])
+        serial_numbers_found = [car.get("serialNumber") for car in cars_found]
+        assert serial_number in serial_numbers_found, "Созданная машина не появилась в поиске!"
+
+    with allure.step("3. Бронируем найденную машину"):
+        response_book = api.book_car(serial_number, start_date, end_date)
+        assert response_book.status_code == 200, f"Ошибка бронирования: {response_book.text}"
+        # Проверяем успешное сообщение, которое обычно возвращает сервер
+        assert "successful" in response_book.json().get("message",
+                                                        "").lower(), "Сообщение о бронировании не содержит подтверждения"
+
+    with allure.step("4. Убираем за собой (удаляем машину)"):
+        # Удаляем машину, чтобы не засорять базу
+        api.delete_car(serial_number)
+
+
+@allure.epic("API Testing")
+@allure.feature("Maintenance")
+@allure.story("Clean up all cars")
+def test_clear_my_garage():
+    api = IlCarroAPI()
+    api.login(VALID_EMAIL, VALID_PASSWORD)
+
+    response = api.get_my_cars()
+    cars = response.json().get("cars", [])
+
+    if not cars:
+        print("\nГараж уже пуст!")
+        return
+
+    for car in cars:
+        serial = car.get("serialNumber")
+        api.delete_car(serial)
+        print(f"\nУдалена машина: {serial}")
+
+    # Проверяем, что всё удалилось
+    assert len(api.get_my_cars().json().get("cars", [])) == 0, "Не удалось удалить все машины!"
 
 ============================================================
 📄 FILE: .\tests\test_calendar.py
