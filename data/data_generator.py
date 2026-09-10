@@ -3,6 +3,7 @@ import string
 from datetime import datetime, timedelta
 from faker import Faker
 from models.user import User
+from models.car import Car
 
 # Инициализируем Faker один раз
 fake = Faker('en_US')
@@ -83,3 +84,36 @@ class SearchDataGenerator:
         end_date = start_date + timedelta(days=duration)
 
         return start_date, end_date
+
+
+class CarGenerator:
+    FUEL_TYPES = ["Petrol", "Diesel", "Hybrid", "Electric"]
+    GEAR_TYPES = ["Automatic", "Manual"]
+    WD_TYPES = ["AWD", "FWD", "RWD"]
+
+    # Берем безопасные списки как в учебном проекте, чтобы избежать скрытых багов длины строки
+    MAKE_TYPES = ["Toyota", "Honda", "Ford", "BMW", "Mazda"]
+    MODEL_TYPES = ["Camry", "Civic", "Focus", "X5", "Premium"]
+    CLASS_TYPES = ["Economy", "Comfort", "Business", "Premium"]
+
+    @classmethod
+    def get_random_car(cls, photo_path=None, **overrides):
+        data = {
+            "city": SearchDataGenerator.get_random_city(),
+            "make": random.choice(cls.MAKE_TYPES),
+            "model": random.choice(cls.MODEL_TYPES),
+            "year": str(random.randint(2010, 2024)),
+            "fuel": random.choice(cls.FUEL_TYPES),
+            "gear": random.choice(cls.GEAR_TYPES),
+            "wd": random.choice(cls.WD_TYPES),
+            "doors": str(random.randint(2, 5)),
+            "seats": str(random.randint(2, 7)),
+            "car_class": random.choice(cls.CLASS_TYPES),
+            "reg_number": f"{random.randint(100, 999)}-{random.randint(10, 99)}-{random.randint(100, 999)}",
+            "price": str(random.randint(50, 500)),
+            "about": "",  # Оставляем пустым, чтобы обойти возможный баг бэкенда
+            "photo_path": photo_path
+        }
+        data.update(overrides)
+        from models.car import Car
+        return Car(**data)
