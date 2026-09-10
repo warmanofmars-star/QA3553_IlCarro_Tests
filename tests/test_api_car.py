@@ -1,6 +1,9 @@
 import os
 import allure
 import datetime
+
+import pytest
+
 from api.car_api import IlCarroAPI
 from data.data_generator import CarGenerator
 
@@ -204,3 +207,31 @@ def test_clear_my_garage():
 
     # Проверяем, что всё удалилось
     assert len(api.get_my_cars().json().get("cars", [])) == 0, "Не удалось удалить все машины!"
+
+
+@allure.epic("API Testing")
+@allure.feature("Car Controller")
+@allure.story("Bug #404: Unsupported city Beersheba")
+@pytest.mark.xfail(reason="Бэкенд отклоняет город Beersheba, хотя он есть на UI")
+def test_api_add_car_beersheba_bug():
+    api = IlCarroAPI()
+    api.login(VALID_EMAIL, VALID_PASSWORD)
+
+    # Жестко задаем проблемный город
+    car_obj = CarGenerator.get_random_car(city="Beersheba")
+    car_payload = {
+        "serialNumber": car_obj.reg_number,
+        "manufacture": car_obj.make,
+        "model": car_obj.model,
+        "year": str(car_obj.year),
+        "fuel": car_obj.fuel,
+        "seats": int(car_obj.seats),
+        "carClass": car_obj.car_class,
+        "pricePerDay": float(car_obj.price),
+        "about": car_obj.about,
+        "city": car_obj.city
+    }
+
+    response = api.add_car(car_payload)
+    # Ожидаем, что когда баг починят, сервер вернет 200
+    assert response.status_code == 200, f"Баг всё еще актуален: {response.text}"
