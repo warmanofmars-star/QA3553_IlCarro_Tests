@@ -53,3 +53,32 @@ def test_search_form_dynamic(driver):
                 assert parsed_price >= 0, f"Цена не может быть отрицательной: {parsed_price}"
             except ValueError:
                 pytest.fail(f"Фронтенд вывел некорректный формат цены: {first_car['price']}")
+
+
+@allure.epic("UI Testing")
+@allure.feature("Search Page")
+@allure.story("Negative Search - Empty City Validation")
+@allure.severity(allure.severity_level.NORMAL)
+def test_search_empty_city_validation(driver):
+    search_page = SearchPage(driver)
+    search_page.open()
+
+    with allure.step("Кликаем в поле City и снимаем фокус для вызова валидации"):
+        search_page.click(search_page.CITY_INPUT)
+        search_page.remove_focus()  # Тот самый универсальный клик по body из BasePage!
+
+    # Проверяем, что фронтенд отреагировал на пустое поле
+    assert search_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована при пустом городе"
+
+
+@allure.epic("UI Testing")
+@allure.feature("Search Page")
+@allure.story("Negative Search - Dates Manual Input Blocked")
+@allure.severity(allure.severity_level.NORMAL)
+def test_search_dates_readonly_protection(driver):
+    search_page = SearchPage(driver)
+    search_page.open()
+
+    with allure.step("Проверка защиты от дурака: поле дат не должно принимать ручной ввод текста"):
+        # Если поле readonly, пользователь не сможет вбить туда "Привет" вместо "12/12/2026"
+        assert search_page.is_dates_input_readonly() == True, "Критическая уязвимость UI: Поле дат доступно для ручного ввода текста!"

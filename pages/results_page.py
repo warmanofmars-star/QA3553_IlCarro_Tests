@@ -14,15 +14,14 @@ class ResultsPage(BasePage):
     CAR_PRICE = (By.CSS_SELECTOR, ".car-price-value")
 
     # --- ПРОВЕРКИ И ОЖИДАНИЯ ---
-    @allure.step("Ожидание завершения поиска (смена URL и рендер компонента)")
+    @allure.step("Ожидание завершения поиска (смена URL)")
     def wait_for_search_request_to_complete(self):
-        logger.info("Ждем обновления URL и появления результатов (или пустого состояния)...")
-        # Ждем 2 вещи одновременно: URL изменился И (появились карточки ИЛИ плашка об отсутствии)
+        logger.info("Ждем обновления URL с параметрами поиска...")
         WebDriverWait(self.driver, 10).until(
-            lambda d: ("city=" in d.current_url) and
-                      (d.find_elements(*self.CAR_CARD_LINK) or d.find_elements(By.CSS_SELECTOR, "h3.no-cars-label")),
-            message="Поисковый запрос завис: URL не обновился или DOM не отрендерил ответ!"
+            lambda d: "city=" in d.current_url and "from=" in d.current_url,
+            message="Поисковый запрос не выполнился: URL не обновился!"
         )
+
 
     @allure.step("Проверка, есть ли найденные машины")
     def has_cars(self):

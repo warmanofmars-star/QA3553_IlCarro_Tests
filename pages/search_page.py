@@ -99,3 +99,8 @@ class SearchPage(BasePage):
         element = self.find(self.DATES_INPUT)
         return element.get_attribute("value")
 
+    @allure.step("Проверка, что ручный ввод в поле дат заблокирован (readonly)")
+    def is_dates_input_readonly(self):
+        element = self.find(self.DATES_INPUT)
+        # Если у инпута есть атрибут readonly, он вернет "true" или пустую строку, иначе None
+        return element.get_attribute("readonly") is not None

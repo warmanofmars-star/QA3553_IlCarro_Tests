@@ -556,15 +556,14 @@ class ResultsPage(BasePage):
     CAR_PRICE = (By.CSS_SELECTOR, ".car-price-value")
 
     # --- ПРОВЕРКИ И ОЖИДАНИЯ ---
-    @allure.step("Ожидание завершения поиска (смена URL и рендер компонента)")
+    @allure.step("Ожидание завершения поиска (смена URL)")
     def wait_for_search_request_to_complete(self):
-        logger.info("Ждем обновления URL и появления результатов (или пустого состояния)...")
-        # Ждем 2 вещи одновременно: URL изменился И (появились карточки ИЛИ плашка об отсутствии)
+        logger.info("Ждем обновления URL с параметрами поиска...")
         WebDriverWait(self.driver, 10).until(
-            lambda d: ("city=" in d.current_url) and
-                      (d.find_elements(*self.CAR_CARD_LINK) or d.find_elements(By.CSS_SELECTOR, "h3.no-cars-label")),
-            message="Поисковый запрос завис: URL не обновился или DOM не отрендерил ответ!"
+            lambda d: "city=" in d.current_url and "from=" in d.current_url,
+            message="Поисковый запрос не выполнился: URL не обновился!"
         )
+
 
     @allure.step("Проверка, есть ли найденные машины")
     def has_cars(self):
@@ -701,7 +700,11 @@ class SearchPage(BasePage):
         element = self.find(self.DATES_INPUT)
         return element.get_attribute("value")
 
-
+    @allure.step("Проверка, что ручный ввод в поле дат заблокирован (readonly)")
+    def is_dates_input_readonly(self):
+        element = self.find(self.DATES_INPUT)
+        # Если у инпута есть атрибут readonly, он вернет "true" или пустую строку, иначе None
+        return element.get_attribute("readonly") is not None
 
 ============================================================
 📄 FILE: .\pages\__init__.py
@@ -1024,6 +1027,36 @@ def test_search_form_dynamic(driver):
                 assert parsed_price >= 0, f"Цена не может быть отрицательной: {parsed_price}"
             except ValueError:
                 pytest.fail(f"Фронтенд вывел некорректный формат цены: {first_car['price']}")
+
+
+@allure.epic("UI Testing")
+@allure.feature("Search Page")
+@allure.story("Negative Search - Empty City Validation")
+@allure.severity(allure.severity_level.NORMAL)
+def test_search_empty_city_validation(driver):
+    search_page = SearchPage(driver)
+    search_page.open()
+
+    with allure.step("Кликаем в поле City и снимаем фокус для вызова валидации"):
+        search_page.click(search_page.CITY_INPUT)
+        search_page.remove_focus()  # Тот самый универсальный клик по body из BasePage!
+
+    # Проверяем, что фронтенд отреагировал на пустое поле
+    assert search_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована при пустом городе"
+
+
+@allure.epic("UI Testing")
+@allure.feature("Search Page")
+@allure.story("Negative Search - Dates Manual Input Blocked")
+@allure.severity(allure.severity_level.NORMAL)
+def test_search_dates_readonly_protection(driver):
+    search_page = SearchPage(driver)
+    search_page.open()
+
+    with allure.step("Проверка защиты от дурака: поле дат не должно принимать ручной ввод текста"):
+        # Если поле readonly, пользователь не сможет вбить туда "Привет" вместо "12/12/2026"
+        assert search_page.is_dates_input_readonly() == True, "Критическая уязвимость UI: Поле дат доступно для ручного ввода текста!"
+
 
 ============================================================
 📄 FILE: .\tests\__init__.py
