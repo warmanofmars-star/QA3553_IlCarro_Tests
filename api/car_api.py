@@ -74,3 +74,8 @@ class IlCarroAPI:
             "Authorization": f"Bearer {self.token}"
         }
         return requests.post(url, json=payload, headers=headers)
+
+    @allure.step("API: Получение списка доступных городов")
+    def get_cities(self):
+        url = f"{self.BASE_URL}/v1/cars/cities"
+        return requests.get(url)

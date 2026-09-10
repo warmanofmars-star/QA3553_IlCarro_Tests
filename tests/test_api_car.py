@@ -211,8 +211,8 @@ def test_clear_my_garage():
 
 @allure.epic("API Testing")
 @allure.feature("Car Controller")
-@allure.story("Bug #404: Unsupported city Beersheba")
-@pytest.mark.xfail(reason="Бэкенд отклоняет город Beersheba, хотя он есть на UI")
+@allure.story("Bug #404: Spelling mismatch for Beer Sheva")
+@pytest.mark.xfail(reason="Баг интеграции: UI отправляет 'Beersheba', а бэкенд ждет 'Beer Sheva'")
 def test_api_add_car_beersheba_bug():
     api = IlCarroAPI()
     api.login(VALID_EMAIL, VALID_PASSWORD)
