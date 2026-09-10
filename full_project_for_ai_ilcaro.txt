@@ -565,12 +565,16 @@ class BasePage:
         )
         element.click()
 
-    @allure.step("Ввод текста '{value}' в поле: {locator}")
-    def fill(self, locator, value):
-        logger.info(f"Вводим текст '{value}' в поле: {locator}")
-        element = self.find(locator)
-        element.clear()
-        element.send_keys(value)
+
+    def fill(self, locator, value, is_secret=False):
+        # Если флаг is_secret=True, заменяем текст на звездочки для логов
+        display_value = "********" if is_secret else value
+
+        with allure.step(f"Ввод текста '{display_value}' в поле: {locator}"):
+            logger.info(f"Вводим текст '{display_value}' в поле: {locator}")
+            element = self.find(locator)
+            element.clear()
+            element.send_keys(value)  # А вот в сам браузер отправляем реальный пароль!
 
     @allure.step("Проверка видимости элемента: {locator}")
     def is_element_visible(self, locator):
@@ -648,7 +652,7 @@ class LoginPage(BasePage):
         self.fill(self.EMAIL_INPUT, email)
 
     def fill_password(self, password):
-        self.fill(self.PASSWORD_INPUT, password)
+        self.fill(self.PASSWORD_INPUT, password, is_secret=True) # Добавили флаг
 
     def submit_login(self):
         self.click(self.SUBMIT_BTN)
@@ -726,7 +730,7 @@ class RegistrationPage(BasePage):
         self.fill(self.EMAIL_INPUT, email)
 
     def fill_password(self, password):
-        self.fill(self.PASSWORD_INPUT, password)
+        self.fill(self.PASSWORD_INPUT, password, is_secret=True) # Добавили флаг
 
     def submit_registration(self):
         self.click(self.YALLA_BTN)

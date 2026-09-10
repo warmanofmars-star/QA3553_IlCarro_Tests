@@ -39,12 +39,16 @@ class BasePage:
         )
         element.click()
 
-    @allure.step("Ввод текста '{value}' в поле: {locator}")
-    def fill(self, locator, value):
-        logger.info(f"Вводим текст '{value}' в поле: {locator}")
-        element = self.find(locator)
-        element.clear()
-        element.send_keys(value)
+
+    def fill(self, locator, value, is_secret=False):
+        # Если флаг is_secret=True, заменяем текст на звездочки для логов
+        display_value = "********" if is_secret else value
+
+        with allure.step(f"Ввод текста '{display_value}' в поле: {locator}"):
+            logger.info(f"Вводим текст '{display_value}' в поле: {locator}")
+            element = self.find(locator)
+            element.clear()
+            element.send_keys(value)  # А вот в сам браузер отправляем реальный пароль!
 
     @allure.step("Проверка видимости элемента: {locator}")
     def is_element_visible(self, locator):

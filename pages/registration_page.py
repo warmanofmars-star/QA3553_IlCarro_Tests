@@ -44,7 +44,7 @@ class RegistrationPage(BasePage):
         self.fill(self.EMAIL_INPUT, email)
 
     def fill_password(self, password):
-        self.fill(self.PASSWORD_INPUT, password)
+        self.fill(self.PASSWORD_INPUT, password, is_secret=True) # Добавили флаг
 
     def submit_registration(self):
         self.click(self.YALLA_BTN)
