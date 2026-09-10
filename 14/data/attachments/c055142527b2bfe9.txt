@@ -1,0 +1,11 @@
+[94m17:23:05 - [2422] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/login[0m
+[94m17:23:07 - [2422] - INFO - Вводим текст 'warman.of.mars@gmail.com' в поле: ('css selector', "input[name='username']")[0m
+[94m17:23:07 - [2422] - INFO - Ищем элемент: ('css selector', "input[name='username']")[0m
+[94m17:23:08 - [2422] - INFO - Вводим текст '********' в поле: ('css selector', "input[name='password']")[0m
+[94m17:23:08 - [2422] - INFO - Ищем элемент: ('css selector', "input[name='password']")[0m
+[94m17:23:08 - [2422] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
+[94m17:23:08 - [2422] - INFO - Кликаем по элементу: ('xpath', "//*[contains(text(), 'OK')]")[0m
+[94m17:23:09 - [2422] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/let-car-work[0m
+[94m17:23:09 - [2422] - INFO - Вводим текст 'Beer Sheva' в поле: ('id', 'city')[0m
+[94m17:23:09 - [2422] - INFO - Ищем элемент: ('id', 'city')[0m
+[94m17:23:10 - [2422] - INFO - Кликаем по элементу: ('css selector', "[data-testid='city-option'][data-value='Beer Sheva']")[0m

@@ -1,6 +1,0 @@
-[94m16:19:09 - [2441] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
-[94m16:19:10 - [2441] - INFO - Кликаем по элементу: ('id', 'dates')[0m
-[94m16:19:10 - [2441] - INFO - Проверяем видимость элемента: ('css selector', '.daterange-popover')[0m
-[94m16:19:10 - [2441] - INFO - Проверяем видимость элемента: ('css selector', '.rdrDayToday')[0m
-[94m16:19:11 - [2441] - INFO - Кликаем по элементу: ('id', 'city')[0m
-[94m16:19:11 - [2441] - INFO - Проверяем исчезновение элемента: ('css selector', '.daterange-popover')[0m

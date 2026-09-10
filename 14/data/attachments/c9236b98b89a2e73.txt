@@ -1,0 +1,10 @@
+INFO     IlCarro:base_page.py:24 Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+INFO     IlCarro:base_page.py:48 Вводим текст 'Ashkelon' в поле: ('id', 'city')
+INFO     IlCarro:base_page.py:29 Ищем элемент: ('id', 'city')
+INFO     IlCarro:base_page.py:36 Кликаем по элементу: ('id', 'dates')
+INFO     IlCarro:base_page.py:36 Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='11']]")
+INFO     IlCarro:base_page.py:36 Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='14']]")
+INFO     IlCarro:base_page.py:36 Кликаем по элементу: ('id', 'city')
+INFO     IlCarro:base_page.py:68 Проверяем блокировку элемента: ('css selector', "button[type='submit']")
+INFO     IlCarro:base_page.py:29 Ищем элемент: ('css selector', "button[type='submit']")
+INFO     IlCarro:base_page.py:36 Кликаем по элементу: ('css selector', "button[type='submit']")
