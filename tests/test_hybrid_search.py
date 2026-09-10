@@ -1,26 +1,14 @@
-import os
 import allure
-import pytest
-
-from api.car_api import IlCarroAPI
 from data.data_generator import CarGenerator, SearchDataGenerator
 from pages.search_page import SearchPage
 from pages.results_page import ResultsPage
-
-VALID_EMAIL = os.getenv("USER_EMAIL")
-VALID_PASSWORD = os.getenv("USER_PASSWORD")
 
 
 @allure.epic("Hybrid Testing")
 @allure.feature("Search functionality")
 @allure.story("API Setup -> UI Search -> API Teardown")
 @allure.severity(allure.severity_level.BLOCKER)
-def test_hybrid_car_search(driver):
-    # Инициализируем API клиент и логинимся для получения токена
-    api = IlCarroAPI()
-    api.login(VALID_EMAIL, VALID_PASSWORD)
-
-    # --- ШАГ 1: API (Подготовка данных) ---
+def test_hybrid_car_search(driver, auth_api):
     with allure.step("API: Подготовка тестовых данных (создание машины)"):
         target_city = SearchDataGenerator.get_random_city()
         car_obj = CarGenerator.get_random_car(city=target_city)
@@ -39,8 +27,9 @@ def test_hybrid_car_search(driver):
             "city": car_obj.city
         }
 
-        response = api.add_car(car_payload)
-        assert response.status_code == 200, f"Ошибка пререквизита: API не смог создать машину. Ответ: {response.text}"
+        # ИСПОЛЬЗУЕМ ФИКСТУРУ ДЛЯ ЗАПРОСА ↓
+        response = auth_api.add_car(car_payload)
+        assert response.status_code == 200, f"Ошибка пререквизита: {response.text}"
 
     # Оборачиваем UI-логику в try..finally, чтобы машина удалилась даже если Селениум упадет
     try:
@@ -74,4 +63,4 @@ def test_hybrid_car_search(driver):
     finally:
         # --- ШАГ 4: API (Очистка базы данных) ---
         with allure.step(f"API (Teardown): Удаление тестовой машины {serial_number}"):
-            api.delete_car(serial_number)
+            auth_api.delete_car(serial_number)

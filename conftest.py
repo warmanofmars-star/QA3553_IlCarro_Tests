@@ -5,6 +5,7 @@ from selenium import webdriver
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from dotenv import load_dotenv
+from api.car_api import IlCarroAPI
 
 # Загружаем переменные из .env
 load_dotenv()
@@ -59,3 +60,19 @@ def pytest_runtest_makereport(item, call):
                 name=f"Скриншот ошибки: {test_name}",
                 attachment_type=allure.attachment_type.PNG
             )
+
+
+from api.car_api import IlCarroAPI
+
+
+@pytest.fixture
+def auth_api():
+    """Фикстура, которая автоматически создает API-клиента и логинится"""
+    api = IlCarroAPI()
+    email = os.getenv("USER_EMAIL")
+    password = os.getenv("USER_PASSWORD")
+
+    with allure.step("Setup Fixture: Автоматическая API-авторизация"):
+        api.login(email, password)
+
+    return api

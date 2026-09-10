@@ -1,12 +1,11 @@
-import logging
 import allure
 import pytest
-
 from pages.search_page import SearchPage
 from data.data_generator import SearchDataGenerator
 from pages.results_page import ResultsPage
+from utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger()
 
 @allure.epic("UI Testing")
 @allure.feature("Search Page")

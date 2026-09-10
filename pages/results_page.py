@@ -1,10 +1,10 @@
-import logging
 import allure
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from pages.base_page import BasePage
+from utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger()
 
 class ResultsPage(BasePage):
     # --- ЛОКАТОРЫ ---
