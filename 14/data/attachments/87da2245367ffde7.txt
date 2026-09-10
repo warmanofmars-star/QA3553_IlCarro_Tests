@@ -1,6 +1,0 @@
-[94m17:23:53 - [2422] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
-[94m17:23:53 - [2422] - INFO - Кликаем по элементу: ('id', 'city')[0m
-[94m17:23:54 - [2422] - INFO - Кликаем по пустому месту (body) для снятия фокуса[0m
-[94m17:23:54 - [2422] - INFO - Кликаем по элементу: ('css selector', 'body')[0m
-[94m17:23:54 - [2422] - INFO - Проверяем блокировку элемента: ('css selector', "button[type='submit']")[0m
-[94m17:23:54 - [2422] - INFO - Ищем элемент: ('css selector', "button[type='submit']")[0m
