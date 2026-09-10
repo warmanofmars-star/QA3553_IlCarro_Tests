@@ -1,0 +1,17 @@
+INFO     IlCarro:base_page.py:24 Переходим по ссылке: https://icarro-v1.netlify.app/register
+INFO     IlCarro:base_page.py:44 Вводим текст 'Jennifer' в поле: ('css selector', "[name='firstName']")
+INFO     IlCarro:base_page.py:29 Ищем элемент: ('css selector', "[name='firstName']")
+INFO     IlCarro:base_page.py:44 Вводим текст '' в поле: ('css selector', "[name='lastName']")
+INFO     IlCarro:base_page.py:29 Ищем элемент: ('css selector', "[name='lastName']")
+INFO     IlCarro:base_page.py:44 Вводим текст 'joelwu@example.org' в поле: ('css selector', "[name='username']")
+INFO     IlCarro:base_page.py:29 Ищем элемент: ('css selector', "[name='username']")
+INFO     IlCarro:base_page.py:44 Вводим текст 'YWhxJ07^u' в поле: ('css selector', "[name='password']")
+INFO     IlCarro:base_page.py:29 Ищем элемент: ('css selector', "[name='password']")
+INFO     IlCarro:base_page.py:29 Ищем элемент: ('id', 'terms-of-use')
+INFO     IlCarro:base_page.py:36 Кликаем по элементу: ('id', 'terms-of-use')
+INFO     IlCarro:base_page.py:89 Кликаем по пустому месту (body) для снятия фокуса
+INFO     IlCarro:base_page.py:36 Кликаем по элементу: ('css selector', 'body')
+INFO     IlCarro:base_page.py:70 Получаем текст из элемента: ('class name', 'error')
+INFO     IlCarro:base_page.py:29 Ищем элемент: ('class name', 'error')
+INFO     IlCarro:base_page.py:64 Проверяем блокировку элемента: ('css selector', "button[type='submit']")
+INFO     IlCarro:base_page.py:29 Ищем элемент: ('css selector', "button[type='submit']")
