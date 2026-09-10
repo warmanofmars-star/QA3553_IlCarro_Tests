@@ -9,20 +9,20 @@ class IlCarroAPI:
     def __init__(self):
         self.token = None
 
-    @allure.step("API: Авторизация пользователя {username}")
     def login(self, username, password):
-        url = f"{self.BASE_URL}/v1/user/login/usernamepassword"
-        payload = {
-            "username": username,
-            "password": password
-        }
-        response = requests.post(url, json=payload)
+        # Перенесли шаг внутрь. Переменную password нигде не выводим!
+        with allure.step(f"API: Авторизация пользователя {username}"):
+            url = f"{self.BASE_URL}/v1/user/login/usernamepassword"
+            payload = {
+                "username": username,
+                "password": password
+            }
+            response = requests.post(url, json=payload)
 
-        # Если логин успешен, сохраняем токен для будущих запросов
-        if response.status_code == 200:
-            self.token = response.json().get("accessToken")
+            if response.status_code == 200:
+                self.token = response.json().get("accessToken")
 
-        return response
+            return response
 
     @allure.step("API: Добавление новой машины")
     def add_car(self, car_payload):
