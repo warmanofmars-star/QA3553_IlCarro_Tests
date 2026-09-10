@@ -265,6 +265,11 @@ class IlCarroAPI:
         }
         return requests.post(url, json=payload, headers=headers)
 
+    @allure.step("API: Получение списка доступных городов")
+    def get_cities(self):
+        url = f"{self.BASE_URL}/v1/cars/cities"
+        return requests.get(url)
+
 ============================================================
 📄 FILE: .\api\__init__.py
 ============================================================
@@ -281,6 +286,7 @@ from datetime import datetime, timedelta
 from faker import Faker
 from models.user import User
 from models.car import Car
+from api.car_api import IlCarroAPI
 
 # Инициализируем Faker один раз
 fake = Faker('en_US')
@@ -325,41 +331,34 @@ class UserGenerator:
 
 
 class SearchDataGenerator:
-    # Полный фиксированный список городов из выпадающего списка IlCarro
-    CITIES = [
-        "Tel Aviv",
-        "Jerusalem",
-        "Haifa",
-        "Rishon LeZion",
-        "Petah Tikva",
-        "Ashdod",
-        "Netanya",
-
-    ]
+    # Запасной список на случай, если бэкенд недоступен
+    FALLBACK_CITIES = ["Tel Aviv", "Jerusalem", "Haifa"]
 
     @classmethod
     def get_random_city(cls):
-        return random.choice(cls.CITIES)
+        try:
+            api = IlCarroAPI()
+            response = api.get_cities()
+
+            if response.status_code == 200:
+                cities_data = response.json().get("cities", [])
+                # Парсим JSON и вытаскиваем только названия городов
+                real_cities = [city_obj.get("city") for city_obj in cities_data if city_obj.get("city")]
+
+                if real_cities:
+                    return random.choice(real_cities)
+        except Exception as e:
+            print(f"Не удалось получить города из API, используем резервный список. Ошибка: {e}")
+
+        return random.choice(cls.FALLBACK_CITIES)
 
     @staticmethod
     def get_safe_future_dates(min_offset=1, max_offset=10, min_duration=2, max_duration=6):
-        """
-        Генерирует даты в будущем.
-        :param min_offset: Минимальное количество дней от сегодня до начала аренды
-        :param max_offset: Максимальное количество дней до начала аренды
-        :param min_duration: Минимальная длительность поездки
-        :param max_duration: Максимальная длительность поездки
-        """
         today = datetime.now()
-
-        # Настраиваемое смещение до начала поездки
         start_offset = random.randint(min_offset, max_offset)
         start_date = today + timedelta(days=start_offset)
-
-        # Настраиваемая длительность
         duration = random.randint(min_duration, max_duration)
         end_date = start_date + timedelta(days=duration)
-
         return start_date, end_date
 
 
@@ -1213,8 +1212,8 @@ def test_clear_my_garage():
 
 @allure.epic("API Testing")
 @allure.feature("Car Controller")
-@allure.story("Bug #404: Unsupported city Beersheba")
-@pytest.mark.xfail(reason="Бэкенд отклоняет город Beersheba, хотя он есть на UI")
+@allure.story("Bug #404: Spelling mismatch for Beer Sheva")
+@pytest.mark.xfail(reason="Баг интеграции: UI отправляет 'Beersheba', а бэкенд ждет 'Beer Sheva'")
 def test_api_add_car_beersheba_bug():
     api = IlCarroAPI()
     api.login(VALID_EMAIL, VALID_PASSWORD)
