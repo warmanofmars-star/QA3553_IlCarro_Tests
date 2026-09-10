@@ -57,7 +57,7 @@ class SearchDataGenerator:
         "Petah Tikva",
         "Ashdod",
         "Netanya",
-        "Beersheba"
+
     ]
 
     @classmethod
