@@ -1,8 +1,0 @@
-[94m11:02:17 - [2691] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
-[94m11:02:17 - [2691] - INFO - Кликаем по элементу: ('id', 'dates')[0m
-[94m11:02:17 - [2691] - INFO - Проверяем видимость элемента: ('css selector', '.daterange-popover')[0m
-[94m11:02:17 - [2691] - INFO - Получаем текст из элемента: ('css selector', '.rdrMonthPicker option:checked')[0m
-[94m11:02:17 - [2691] - INFO - Ищем элемент: ('css selector', '.rdrMonthPicker option:checked')[0m
-[94m11:02:17 - [2691] - INFO - Кликаем по элементу: ('css selector', '.rdrPprevButton')[0m
-[94m11:02:17 - [2691] - INFO - Получаем текст из элемента: ('css selector', '.rdrMonthPicker option:checked')[0m
-[94m11:02:17 - [2691] - INFO - Ищем элемент: ('css selector', '.rdrMonthPicker option:checked')[0m
