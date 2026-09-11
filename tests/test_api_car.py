@@ -150,25 +150,6 @@ def test_api_car_booking_flow(auth_api):
 
 
 @allure.epic("API Testing")
-@allure.feature("Maintenance")
-@allure.story("Clean up all cars")
-def test_clear_my_garage(auth_api):
-    response = auth_api.get_my_cars()
-    cars = response.json().get("cars", [])
-
-    if not cars:
-        print("\nГараж уже пуст!")
-        return
-
-    for car in cars:
-        serial = car.get("serialNumber")
-        auth_api.delete_car(serial)
-        print(f"\nУдалена машина: {serial}")
-
-    assert len(auth_api.get_my_cars().json().get("cars", [])) == 0, "Не удалось удалить все машины!"
-
-
-@allure.epic("API Testing")
 @allure.feature("Car Controller")
 @allure.story("Bug #404: Spelling mismatch for Beer Sheva")
 @pytest.mark.xfail(reason="Баг интеграции: UI отправляет 'Beersheba', а бэкенд ждет 'Beer Sheva'")
