@@ -1,0 +1,12 @@
+INFO     IlCarro:base_page.py:24 Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+INFO     IlCarro:base_page.py:48 Вводим текст 'Ramat Gan' в поле: ('id', 'city')
+INFO     IlCarro:base_page.py:29 Ищем элемент: ('id', 'city')
+INFO     IlCarro:base_page.py:36 Кликаем по элементу: ('id', 'dates')
+INFO     IlCarro:base_page.py:36 Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='17']]")
+INFO     IlCarro:base_page.py:36 Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='22']]")
+INFO     IlCarro:base_page.py:36 Кликаем по элементу: ('id', 'city')
+INFO     IlCarro:base_page.py:68 Проверяем блокировку элемента: ('css selector', "button[type='submit']")
+INFO     IlCarro:base_page.py:29 Ищем элемент: ('css selector', "button[type='submit']")
+INFO     IlCarro:base_page.py:36 Кликаем по элементу: ('css selector', "button[type='submit']")
+INFO     IlCarro:results_page.py:19 Ждем обновления URL с параметрами поиска...
+INFO     IlCarro:test_search.py:44 Найдена машина: ID CAR-acb6a9f1-4f69-40c3-a773-04208ed355f6, Volkswagen Golf (2023) за $52.0/день
