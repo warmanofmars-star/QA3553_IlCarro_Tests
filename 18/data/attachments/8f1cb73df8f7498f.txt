@@ -1,0 +1,12 @@
+[94m07:48:55 - [2690] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
+[94m07:48:56 - [2690] - INFO - Вводим текст 'Qiryat Motzkin' в поле: ('id', 'city')[0m
+[94m07:48:56 - [2690] - INFO - Ищем элемент: ('id', 'city')[0m
+[94m07:48:56 - [2690] - INFO - Кликаем по элементу: ('id', 'dates')[0m
+[94m07:48:56 - [2690] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='15']]")[0m
+[94m07:48:56 - [2690] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='17']]")[0m
+[94m07:48:56 - [2690] - INFO - Кликаем по элементу: ('id', 'city')[0m
+[94m07:48:56 - [2690] - INFO - Проверяем блокировку элемента: ('css selector', "button[type='submit']")[0m
+[94m07:48:56 - [2690] - INFO - Ищем элемент: ('css selector', "button[type='submit']")[0m
+[94m07:48:56 - [2690] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
+[94m07:48:56 - [2690] - INFO - Ждем обновления URL с параметрами поиска...[0m
+[94m07:49:01 - [2690] - INFO - В городе 'Qiryat Motzkin' на выбранные даты нет доступных машин. Отработало пустое состояние.[0m
