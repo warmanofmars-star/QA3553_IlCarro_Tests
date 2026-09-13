@@ -431,6 +431,19 @@ class SearchDataGenerator:
     # Запасной список на случай, если бэкенд недоступен
     FALLBACK_CITIES = ["Tel Aviv", "Jerusalem", "Haifa"]
 
+    # Список, который мы вытащили из фронтенда (JS-код)
+    UI_CITIES = [
+        "Tel Aviv", "Jerusalem", "Haifa", "Rishon LeZion", "Petah Tikva", "Ashdod",
+        "Netanya", "Beersheba", "Bnei Brak", "Holon", "Ramat Gan", "Ashkelon",
+        "Rehovot", "Bat Yam", "Beit Shemesh", "Kfar Saba", "Herzliya", "Hadera",
+        "Modi'in-Maccabim-Re'ut", "Nazareth", "Lod", "Ramla", "Ra'anana",
+        "Rosh HaAyin", "Acre", "Eilat", "Kiryat Ata", "Kiryat Gat", "Kiryat Yam",
+        "Kiryat Motzkin", "Kiryat Bialik", "Nahariya", "Tiberias", "Safed", "Afula",
+        "Carmiel", "Nes Ziona", "Yavne", "Or Yehuda", "Givatayim", "Kiryat Ono",
+        "Umm al-Fahm", "Sakhnin", "Tamra", "Tayibe", "Tira", "Ma'alot-Tarshiha",
+        "Migdal HaEmek", "Sderot", "Arad", "Dimona", "Ofakim", "Yeruham", "Kiryat Shmona"
+    ]
+
     @classmethod
     def get_random_city(cls):
         try:
@@ -438,17 +451,15 @@ class SearchDataGenerator:
             response = api.get_cities()
 
             if response.status_code == 200:
-                cities_data = response.json().get("cities", [])
-                # Парсим JSON и вытаскиваем только названия городов, КРОМЕ проблемной Beer Sheva
-                real_cities = [
-                    city_obj.get("city") for city_obj in cities_data
-                    if city_obj.get("city") and city_obj.get("city") != "Beer Sheva"
-                ]
+                api_cities = [city_obj.get("city") for city_obj in response.json().get("cities", [])]
 
-                if real_cities:
-                    return random.choice(real_cities)
+                # Используем cls.UI_CITIES для обращения к константе класса
+                safe_cities = list(set(api_cities).intersection(set(cls.UI_CITIES)))
+
+                if safe_cities:
+                    return random.choice(safe_cities)
         except Exception as e:
-            print(f"Не удалось получить города из API, используем резервный список. Ошибка: {e}")
+            print(f"Не удалось получить города из API. Ошибка: {e}")
 
         return random.choice(cls.FALLBACK_CITIES)
 
@@ -957,8 +968,12 @@ class SearchPage(BasePage):
     def open(self):
         self.open_url(self.ENDPOINT)
 
+    @allure.step("Ввод города {city_name} с выбором из динамического списка")
     def fill_city(self, city_name):
         self.fill(self.CITY_INPUT, city_name)
+        # Ждем, пока React отфильтрует нужный город, и кликаем по нему
+        option_locator = (By.CSS_SELECTOR, f"[data-testid='city-option'][data-value='{city_name}']")
+        self.click(option_locator)
 
     def click_dates_input(self):
         self.click(self.DATES_INPUT)
@@ -1348,67 +1363,52 @@ def test_calendar_month_navigation(driver):
     assert initial_month == returned_month, f"Не вернулись! Ожидали {initial_month}, получили {returned_month}"
 
 ============================================================
-📄 FILE: .\tests\test_data_integrity.py
+📄 FILE: .\tests\test_dictionaries.py
 ============================================================
 
-import time
-import pytest
-from selenium.webdriver.common.by import By
 import allure
+import pytest
 from api.car_api import IlCarroAPI
-from pages.search_page import SearchPage
+
+FRONTEND_CITIES = [
+    "Tel Aviv", "Jerusalem", "Haifa", "Rishon LeZion", "Petah Tikva", "Ashdod",
+    "Netanya", "Beersheba", "Bnei Brak", "Holon", "Ramat Gan", "Ashkelon",
+    "Rehovot", "Bat Yam", "Beit Shemesh", "Kfar Saba", "Herzliya", "Hadera",
+    "Modi'in-Maccabim-Re'ut", "Nazareth", "Lod", "Ramla", "Ra'anana",
+    "Rosh HaAyin", "Acre", "Eilat", "Kiryat Ata", "Kiryat Gat", "Kiryat Yam",
+    "Kiryat Motzkin", "Kiryat Bialik", "Nahariya", "Tiberias", "Safed", "Afula",
+    "Carmiel", "Nes Ziona", "Yavne", "Or Yehuda", "Givatayim", "Kiryat Ono",
+    "Umm al-Fahm", "Sakhnin", "Tamra", "Tayibe", "Tira", "Ma'alot-Tarshiha",
+    "Migdal HaEmek", "Sderot", "Arad", "Dimona", "Ofakim", "Yeruham", "Kiryat Shmona"
+]
 
 
 @allure.epic("Data Integrity")
-@allure.feature("Cities Dictionary")
-@pytest.mark.xfail(reason="Критический баг UI: Захардкожено 8 городов вместо 37 из API")
-@allure.title("Проверка синхронизации списка городов между API и UI")
-def test_cities_sync_api_vs_ui(driver):
+@allure.feature("Cross-System Dictionaries")
+@allure.title("Строгое соответствие словаря городов (Frontend vs Backend)")
+@pytest.mark.xfail(reason="Глобальный рассинхрон: Фронтенд использует захардкоженный список городов, отличный от БД")
+def test_frontend_backend_cities_mapping():
     api = IlCarroAPI()
-    search_page = SearchPage(driver)
 
-    with allure.step("1. Получаем эталонный список городов из API"):
+    with allure.step("1. Получаем словарь бэкенда"):
         response = api.get_cities()
-        assert response.status_code == 200, "API городов недоступно"
+        assert response.status_code == 200, "API недоступно"
+        backend_cities = [city["city"] for city in response.json().get("cities", [])]
 
-        # Собираем все названия в множество (set) для удобного сравнения
-        api_cities = {city_obj["city"] for city_obj in response.json().get("cities", [])}
-        print(f"\nГородов в API: {len(api_cities)}")
+    with allure.step("2. Нормализация и сравнение списков"):
+        front_set = set(FRONTEND_CITIES)
+        back_set = set(backend_cities)
 
-    with allure.step("2. Получаем список городов из выпадающего меню UI"):
-        search_page.open()
-        # Кликаем по пустому полю, чтобы React развернул список
-        driver.find_element(By.ID, "city").click()
+        fake_frontend_cities = front_set - back_set
+        unreachable_backend_cities = back_set - front_set
 
-        # Даем слабенькому серверу GitHub (или локальному ПК) секунду на отрисовку списка.
-        # Обычно мы используем WebDriverWait, но для скрипта-аудитора time.sleep() — это железобетонно.
-        time.sleep(1)
+        error_msg = ""
+        if fake_frontend_cities:
+            error_msg += f"\n[CRITICAL] Фронтенд отправляет города, которых нет в БД: {sorted(fake_frontend_cities)}"
+        if unreachable_backend_cities:
+            error_msg += f"\n[WARNING] В БД есть машины в этих городах, но юзер их не найдет: {sorted(unreachable_backend_cities)}"
 
-        # Мы знаем из прошлых тестов, что города лежат в атрибуте data-testid='city-option'
-        ui_elements = driver.find_elements(By.CSS_SELECTOR, "[data-testid='city-option']")
-        ui_cities = {element.text for element in ui_elements if element.text}
-
-        print(f"Городов в UI: {len(ui_cities)}")
-
-    with allure.step("3. Сравниваем списки и выявляем баги"):
-        # Находим города, которые есть в API, но отсутствуют в UI (или написаны иначе)
-        missing_in_ui = api_cities - ui_cities
-
-        # Находим города, которые есть в UI, но бэкенд о них не знает
-        extra_in_ui = ui_cities - api_cities
-
-        if missing_in_ui:
-            print(f"\n[БАГ] В UI не хватает (или опечатка): {missing_in_ui}")
-
-        if extra_in_ui:
-            print(f"\n[БАГ] В UI лишние (или опечатка): {extra_in_ui}")
-
-        # Тест должен упасть, если списки не идентичны
-        assert api_cities == ui_cities, (
-            f"Рассинхронизация словарей!\n"
-            f"Потеряны в UI: {missing_in_ui}\n"
-            f"Лишние в UI: {extra_in_ui}"
-        )
+        assert not fake_frontend_cities and not unreachable_backend_cities, error_msg
 
 ============================================================
 📄 FILE: .\tests\test_hybrid_search.py

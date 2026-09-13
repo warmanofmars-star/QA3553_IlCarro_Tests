@@ -51,6 +51,19 @@ class SearchDataGenerator:
     # Запасной список на случай, если бэкенд недоступен
     FALLBACK_CITIES = ["Tel Aviv", "Jerusalem", "Haifa"]
 
+    # Список, который мы вытащили из фронтенда (JS-код)
+    UI_CITIES = [
+        "Tel Aviv", "Jerusalem", "Haifa", "Rishon LeZion", "Petah Tikva", "Ashdod",
+        "Netanya", "Beersheba", "Bnei Brak", "Holon", "Ramat Gan", "Ashkelon",
+        "Rehovot", "Bat Yam", "Beit Shemesh", "Kfar Saba", "Herzliya", "Hadera",
+        "Modi'in-Maccabim-Re'ut", "Nazareth", "Lod", "Ramla", "Ra'anana",
+        "Rosh HaAyin", "Acre", "Eilat", "Kiryat Ata", "Kiryat Gat", "Kiryat Yam",
+        "Kiryat Motzkin", "Kiryat Bialik", "Nahariya", "Tiberias", "Safed", "Afula",
+        "Carmiel", "Nes Ziona", "Yavne", "Or Yehuda", "Givatayim", "Kiryat Ono",
+        "Umm al-Fahm", "Sakhnin", "Tamra", "Tayibe", "Tira", "Ma'alot-Tarshiha",
+        "Migdal HaEmek", "Sderot", "Arad", "Dimona", "Ofakim", "Yeruham", "Kiryat Shmona"
+    ]
+
     @classmethod
     def get_random_city(cls):
         try:
@@ -58,17 +71,15 @@ class SearchDataGenerator:
             response = api.get_cities()
 
             if response.status_code == 200:
-                cities_data = response.json().get("cities", [])
-                # Парсим JSON и вытаскиваем только названия городов, КРОМЕ проблемной Beer Sheva
-                real_cities = [
-                    city_obj.get("city") for city_obj in cities_data
-                    if city_obj.get("city") and city_obj.get("city") != "Beer Sheva"
-                ]
+                api_cities = [city_obj.get("city") for city_obj in response.json().get("cities", [])]
 
-                if real_cities:
-                    return random.choice(real_cities)
+                # Используем cls.UI_CITIES для обращения к константе класса
+                safe_cities = list(set(api_cities).intersection(set(cls.UI_CITIES)))
+
+                if safe_cities:
+                    return random.choice(safe_cities)
         except Exception as e:
-            print(f"Не удалось получить города из API, используем резервный список. Ошибка: {e}")
+            print(f"Не удалось получить города из API. Ошибка: {e}")
 
         return random.choice(cls.FALLBACK_CITIES)
 

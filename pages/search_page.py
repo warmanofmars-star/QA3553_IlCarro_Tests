@@ -30,8 +30,12 @@ class SearchPage(BasePage):
     def open(self):
         self.open_url(self.ENDPOINT)
 
+    @allure.step("Ввод города {city_name} с выбором из динамического списка")
     def fill_city(self, city_name):
         self.fill(self.CITY_INPUT, city_name)
+        # Ждем, пока React отфильтрует нужный город, и кликаем по нему
+        option_locator = (By.CSS_SELECTOR, f"[data-testid='city-option'][data-value='{city_name}']")
+        self.click(option_locator)
 
     def click_dates_input(self):
         self.click(self.DATES_INPUT)
