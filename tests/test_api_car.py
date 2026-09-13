@@ -147,26 +147,3 @@ def test_api_car_booking_flow(auth_api):
 
     with allure.step("4. Убираем за собой (удаляем машину)"):
         auth_api.delete_car(serial_number)
-
-
-@allure.epic("API Testing")
-@allure.feature("Car Controller")
-@allure.story("Bug #404: Spelling mismatch for Beer Sheva")
-@pytest.mark.xfail(reason="Баг интеграции: UI отправляет 'Beersheba', а бэкенд ждет 'Beer Sheva'")
-def test_api_add_car_beersheba_bug(auth_api):
-    car_obj = CarGenerator.get_random_car(city="Beersheba")
-    car_payload = {
-        "serialNumber": car_obj.reg_number,
-        "manufacture": car_obj.make,
-        "model": car_obj.model,
-        "year": str(car_obj.year),
-        "fuel": car_obj.fuel,
-        "seats": int(car_obj.seats),
-        "carClass": car_obj.car_class,
-        "pricePerDay": float(car_obj.price),
-        "about": car_obj.about,
-        "city": car_obj.city
-    }
-
-    response = auth_api.add_car(car_payload)
-    assert response.status_code == 200, f"Баг всё еще актуален: {response.text}"

@@ -20,7 +20,7 @@ This project demonstrates a senior-level approach to QA automation, combining cl
 * **Smart Browser Cascading:** The framework automatically detects the environment. It runs headless Google Chrome in CI/CD (GitHub Actions) for consistency, but gracefully falls back to Microsoft Edge for local execution if Chrome is unavailable.
 * **Dynamic Data Generation:** Uses dynamic querying to the backend API to fetch a valid list of cities for testing, avoiding hardcoded data and preventing false negatives due to data desynchronization.
 * **Security & Log Masking:** Sensitive data (passwords, tokens) are strictly masked (`********`) in all console outputs, test logs, and Allure reports.
-* **Legacy Bug Handling:** Integrates a quarantine pattern for known frontend-backend data mismatches (e.g., the 'Beersheba'/'Beer Sheva' 400 Bad Request integration bug), utilizing `@pytest.mark.xfail` to document the issue without failing the pipeline.
+* **Data Integrity Auditing:** Includes isolated Gray-box tests (test_dictionaries.py) to strictly validate frontend autocomplete dictionaries against backend API responses, automatically detecting silent business bugs and mapping mismatches without breaking functional UI tests.
 * **Parallel Execution Ready:** Configured to run concurrently using `pytest-xdist` with strictly isolated test environments.
 
 ## ⚙️ Setup & Installation
