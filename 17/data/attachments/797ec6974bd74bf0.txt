@@ -1,0 +1,17 @@
+[94m07:39:16 - [2691] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/register[0m
+[94m07:39:16 - [2691] - INFO - Вводим текст 'Kyle' в поле: ('css selector', "[name='firstName']")[0m
+[94m07:39:16 - [2691] - INFO - Ищем элемент: ('css selector', "[name='firstName']")[0m
+[94m07:39:17 - [2691] - INFO - Вводим текст 'Chapman' в поле: ('css selector', "[name='lastName']")[0m
+[94m07:39:17 - [2691] - INFO - Ищем элемент: ('css selector', "[name='lastName']")[0m
+[94m07:39:17 - [2691] - INFO - Вводим текст 'qholland@example.com' в поле: ('css selector', "[name='username']")[0m
+[94m07:39:17 - [2691] - INFO - Ищем элемент: ('css selector', "[name='username']")[0m
+[94m07:39:17 - [2691] - INFO - Вводим текст '********' в поле: ('css selector', "[name='password']")[0m
+[94m07:39:17 - [2691] - INFO - Ищем элемент: ('css selector', "[name='password']")[0m
+[94m07:39:17 - [2691] - INFO - Ищем элемент: ('id', 'terms-of-use')[0m
+[94m07:39:17 - [2691] - INFO - Кликаем по элементу: ('id', 'terms-of-use')[0m
+[94m07:39:17 - [2691] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
+[94m07:39:17 - [2691] - INFO - Получаем текст из элемента: ('css selector', 'h3')[0m
+[94m07:39:17 - [2691] - INFO - Ищем элемент: ('css selector', 'h3')[0m
+[94m07:39:18 - [2691] - INFO - Получаем текст из элемента: ('css selector', 'p')[0m
+[94m07:39:18 - [2691] - INFO - Ищем элемент: ('css selector', 'p')[0m
+[94m07:39:18 - [2691] - INFO - Кликаем по элементу: ('xpath', "//*[contains(text(), 'OK')]")[0m

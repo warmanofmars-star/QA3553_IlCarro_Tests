@@ -1,0 +1,9 @@
+[94m07:39:05 - [2691] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
+[94m07:39:05 - [2691] - INFO - Вводим текст 'Jerusalem' в поле: ('id', 'city')[0m
+[94m07:39:05 - [2691] - INFO - Ищем элемент: ('id', 'city')[0m
+[94m07:39:05 - [2691] - INFO - Кликаем по элементу: ('id', 'dates')[0m
+[94m07:39:05 - [2691] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='22']]")[0m
+[94m07:39:05 - [2691] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='25']]")[0m
+[94m07:39:05 - [2691] - INFO - Кликаем по элементу: ('id', 'city')[0m
+[94m07:39:05 - [2691] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
+[94m07:39:05 - [2691] - INFO - Ждем обновления URL с параметрами поиска...[0m

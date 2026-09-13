@@ -1,9 +1,0 @@
-[94m19:07:12 - [2692] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
-[94m19:07:12 - [2692] - INFO - Вводим текст 'Qiryat Bialik' в поле: ('id', 'city')[0m
-[94m19:07:12 - [2692] - INFO - Ищем элемент: ('id', 'city')[0m
-[94m19:07:13 - [2692] - INFO - Кликаем по элементу: ('id', 'dates')[0m
-[94m19:07:13 - [2692] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='13']]")[0m
-[94m19:07:13 - [2692] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='19']]")[0m
-[94m19:07:13 - [2692] - INFO - Кликаем по элементу: ('id', 'city')[0m
-[94m19:07:13 - [2692] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
-[94m19:07:13 - [2692] - INFO - Ждем обновления URL с параметрами поиска...[0m
