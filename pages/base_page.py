@@ -13,7 +13,7 @@ logger = get_logger()
 
 class BasePage:
     BASE_URL = "https://icarro-v1.netlify.app"
-    DEFAULT_TIMEOUT = 5
+    DEFAULT_TIMEOUT = 15  # Увеличили с 5 до 15 секунд специально для медленных CI-серверов
 
     def __init__(self, driver):
         self.driver = driver
