@@ -1,0 +1,1 @@
+INFO     IlCarro:base_page.py:24 Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10

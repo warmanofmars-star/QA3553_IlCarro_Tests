@@ -1,0 +1,2 @@
+[94m13:18:18 - [2681] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/[0m
+[94m13:18:18 - [2681] - INFO - Кликаем по элементу: ('css selector', "[href='/register']")[0m
