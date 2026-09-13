@@ -1,8 +1,0 @@
-
-Городов в API: 37
-[94m13:18:06 - [2681] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
-Городов в UI: 8
-
-[БАГ] В UI не хватает (или опечатка): {'Raanana', 'Beer Sheva', 'Bat Yam', 'Qiryat Tivon', 'Qiryat Gat', 'Sderot', 'Bnei Brak', 'Qiryat Shemona', 'Ramat Gan', 'Qiryat Motzkin', 'Qiryat Yovel', 'Ashkelon', 'Modiin', 'Qiryat Malakhi', 'Qiryat Ono', 'Holon', 'Qiryat Yam', 'Herzliya', "Qiryat Ye'arim", 'Nazareth', 'Rehovot', 'Givatayim', 'Kfar Saba', 'Tiberias', 'Qiryat Ata', 'Eilat', 'Hadera', 'Qiryat Bialik', 'Dimona', 'Hod HaSharon'}
-
-[БАГ] В UI лишние (или опечатка): {'Beersheba'}

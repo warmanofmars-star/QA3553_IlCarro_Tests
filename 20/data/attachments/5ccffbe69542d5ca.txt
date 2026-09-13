@@ -1,0 +1,13 @@
+[94m13:36:36 - [2693] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
+[94m13:36:36 - [2693] - INFO - Вводим текст 'Bat Yam' в поле: ('id', 'city')[0m
+[94m13:36:36 - [2693] - INFO - Ищем элемент: ('id', 'city')[0m
+[94m13:36:37 - [2693] - INFO - Кликаем по элементу: ('css selector', "[data-testid='city-option'][data-value='Bat Yam']")[0m
+[94m13:36:37 - [2693] - INFO - Кликаем по элементу: ('id', 'dates')[0m
+[94m13:36:37 - [2693] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='22']]")[0m
+[94m13:36:37 - [2693] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='26']]")[0m
+[94m13:36:37 - [2693] - INFO - Кликаем по элементу: ('id', 'city')[0m
+[94m13:36:37 - [2693] - INFO - Проверяем блокировку элемента: ('css selector', "button[type='submit']")[0m
+[94m13:36:37 - [2693] - INFO - Ищем элемент: ('css selector', "button[type='submit']")[0m
+[94m13:36:37 - [2693] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
+[94m13:36:37 - [2693] - INFO - Ждем обновления URL с параметрами поиска...[0m
+[94m13:36:38 - [2693] - INFO - Найдена машина: ID 9, LADA GRANTA (1111) за $9.0/день[0m
