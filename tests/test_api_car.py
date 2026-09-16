@@ -1,6 +1,5 @@
 import allure
 import datetime
-import pytest
 
 from api.car_api import IlCarroAPI
 from data.data_generator import CarGenerator

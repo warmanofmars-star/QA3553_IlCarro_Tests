@@ -1,16 +1,19 @@
+from dataclasses import dataclass
+
+@dataclass
 class Car:
-    def __init__(self, city, make, model, year, fuel, gear, wd, doors, seats, car_class, reg_number, price, about, photo_path=None):
-        self.city = city
-        self.make = make
-        self.model = model
-        self.year = year
-        self.fuel = fuel
-        self.gear = gear
-        self.wd = wd
-        self.doors = doors
-        self.seats = seats
-        self.car_class = car_class
-        self.reg_number = reg_number
-        self.price = price
-        self.about = about
-        self.photo_path = photo_path
+    city: str
+    make: str
+    model: str
+    year: str
+    fuel: str
+    gear: str
+    wd: str
+    doors: str
+    seats: str
+    car_class: str
+    reg_number: str
+    price: str
+    about: str
+    # Важное правило Python: поля со значением по умолчанию всегда идут в самом конце!
+    photo_path: str = None

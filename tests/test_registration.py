@@ -1,8 +1,11 @@
+import os
 import pytest
 import allure
 from pages.registration_page import RegistrationPage
 from data.data_generator import UserGenerator
 
+VALID_EMAIL = os.getenv("USER_EMAIL")
+VALID_PASSWORD = os.getenv("USER_PASSWORD")
 
 @allure.epic("UI Testing")
 @allure.feature("Registration Page")
@@ -37,36 +40,61 @@ def test_registration_success(driver):
 
 
 # ===========================================================================
-# ПАРАМЕТРИЗОВАННЫЙ НЕГАТИВНЫЙ ТЕСТ (6 проверок в 1 функции!)
+# ПАРАМЕТРИЗОВАННЫЙ НЕГАТИВНЫЙ ТЕСТ: Фронтенд-валидация
 # ===========================================================================
 @allure.epic("UI Testing")
 @allure.feature("Registration Page")
-@allure.story("Negative Registration")
+@allure.story("Negative Registration - Frontend")
 @allure.severity(allure.severity_level.CRITICAL)
-@pytest.mark.parametrize("field_name, invalid_value, expected_error", [
-    ("name", "", "Name is required"),
-    ("last_name", "", "Last name is required"),
-    ("email", "tonygmail.com", "Wrong email format"),
-    ("email", "", "Email is required"),
-    ("password", "P123$", "Password must contain minimum 6 symbols"),
-    ("password", "", "Password is required")
+@pytest.mark.parametrize("field_name, invalid_value, expected_error, scenario", [
+    ("name", "", "Name is required", "Пустое имя"),
+    ("last_name", "", "Last name is required", "Пустая фамилия"),
+    ("email", "tonygmail.com", "Wrong email format", "Неверный формат email"),
+    ("email", "", "Email is required", "Пустой email"),
+    ("password", "P123$", "Password must contain minimum 6 symbols", "Слишком короткий пароль"),
+    ("password", "", "Password is required", "Пустой пароль")
 ])
-def test_registration_negative_fields(driver, field_name, invalid_value, expected_error):
-    registration_page = RegistrationPage(driver)
+def test_registration_negative_fields(driver, field_name, invalid_value, expected_error, scenario):
+    with allure.step(f"Сценарий: {scenario}"):
+        registration_page = RegistrationPage(driver)
 
-    # Динамически создаем словарь с "битым" полем и передаем его в генератор
-    kwargs = {field_name: invalid_value}
-    user = UserGenerator.get_random_user(**kwargs)
+        # Динамически создаем объект с "битым" полем (Датаклассы это отлично переваривают!)
+        kwargs = {field_name: invalid_value}
+        user = UserGenerator.get_random_user(**kwargs)
 
-    registration_page.open_registration_form()
-    registration_page.fill_registration_form(user)
-    registration_page.set_policy_checkbox(True)
+        registration_page.open_registration_form()
+        registration_page.fill_registration_form(user)
+        registration_page.set_policy_checkbox(True)
 
-    # Универсальный клик в пустоту для вызова onBlur валидации во всех сценариях
-    registration_page.remove_focus()
+        # Универсальный клик в пустоту для вызова onBlur валидации во всех сценариях
+        registration_page.remove_focus()
 
-    assert registration_page.error_message_text() == expected_error, f"Ожидалась ошибка '{expected_error}'"
-    assert registration_page.submit_button_disabled() == True, "Кнопка Y'alla! не заблокировалась"
+        assert registration_page.error_message_text() == expected_error, f"Ожидалась ошибка '{expected_error}'"
+        assert registration_page.submit_button_disabled() == True, "Кнопка Y'alla! не заблокировалась"
+
+
+# ===========================================================================
+# НЕГАТИВНЫЙ ТЕСТ: Бэкенд-валидация (Пользователь уже существует)
+# ===========================================================================
+@allure.epic("UI Testing")
+@allure.feature("Registration Page")
+@allure.story("Negative Registration - Backend")
+@allure.severity(allure.severity_level.CRITICAL)
+def test_registration_existing_user(driver):
+    with allure.step("Сценарий: Регистрация уже существующего пользователя"):
+        registration_page = RegistrationPage(driver)
+
+        # Подсовываем данные юзера, который 100% есть в базе (мы же под ним логинимся)
+        user = UserGenerator.get_random_user(email=VALID_EMAIL, password=VALID_PASSWORD)
+
+        registration_page.open_registration_form()
+        registration_page.fill_registration_form(user)
+        registration_page.set_policy_checkbox(True)
+
+        registration_page.submit_registration()
+
+        # Проверяем ответ от бэкенда
+        assert registration_page.confirmation_text() == "Registration failed", "Бэкенд не отбил регистрацию существующего юзера!"
 
 
 # --- НЕГАТИВНЫЙ ТЕСТ: ЧЕКБОКС (Отдельный флоу) ---

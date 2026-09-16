@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from faker import Faker
 from models.user import User
 from api.car_api import IlCarroAPI
+from models.car import Car
 
 # Инициализируем Faker один раз
 fake = Faker('en_US')
@@ -103,24 +104,29 @@ class CarGenerator:
     MODEL_TYPES = ["Camry", "Civic", "Focus", "X5", "Premium"]
     CLASS_TYPES = ["Economy", "Comfort", "Business", "Premium"]
 
-    @classmethod
-    def get_random_car(cls, photo_path=None, **overrides):
+    @staticmethod
+    def get_random_car(**overrides) -> Car:
+        """Генерирует случайную машину. Позволяет переопределять любые поля через **overrides"""
+        # Базовые случайные данные (используем Faker и твои списки)
         data = {
             "city": SearchDataGenerator.get_random_city(),
-            "make": random.choice(cls.MAKE_TYPES),
-            "model": random.choice(cls.MODEL_TYPES),
+            "make": fake.company(),
+            "model": fake.word().capitalize(),
             "year": str(random.randint(2010, 2024)),
-            "fuel": random.choice(cls.FUEL_TYPES),
-            "gear": random.choice(cls.GEAR_TYPES),
-            "wd": random.choice(cls.WD_TYPES),
+            "fuel": random.choice(["Petrol", "Diesel", "Hybrid", "Electric"]),
+            "gear": random.choice(["Manual", "Automatic"]),
+            "wd": random.choice(["AWD", "FWD", "RWD"]),
             "doors": str(random.randint(2, 5)),
             "seats": str(random.randint(2, 7)),
-            "car_class": random.choice(cls.CLASS_TYPES),
-            "reg_number": f"{random.randint(100, 999)}-{random.randint(10, 99)}-{random.randint(100, 999)}",
-            "price": str(random.randint(50, 500)),
-            "about": "",  # Оставляем пустым, чтобы обойти возможный баг бэкенда
-            "photo_path": photo_path
+            "car_class": random.choice(["Economy", "Business", "Premium"]),
+            "reg_number": fake.unique.bothify(text='??-###-??').upper(),
+            "price": str(random.randint(100, 1000)),
+            "about": fake.sentence(),
+            "photo_path": None
         }
+
+        # Накатываем сверху те значения, которые мы передали в тест (если они есть)
         data.update(overrides)
-        from models.car import Car
+
+        # Распаковываем словарь в наш красивый датакласс Car!
         return Car(**data)

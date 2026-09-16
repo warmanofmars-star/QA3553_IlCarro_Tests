@@ -85,3 +85,24 @@ def auth_api():
         api.login(email, password)
 
     return api
+
+
+from pages.login_page import LoginPage
+
+
+@pytest.fixture
+def authenticated_driver(driver):
+    """Фикстура, которая автоматически логинится через UI перед тестом"""
+    with allure.step("Setup Fixture: Автоматическая UI-авторизация"):
+        login_page = LoginPage(driver)
+        login_page.open()
+
+        email = os.getenv("USER_EMAIL")
+        password = os.getenv("USER_PASSWORD")
+
+        login_page.login(email, password)
+
+        # Ждем, пока появится кнопка Logout, чтобы убедиться, что логин прошел
+        login_page.is_logout_button_visible()
+
+    return driver
