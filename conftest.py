@@ -106,3 +106,9 @@ def authenticated_driver(driver):
         login_page.is_logout_button_visible()
 
     return driver
+
+def pytest_make_parametrize_id(val):
+    """
+    Хук Pytest: запрещает экранировать кириллицу в ID параметризованных тестов.
+    """
+    return str(val)
