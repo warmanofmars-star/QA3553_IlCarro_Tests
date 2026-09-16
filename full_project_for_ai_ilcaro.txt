@@ -182,6 +182,9 @@ This project demonstrates a senior-level approach to QA automation, combining cl
 * **Security & Log Masking:** Sensitive data (passwords, tokens) are strictly masked (`********`) in all console outputs, test logs, and Allure reports.
 * **Data Integrity Auditing:** Includes isolated Gray-box tests (test_dictionaries.py) to strictly validate frontend autocomplete dictionaries against backend API responses, automatically detecting silent business bugs and mapping mismatches without breaking functional UI tests.
 * **Parallel Execution Ready:** Configured to run concurrently using `pytest-xdist` with strictly isolated test environments.
+* **Data-Driven Testing (DDT):** Extensively utilizes `@pytest.mark.parametrize` to execute complex positive and negative test scenarios (e.g., isolating frontend validation from backend API errors) from a single test function, ensuring high coverage while strictly adhering to the DRY principle.
+* **Modern Data Modeling:** Implements Python `@dataclass` for representing test entities (e.g., `User`, `Car`). This architectural choice ensures clean object instantiation, dynamic payload overriding via `**kwargs`, and highly readable automatic logging of generated test data.
+* **Advanced Custom Logging:** Features a proprietary logging utility with dual-stream outputs. It provides real-time, ANSI-colored console logs for rapid local debugging and simultaneously writes clean, thread-safe logs to individual files, ensuring stable log capture during parallel execution (`pytest-xdist`).
 
 ## ⚙️ Setup & Installation
 
