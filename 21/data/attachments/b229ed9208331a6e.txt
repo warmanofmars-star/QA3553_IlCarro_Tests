@@ -1,0 +1,13 @@
+[94m05:56:44 - [2653] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
+[94m05:56:44 - [2653] - INFO - Вводим текст 'Sderot' в поле: ('id', 'city')[0m
+[94m05:56:44 - [2653] - INFO - Ищем элемент: ('id', 'city')[0m
+[94m05:56:44 - [2653] - INFO - Кликаем по элементу: ('css selector', "[data-testid='city-option'][data-value='Sderot']")[0m
+[94m05:56:44 - [2653] - INFO - Кликаем по элементу: ('id', 'dates')[0m
+[94m05:56:45 - [2653] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='22']]")[0m
+[94m05:56:45 - [2653] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='26']]")[0m
+[94m05:56:45 - [2653] - INFO - Кликаем по элементу: ('id', 'city')[0m
+[94m05:56:45 - [2653] - INFO - Проверяем блокировку элемента: ('css selector', "button[type='submit']")[0m
+[94m05:56:45 - [2653] - INFO - Ищем элемент: ('css selector', "button[type='submit']")[0m
+[94m05:56:45 - [2653] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
+[94m05:56:45 - [2653] - INFO - Ждем обновления URL с параметрами поиска...[0m
+[94m05:56:50 - [2653] - INFO - В городе 'Sderot' на выбранные даты нет доступных машин. Отработало пустое состояние.[0m

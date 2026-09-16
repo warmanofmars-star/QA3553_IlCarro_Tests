@@ -1,0 +1,37 @@
+[94m05:55:18 - [2653] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/login[0m
+[94m05:55:20 - [2653] - INFO - Вводим текст 'warman.of.mars@gmail.com' в поле: ('css selector', "input[name='username']")[0m
+[94m05:55:20 - [2653] - INFO - Ищем элемент: ('css selector', "input[name='username']")[0m
+[94m05:55:20 - [2653] - INFO - Вводим текст '********' в поле: ('css selector', "input[name='password']")[0m
+[94m05:55:20 - [2653] - INFO - Ищем элемент: ('css selector', "input[name='password']")[0m
+[94m05:55:20 - [2653] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
+[94m05:55:20 - [2653] - INFO - Проверяем видимость элемента: ('css selector', 'button.navigation-link')[0m
+[94m05:55:21 - [2653] - INFO - --- ЗАПУСК ТЕСТА: Добавление бензиновой машины эконом-класса ---[0m
+[94m05:55:21 - [2653] - INFO - Сгенерированные данные: Car(city='Dimona', make='Bauer-Fleming', model='Such', year='2019', fuel='Petrol', gear='Manual', wd='AWD', doors='2', seats='7', car_class='Economy', reg_number='DD-156-DN', price='421', about='Price your give.', photo_path=None)[0m
+[94m05:55:21 - [2653] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/let-car-work[0m
+[94m05:55:22 - [2653] - INFO - Вводим текст 'Dimona' в поле: ('id', 'city')[0m
+[94m05:55:22 - [2653] - INFO - Ищем элемент: ('id', 'city')[0m
+[94m05:55:22 - [2653] - INFO - Кликаем по элементу: ('css selector', "[data-testid='city-option'][data-value='Dimona']")[0m
+[94m05:55:22 - [2653] - INFO - Вводим текст 'Bauer-Fleming' в поле: ('css selector', "input[name='manufacture']")[0m
+[94m05:55:22 - [2653] - INFO - Ищем элемент: ('css selector', "input[name='manufacture']")[0m
+[94m05:55:22 - [2653] - INFO - Вводим текст 'Such' в поле: ('css selector', "input[name='model']")[0m
+[94m05:55:22 - [2653] - INFO - Ищем элемент: ('css selector', "input[name='model']")[0m
+[94m05:55:22 - [2653] - INFO - Вводим текст '2019' в поле: ('css selector', "input[name='year']")[0m
+[94m05:55:22 - [2653] - INFO - Ищем элемент: ('css selector', "input[name='year']")[0m
+[94m05:55:22 - [2653] - INFO - Вводим текст '2' в поле: ('css selector', "input[name='doors']")[0m
+[94m05:55:22 - [2653] - INFO - Ищем элемент: ('css selector', "input[name='doors']")[0m
+[94m05:55:22 - [2653] - INFO - Вводим текст '7' в поле: ('css selector', "input[name='seats']")[0m
+[94m05:55:22 - [2653] - INFO - Ищем элемент: ('css selector', "input[name='seats']")[0m
+[94m05:55:22 - [2653] - INFO - Вводим текст 'Economy' в поле: ('css selector', "input[name='carClass']")[0m
+[94m05:55:22 - [2653] - INFO - Ищем элемент: ('css selector', "input[name='carClass']")[0m
+[94m05:55:22 - [2653] - INFO - Вводим текст 'DD-156-DN' в поле: ('css selector', "input[name='serialNumber']")[0m
+[94m05:55:22 - [2653] - INFO - Ищем элемент: ('css selector', "input[name='serialNumber']")[0m
+[94m05:55:22 - [2653] - INFO - Вводим текст '421' в поле: ('css selector', "input[name='pricePerDay']")[0m
+[94m05:55:22 - [2653] - INFO - Ищем элемент: ('css selector', "input[name='pricePerDay']")[0m
+[94m05:55:22 - [2653] - INFO - Вводим текст 'Price your give.' в поле: ('css selector', "textarea[name='about']")[0m
+[94m05:55:22 - [2653] - INFO - Ищем элемент: ('css selector', "textarea[name='about']")[0m
+[94m05:55:23 - [2653] - INFO - Ищем элемент: ('css selector', "select[name='fuel']")[0m
+[94m05:55:23 - [2653] - INFO - Ищем элемент: ('css selector', "select[name='gear']")[0m
+[94m05:55:23 - [2653] - INFO - Ищем элемент: ('css selector', "select[name='wheelsDrive']")[0m
+[94m05:55:23 - [2653] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
+[94m05:55:23 - [2653] - INFO - Получаем текст из элемента: ('css selector', 'h3')[0m
+[94m05:55:23 - [2653] - INFO - Ищем элемент: ('css selector', 'h3')[0m
