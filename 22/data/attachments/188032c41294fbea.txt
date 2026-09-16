@@ -1,0 +1,37 @@
+[94m06:23:24 - [2462] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/login[0m
+[94m06:23:24 - [2462] - INFO - Вводим текст 'warman.of.mars@gmail.com' в поле: ('css selector', "input[name='username']")[0m
+[94m06:23:24 - [2462] - INFO - Ищем элемент: ('css selector', "input[name='username']")[0m
+[94m06:23:25 - [2462] - INFO - Вводим текст '********' в поле: ('css selector', "input[name='password']")[0m
+[94m06:23:25 - [2462] - INFO - Ищем элемент: ('css selector', "input[name='password']")[0m
+[94m06:23:25 - [2462] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
+[94m06:23:25 - [2462] - INFO - Проверяем видимость элемента: ('css selector', 'button.navigation-link')[0m
+[94m06:23:25 - [2462] - INFO - --- ЗАПУСК ТЕСТА: Добавление премиального электрокара ---[0m
+[94m06:23:25 - [2462] - INFO - Сгенерированные данные: Car(city='Givatayim', make='Johnson, Luna and Carroll', model='View', year='2011', fuel='Electric', gear='Automatic', wd='RWD', doors='3', seats='6', car_class='Premium', reg_number='NZ-058-FF', price='903', about='Top include cost partner resource difference clearly.', photo_path=None)[0m
+[94m06:23:25 - [2462] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/let-car-work[0m
+[94m06:23:25 - [2462] - INFO - Вводим текст 'Givatayim' в поле: ('id', 'city')[0m
+[94m06:23:25 - [2462] - INFO - Ищем элемент: ('id', 'city')[0m
+[94m06:23:25 - [2462] - INFO - Кликаем по элементу: ('css selector', "[data-testid='city-option'][data-value='Givatayim']")[0m
+[94m06:23:25 - [2462] - INFO - Вводим текст 'Johnson, Luna and Carroll' в поле: ('css selector', "input[name='manufacture']")[0m
+[94m06:23:25 - [2462] - INFO - Ищем элемент: ('css selector', "input[name='manufacture']")[0m
+[94m06:23:25 - [2462] - INFO - Вводим текст 'View' в поле: ('css selector', "input[name='model']")[0m
+[94m06:23:25 - [2462] - INFO - Ищем элемент: ('css selector', "input[name='model']")[0m
+[94m06:23:25 - [2462] - INFO - Вводим текст '2011' в поле: ('css selector', "input[name='year']")[0m
+[94m06:23:25 - [2462] - INFO - Ищем элемент: ('css selector', "input[name='year']")[0m
+[94m06:23:25 - [2462] - INFO - Вводим текст '3' в поле: ('css selector', "input[name='doors']")[0m
+[94m06:23:25 - [2462] - INFO - Ищем элемент: ('css selector', "input[name='doors']")[0m
+[94m06:23:25 - [2462] - INFO - Вводим текст '6' в поле: ('css selector', "input[name='seats']")[0m
+[94m06:23:25 - [2462] - INFO - Ищем элемент: ('css selector', "input[name='seats']")[0m
+[94m06:23:25 - [2462] - INFO - Вводим текст 'Premium' в поле: ('css selector', "input[name='carClass']")[0m
+[94m06:23:25 - [2462] - INFO - Ищем элемент: ('css selector', "input[name='carClass']")[0m
+[94m06:23:26 - [2462] - INFO - Вводим текст 'NZ-058-FF' в поле: ('css selector', "input[name='serialNumber']")[0m
+[94m06:23:26 - [2462] - INFO - Ищем элемент: ('css selector', "input[name='serialNumber']")[0m
+[94m06:23:26 - [2462] - INFO - Вводим текст '903' в поле: ('css selector', "input[name='pricePerDay']")[0m
+[94m06:23:26 - [2462] - INFO - Ищем элемент: ('css selector', "input[name='pricePerDay']")[0m
+[94m06:23:26 - [2462] - INFO - Вводим текст 'Top include cost partner resource difference clearly.' в поле: ('css selector', "textarea[name='about']")[0m
+[94m06:23:26 - [2462] - INFO - Ищем элемент: ('css selector', "textarea[name='about']")[0m
+[94m06:23:26 - [2462] - INFO - Ищем элемент: ('css selector', "select[name='fuel']")[0m
+[94m06:23:26 - [2462] - INFO - Ищем элемент: ('css selector', "select[name='gear']")[0m
+[94m06:23:26 - [2462] - INFO - Ищем элемент: ('css selector', "select[name='wheelsDrive']")[0m
+[94m06:23:26 - [2462] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
+[94m06:23:26 - [2462] - INFO - Получаем текст из элемента: ('css selector', 'h3')[0m
+[94m06:23:26 - [2462] - INFO - Ищем элемент: ('css selector', 'h3')[0m
