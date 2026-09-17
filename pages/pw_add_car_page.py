@@ -28,6 +28,7 @@ class PwAddCarPage(PwBasePage):
         self.about_input = page.locator("textarea[name='about']")
 
         self.submit_btn = page.locator("button[type='submit']")
+        self.submit_error_message = page.locator("div.error[role='alert']")
 
     # --- ДЕЙСТВИЯ ---
     @allure.step("Открытие страницы добавления машины")
@@ -64,4 +65,14 @@ class PwAddCarPage(PwBasePage):
     @allure.step("Проверка сброса формы (успешное добавление в БД)")
     def check_form_cleared(self):
         # Если поле очистилось, значит React принял ответ 200 OK от реального сервера
-        expect(self.make_input).to_be_empty(timeout=8000)
+        expect(self.make_input).to_be_empty(timeout=self.expect_timeout)
+
+    #for Playwright:
+    @allure.step("Проверка появления ошибки отправки: {expected_text}")
+    def check_submit_error(self, expected_text: str):
+        expect(self.submit_error_message).to_have_text(expected_text)
+
+    @allure.step("Проверка, что данные остались в форме (Make = {expected_value})")
+    def check_make_field_value(self, expected_value: str):
+        # В Playwright для проверки содержимого инпута используется to_have_value
+        expect(self.make_input).to_have_value(expected_value)

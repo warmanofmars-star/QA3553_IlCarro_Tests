@@ -886,6 +886,7 @@ class PwAddCarPage(PwBasePage):
         self.about_input = page.locator("textarea[name='about']")
 
         self.submit_btn = page.locator("button[type='submit']")
+        self.submit_error_message = page.locator("div.error[role='alert']")
 
     # --- ДЕЙСТВИЯ ---
     @allure.step("Открытие страницы добавления машины")
@@ -922,7 +923,17 @@ class PwAddCarPage(PwBasePage):
     @allure.step("Проверка сброса формы (успешное добавление в БД)")
     def check_form_cleared(self):
         # Если поле очистилось, значит React принял ответ 200 OK от реального сервера
-        expect(self.make_input).to_be_empty(timeout=8000)
+        expect(self.make_input).to_be_empty(timeout=self.expect_timeout)
+
+    #for Playwright:
+    @allure.step("Проверка появления ошибки отправки: {expected_text}")
+    def check_submit_error(self, expected_text: str):
+        expect(self.submit_error_message).to_have_text(expected_text)
+
+    @allure.step("Проверка, что данные остались в форме (Make = {expected_value})")
+    def check_make_field_value(self, expected_value: str):
+        # В Playwright для проверки содержимого инпута используется to_have_value
+        expect(self.make_input).to_have_value(expected_value)
 
 ============================================================
 📄 FILE: .\pages\pw_base_page.py
@@ -935,6 +946,8 @@ class PwBasePage:
     def __init__(self, page: Page):
         self.page = page
         self.base_url = "https://icarro-v1.netlify.app"
+        # Playwright работает в миллисекундах. Установим 10 секунд для всех проверок
+        self.expect_timeout = 10000
 
     @allure.step("Открытие URL: {path}")
     def open_url(self, path: str = ""):
@@ -960,7 +973,7 @@ class PwLoginPage(PwBasePage):
         self.email_input = page.locator("input[name='username']")
         self.password_input = page.locator("input[name='password']")
         self.submit_btn = page.locator("button[type='submit']")
-
+        self.error_message = page.locator(".error")
         # Используем мощный селектор "по роли", который Playwright понимает из коробки
         self.ok_btn = page.get_by_role("link", name="OK", exact=True)
         self.global_message = page.locator("h3")
@@ -1000,6 +1013,20 @@ class PwLoginPage(PwBasePage):
     @allure.step("Проверка, что кнопка Logout появилась")
     def check_logout_button_visible(self):
         expect(self.logout_btn).to_be_visible()
+
+    #for Playwright:
+    @allure.step("Проверка ошибки валидации: {expected_text}")
+    def check_error_message(self, expected_text: str):
+        # Playwright сам будет ждать, пока текст не совпадет!
+        expect(self.error_message).to_have_text(expected_text)
+
+    @allure.step("Проверка блокировки кнопки Submit")
+    def check_submit_button_disabled(self):
+        expect(self.submit_btn).to_be_disabled()
+
+    @allure.step("Снятие фокуса (клик по фону)")
+    def remove_focus(self):
+        self.page.locator("body").click()
 
 ============================================================
 📄 FILE: .\pages\registration_page.py
@@ -1825,12 +1852,54 @@ def test_real_add_car_success(page: Page):
         add_car_page.check_form_cleared()
         logger.info(f"Машина с номером {car.reg_number} успешно добавлена через Playwright!")
 
+
+@allure.epic("Playwright Testing")
+@allure.feature("Cars Management")
+@allure.story("Negative Add Car - Duplicate")
+@allure.title("Создание дубликата машины (Playwright + API)")
+def test_pw_add_car_duplicate(page: Page, auth_api):
+    car = CarGenerator.get_random_car()
+
+    with allure.step("API PRECONDITION: Создаем машину"):
+        car_payload = {
+            "serialNumber": car.reg_number,
+            "manufacture": car.make,
+            "model": car.model,
+            "year": str(car.year),
+            "fuel": car.fuel,
+            "seats": int(car.seats),
+            "carClass": car.car_class,
+            "pricePerDay": float(car.price),
+            "about": car.about,
+            "city": car.city
+        }
+        auth_api.add_car(car_payload)
+
+    with allure.step("UI SCENARIO: Пытаемся создать ту же машину через UI"):
+        login_page = PwLoginPage(page)
+        login_page.open()
+        login_page.login(VALID_EMAIL, VALID_PASSWORD)
+        login_page.click_ok_button()
+
+        add_car_page = PwAddCarPage(page)
+        add_car_page.open()
+        add_car_page.fill_form(car)
+        add_car_page.submit()
+
+    with allure.step("UI ASSERT: Проверка хитрой inline-ошибки"):
+        # Проверяем, что появилась та самая маленькая строчка
+        add_car_page.check_submit_error("Failed to submit car")
+
+        # Проверяем, что форма зависла и не очистилась
+        add_car_page.check_make_field_value(car.make)
+
 ============================================================
 📄 FILE: .\tests\test_playwright_login.py
 ============================================================
 
 import os
 import allure
+import pytest
 from playwright.sync_api import Page
 from pages.pw_login_page import PwLoginPage
 
@@ -1853,6 +1922,28 @@ def test_pw_login_success(page: Page):
     pw_login_page.check_success_message()
     pw_login_page.click_ok_button()
     pw_login_page.check_logout_button_visible()
+
+
+@allure.epic("Playwright Testing")
+@allure.feature("Login")
+@allure.story("Negative Login - Frontend")
+@allure.title("Ошибки валидации формы логина (Playwright)")
+@pytest.mark.parametrize("email, password, expected_error, scenario", [
+    ("bad-email", VALID_PASSWORD, "Wrong email format", "Невалидный email"),
+    (VALID_EMAIL, "", "Password is required", "Пустой пароль")
+])
+def test_pw_login_negative(page: Page, email, password, expected_error, scenario):
+    with allure.step(f"Сценарий: {scenario}"):
+        pw_login_page = PwLoginPage(page)
+        pw_login_page.open()
+
+        pw_login_page.fill_email(email)
+        pw_login_page.fill_password(password)
+        pw_login_page.remove_focus()
+
+        # Мощные ассерты Playwright в деле:
+        pw_login_page.check_error_message(expected_error)
+        pw_login_page.check_submit_button_disabled()
 
 ============================================================
 📄 FILE: .\tests\test_registration.py

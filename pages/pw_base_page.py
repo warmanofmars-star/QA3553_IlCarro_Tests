@@ -5,6 +5,8 @@ class PwBasePage:
     def __init__(self, page: Page):
         self.page = page
         self.base_url = "https://icarro-v1.netlify.app"
+        # Playwright работает в миллисекундах. Установим 10 секунд для всех проверок
+        self.expect_timeout = 10000
 
     @allure.step("Открытие URL: {path}")
     def open_url(self, path: str = ""):

@@ -13,7 +13,7 @@ class PwLoginPage(PwBasePage):
         self.email_input = page.locator("input[name='username']")
         self.password_input = page.locator("input[name='password']")
         self.submit_btn = page.locator("button[type='submit']")
-
+        self.error_message = page.locator(".error")
         # Используем мощный селектор "по роли", который Playwright понимает из коробки
         self.ok_btn = page.get_by_role("link", name="OK", exact=True)
         self.global_message = page.locator("h3")
@@ -53,3 +53,17 @@ class PwLoginPage(PwBasePage):
     @allure.step("Проверка, что кнопка Logout появилась")
     def check_logout_button_visible(self):
         expect(self.logout_btn).to_be_visible()
+
+    #for Playwright:
+    @allure.step("Проверка ошибки валидации: {expected_text}")
+    def check_error_message(self, expected_text: str):
+        # Playwright сам будет ждать, пока текст не совпадет!
+        expect(self.error_message).to_have_text(expected_text)
+
+    @allure.step("Проверка блокировки кнопки Submit")
+    def check_submit_button_disabled(self):
+        expect(self.submit_btn).to_be_disabled()
+
+    @allure.step("Снятие фокуса (клик по фону)")
+    def remove_focus(self):
+        self.page.locator("body").click()
