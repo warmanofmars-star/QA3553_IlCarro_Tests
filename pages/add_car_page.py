@@ -25,7 +25,7 @@ class AddCarPage(BasePage):
     PHOTO_INPUT = (By.ID, "photo-file")
     SUBMIT_BTN = (By.CSS_SELECTOR, "button[type='submit']")
 
-    GLOBAL_MESSAGE = (By.CSS_SELECTOR, "h3")
+    SUBMIT_ERROR_MESSAGE = (By.CSS_SELECTOR, "div.error[role='alert']")
 
     def open(self):
         self.open_url(self.ENDPOINT)
@@ -65,12 +65,19 @@ class AddCarPage(BasePage):
     def submit(self):
         self.click(self.SUBMIT_BTN)
 
-    @allure.step("Получение текста из модального окна")
-    def get_global_message_text(self):
-        return self.get_text(self.GLOBAL_MESSAGE)
+    @allure.step("Получение текста ошибки под формой")
+    def get_submit_error_text(self):
+        # Наш базовый get_text уже содержит умное ожидание,
+        # так что он сам дождется, пока сервер ответит и React отрендерит эту надпись
+        return self.get_text(self.SUBMIT_ERROR_MESSAGE)
 
     @allure.step("Проверка наличия скрытых ошибок валидации на форме")
     def get_form_errors(self):
         # Ищем все элементы с классом error и возвращаем их текст
         errors = self.driver.find_elements(By.CSS_SELECTOR, ".error")
         return [err.text for err in errors if err.text != ""]
+
+    @allure.step("Проверка сброса формы (ожидание успешного добавления)")
+    def is_form_cleared(self) -> bool:
+        # Просто просим базовый класс подождать, пока поле MAKE_INPUT станет пустым
+        return self.is_input_cleared(self.MAKE_INPUT)

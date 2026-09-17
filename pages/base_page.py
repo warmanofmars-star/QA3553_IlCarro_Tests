@@ -88,6 +88,20 @@ class BasePage:
             logger.error(f"Элемент {locator} не исчез в течение {self.DEFAULT_TIMEOUT} сек.")
             return False
 
+    @allure.step("Ожидание очистки значения в поле: {locator}")
+    def is_input_cleared(self, locator):
+        logger.info(f"Ждем очистки значения в поле: {locator}")
+        try:
+            # Используем наш системный DEFAULT_TIMEOUT (15 секунд)
+            WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
+                lambda d: d.find_element(*locator).get_attribute("value") == ""
+            )
+            return True
+        except TimeoutException:
+            logger.error(f"Поле {locator} не очистилось в течение {self.DEFAULT_TIMEOUT} сек.")
+            return False
+
+
     @allure.step("Снятие фокуса с элемента (клик по фону)")
     def remove_focus(self):
         logger.info("Кликаем по пустому месту (body) для снятия фокуса")
