@@ -1,0 +1,2 @@
+INFO     TEST:test_playwright_add_car.py:20 Playwright будет создавать машину: Car(city='Nazareth', make='Howard, Martinez and Lynn', model='So', year='2019', fuel='Diesel', gear='Manual', wd='FWD', doors='5', seats='2', car_class='Business', reg_number='PE-493-KX', price='771', about='Hand son season area loss.', photo_path=None)
+INFO     TEST:test_playwright_add_car.py:36 Машина с номером PE-493-KX успешно добавлена через Playwright!

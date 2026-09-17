@@ -1,0 +1,37 @@
+[94m18:21:29 - [2769] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/login[0m
+[94m18:21:30 - [2769] - INFO - Вводим текст 'warman.of.mars@gmail.com' в поле: ('css selector', "input[name='username']")[0m
+[94m18:21:30 - [2769] - INFO - Ищем элемент: ('css selector', "input[name='username']")[0m
+[94m18:21:30 - [2769] - INFO - Вводим текст '********' в поле: ('css selector', "input[name='password']")[0m
+[94m18:21:30 - [2769] - INFO - Ищем элемент: ('css selector', "input[name='password']")[0m
+[94m18:21:30 - [2769] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
+[94m18:21:30 - [2769] - INFO - Проверяем видимость элемента: ('css selector', 'button.navigation-link')[0m
+[94m18:21:31 - [2769] - INFO - --- ЗАПУСК ТЕСТА: Добавление премиального электрокара ---[0m
+[94m18:21:31 - [2769] - INFO - Сгенерированные данные: Car(city='Hadera', make='Brown-Gonzalez', model='Oil', year='2015', fuel='Electric', gear='Automatic', wd='RWD', doors='3', seats='3', car_class='Premium', reg_number='FX-729-ZF', price='982', about='Perhaps senior whether relate current of.', photo_path=None)[0m
+[94m18:21:31 - [2769] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/let-car-work[0m
+[94m18:21:31 - [2769] - INFO - Вводим текст 'Hadera' в поле: ('id', 'city')[0m
+[94m18:21:31 - [2769] - INFO - Ищем элемент: ('id', 'city')[0m
+[94m18:21:31 - [2769] - INFO - Кликаем по элементу: ('css selector', "[data-testid='city-option'][data-value='Hadera']")[0m
+[94m18:21:31 - [2769] - INFO - Вводим текст 'Brown-Gonzalez' в поле: ('css selector', "input[name='manufacture']")[0m
+[94m18:21:31 - [2769] - INFO - Ищем элемент: ('css selector', "input[name='manufacture']")[0m
+[94m18:21:31 - [2769] - INFO - Вводим текст 'Oil' в поле: ('css selector', "input[name='model']")[0m
+[94m18:21:31 - [2769] - INFO - Ищем элемент: ('css selector', "input[name='model']")[0m
+[94m18:21:31 - [2769] - INFO - Вводим текст '2015' в поле: ('css selector', "input[name='year']")[0m
+[94m18:21:31 - [2769] - INFO - Ищем элемент: ('css selector', "input[name='year']")[0m
+[94m18:21:32 - [2769] - INFO - Вводим текст '3' в поле: ('css selector', "input[name='doors']")[0m
+[94m18:21:32 - [2769] - INFO - Ищем элемент: ('css selector', "input[name='doors']")[0m
+[94m18:21:32 - [2769] - INFO - Вводим текст '3' в поле: ('css selector', "input[name='seats']")[0m
+[94m18:21:32 - [2769] - INFO - Ищем элемент: ('css selector', "input[name='seats']")[0m
+[94m18:21:32 - [2769] - INFO - Вводим текст 'Premium' в поле: ('css selector', "input[name='carClass']")[0m
+[94m18:21:32 - [2769] - INFO - Ищем элемент: ('css selector', "input[name='carClass']")[0m
+[94m18:21:32 - [2769] - INFO - Вводим текст 'FX-729-ZF' в поле: ('css selector', "input[name='serialNumber']")[0m
+[94m18:21:32 - [2769] - INFO - Ищем элемент: ('css selector', "input[name='serialNumber']")[0m
+[94m18:21:32 - [2769] - INFO - Вводим текст '982' в поле: ('css selector', "input[name='pricePerDay']")[0m
+[94m18:21:32 - [2769] - INFO - Ищем элемент: ('css selector', "input[name='pricePerDay']")[0m
+[94m18:21:32 - [2769] - INFO - Вводим текст 'Perhaps senior whether relate current of.' в поле: ('css selector', "textarea[name='about']")[0m
+[94m18:21:32 - [2769] - INFO - Ищем элемент: ('css selector', "textarea[name='about']")[0m
+[94m18:21:32 - [2769] - INFO - Ищем элемент: ('css selector', "select[name='fuel']")[0m
+[94m18:21:32 - [2769] - INFO - Ищем элемент: ('css selector', "select[name='gear']")[0m
+[94m18:21:32 - [2769] - INFO - Ищем элемент: ('css selector', "select[name='wheelsDrive']")[0m
+[94m18:21:32 - [2769] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
+[94m18:21:32 - [2769] - INFO - Ждем очистки значения в поле: ('css selector', "input[name='manufacture']")[0m
+[94m18:21:33 - [2769] - INFO - --- ТЕСТ УСПЕШНО ЗАВЕРШЕН ---[0m

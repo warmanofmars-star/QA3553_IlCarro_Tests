@@ -1,0 +1,13 @@
+[94m18:22:33 - [2769] - INFO - Переходим по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
+[94m18:22:33 - [2769] - INFO - Вводим текст 'Bnei Brak' в поле: ('id', 'city')[0m
+[94m18:22:33 - [2769] - INFO - Ищем элемент: ('id', 'city')[0m
+[94m18:22:33 - [2769] - INFO - Кликаем по элементу: ('css selector', "[data-testid='city-option'][data-value='Bnei Brak']")[0m
+[94m18:22:33 - [2769] - INFO - Кликаем по элементу: ('id', 'dates')[0m
+[94m18:22:33 - [2769] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='21']]")[0m
+[94m18:22:34 - [2769] - INFO - Кликаем по элементу: ('xpath', "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='24']]")[0m
+[94m18:22:34 - [2769] - INFO - Кликаем по элементу: ('id', 'city')[0m
+[94m18:22:34 - [2769] - INFO - Проверяем блокировку элемента: ('css selector', "button[type='submit']")[0m
+[94m18:22:34 - [2769] - INFO - Ищем элемент: ('css selector', "button[type='submit']")[0m
+[94m18:22:34 - [2769] - INFO - Кликаем по элементу: ('css selector', "button[type='submit']")[0m
+[94m18:22:34 - [2769] - INFO - Ждем обновления URL с параметрами поиска...[0m
+[94m18:22:35 - [2769] - INFO - Найдена машина: ID SN94331E5F, Honda 3 (2002) за $26.0/день[0m
