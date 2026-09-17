@@ -122,6 +122,12 @@ def authenticated_driver(driver):
 
     return driver
 
+def pytest_make_parametrize_id(val):
+    """
+    Хук Pytest: запрещает экранировать кириллицу в ID параметризованных тестов.
+    """
+    return str(val)
+
 ============================================================
 📄 FILE: .\merge_code.py
 ============================================================
@@ -615,7 +621,7 @@ class AddCarPage(BasePage):
     PHOTO_INPUT = (By.ID, "photo-file")
     SUBMIT_BTN = (By.CSS_SELECTOR, "button[type='submit']")
 
-    GLOBAL_MESSAGE = (By.CSS_SELECTOR, "h3")
+    SUBMIT_ERROR_MESSAGE = (By.CSS_SELECTOR, "div.error[role='alert']")
 
     def open(self):
         self.open_url(self.ENDPOINT)
@@ -655,15 +661,22 @@ class AddCarPage(BasePage):
     def submit(self):
         self.click(self.SUBMIT_BTN)
 
-    @allure.step("Получение текста из модального окна")
-    def get_global_message_text(self):
-        return self.get_text(self.GLOBAL_MESSAGE)
+    @allure.step("Получение текста ошибки под формой")
+    def get_submit_error_text(self):
+        # Наш базовый get_text уже содержит умное ожидание,
+        # так что он сам дождется, пока сервер ответит и React отрендерит эту надпись
+        return self.get_text(self.SUBMIT_ERROR_MESSAGE)
 
     @allure.step("Проверка наличия скрытых ошибок валидации на форме")
     def get_form_errors(self):
         # Ищем все элементы с классом error и возвращаем их текст
         errors = self.driver.find_elements(By.CSS_SELECTOR, ".error")
         return [err.text for err in errors if err.text != ""]
+
+    @allure.step("Проверка сброса формы (ожидание успешного добавления)")
+    def is_form_cleared(self) -> bool:
+        # Просто просим базовый класс подождать, пока поле MAKE_INPUT станет пустым
+        return self.is_input_cleared(self.MAKE_INPUT)
 
 ============================================================
 📄 FILE: .\pages\base_page.py
@@ -759,6 +772,20 @@ class BasePage:
             logger.error(f"Элемент {locator} не исчез в течение {self.DEFAULT_TIMEOUT} сек.")
             return False
 
+    @allure.step("Ожидание очистки значения в поле: {locator}")
+    def is_input_cleared(self, locator):
+        logger.info(f"Ждем очистки значения в поле: {locator}")
+        try:
+            # Используем наш системный DEFAULT_TIMEOUT (15 секунд)
+            WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
+                lambda d: d.find_element(*locator).get_attribute("value") == ""
+            )
+            return True
+        except TimeoutException:
+            logger.error(f"Поле {locator} не очистилось в течение {self.DEFAULT_TIMEOUT} сек.")
+            return False
+
+
     @allure.step("Снятие фокуса с элемента (клик по фону)")
     def remove_focus(self):
         logger.info("Кликаем по пустому месту (body) для снятия фокуса")
@@ -824,6 +851,155 @@ class LoginPage(BasePage):
     def get_global_message_text(self):
         """Читает текст из модального окна (успешный вход или ошибка бэкенда)"""
         return self.get_text(self.GLOBAL_MESSAGE)
+
+============================================================
+📄 FILE: .\pages\pw_add_car_page.py
+============================================================
+
+import allure
+from playwright.sync_api import Page, expect
+from pages.pw_base_page import PwBasePage
+
+
+class PwAddCarPage(PwBasePage):
+    def __init__(self, page: Page):
+        super().__init__(page)
+        self.endpoint = "/let-car-work"
+
+        # --- ЛОКАТОРЫ ---
+        self.city_input = page.locator("id=city")
+        self.city_option = page.locator("[data-testid='city-option']").first
+
+        self.make_input = page.locator("input[name='manufacture']")
+        self.model_input = page.locator("input[name='model']")
+        self.year_input = page.locator("input[name='year']")
+        self.doors_input = page.locator("input[name='doors']")
+        self.seats_input = page.locator("input[name='seats']")
+        self.class_input = page.locator("input[name='carClass']")
+
+        self.fuel_select = page.locator("select[name='fuel']")
+        self.gear_select = page.locator("select[name='gear']")
+        self.wd_select = page.locator("select[name='wheelsDrive']")
+
+        self.serial_input = page.locator("input[name='serialNumber']")
+        self.price_input = page.locator("input[name='pricePerDay']")
+        self.about_input = page.locator("textarea[name='about']")
+
+        self.submit_btn = page.locator("button[type='submit']")
+
+    # --- ДЕЙСТВИЯ ---
+    @allure.step("Открытие страницы добавления машины")
+    def open(self):
+        self.open_url(self.endpoint)
+
+    @allure.step("Заполнение формы добавления машины")
+    def fill_form(self, car):
+        self.city_input.fill(car.city)
+
+        # В Playwright можно сделать динамический локатор прямо на лету:
+        self.page.locator(f"[data-testid='city-option'][data-value='{car.city}']").click()
+
+        self.make_input.fill(car.make)
+        self.model_input.fill(car.model)
+        self.year_input.fill(str(car.year))
+        self.doors_input.fill(str(car.doors))
+        self.seats_input.fill(str(car.seats))
+        self.class_input.fill(car.car_class)
+
+        self.fuel_select.select_option(car.fuel)
+        self.gear_select.select_option(car.gear)
+        self.wd_select.select_option(car.wd)
+
+        self.serial_input.fill(car.reg_number)
+        self.price_input.fill(str(car.price))
+        self.about_input.fill(car.about)
+
+    @allure.step("Отправка формы")
+    def submit(self):
+        self.submit_btn.click()
+
+    # --- ПРОВЕРКИ ---
+    @allure.step("Проверка сброса формы (успешное добавление в БД)")
+    def check_form_cleared(self):
+        # Если поле очистилось, значит React принял ответ 200 OK от реального сервера
+        expect(self.make_input).to_be_empty(timeout=8000)
+
+============================================================
+📄 FILE: .\pages\pw_base_page.py
+============================================================
+
+import allure
+from playwright.sync_api import Page
+
+class PwBasePage:
+    def __init__(self, page: Page):
+        self.page = page
+        self.base_url = "https://icarro-v1.netlify.app"
+
+    @allure.step("Открытие URL: {path}")
+    def open_url(self, path: str = ""):
+        # Playwright сам дождется события 'load', нам не нужны неявные ожидания
+        self.page.goto(f"{self.base_url}{path}")
+
+============================================================
+📄 FILE: .\pages\pw_login_page.py
+============================================================
+
+import allure
+from playwright.sync_api import Page, expect
+from pages.pw_base_page import PwBasePage
+
+
+class PwLoginPage(PwBasePage):
+    def __init__(self, page: Page):
+        super().__init__(page)
+        self.endpoint = "/login"
+
+        # --- ЛОКАТОРЫ ---
+        # В Playwright мы сохраняем готовые объекты локаторов
+        self.email_input = page.locator("input[name='username']")
+        self.password_input = page.locator("input[name='password']")
+        self.submit_btn = page.locator("button[type='submit']")
+
+        # Используем мощный селектор "по роли", который Playwright понимает из коробки
+        self.ok_btn = page.get_by_role("link", name="OK", exact=True)
+        self.global_message = page.locator("h3")
+        self.logout_btn = page.locator("button.navigation-link")
+
+    # --- ДЕЙСТВИЯ ---
+    def open(self):
+        self.open_url(self.endpoint)
+
+    @allure.step("Ввод email")
+    def fill_email(self, email: str):
+        self.email_input.fill(email)
+
+    @allure.step("Ввод пароля")
+    def fill_password(self, password: str):
+        self.password_input.fill(password)
+
+    @allure.step("Клик по кнопке отправки")
+    def submit_login(self):
+        self.submit_btn.click()
+
+    def login(self, email, password):
+        self.fill_email(email)
+        self.fill_password(password)
+        self.submit_login()
+
+    # --- ПРОВЕРКИ ---
+    # Переносим магию expect() прямо внутрь Page Object
+    @allure.step("Проверка успешного сообщения об авторизации")
+    def check_success_message(self):
+        expect(self.global_message).to_have_text("You are logged in success")
+
+    @allure.step("Закрытие модального окна")
+    def click_ok_button(self):
+        self.ok_btn.click()
+
+    @allure.step("Проверка, что кнопка Logout появилась")
+    def check_logout_button_visible(self):
+        expect(self.logout_btn).to_be_visible()
 
 ============================================================
 📄 FILE: .\pages\registration_page.py
@@ -1105,7 +1281,6 @@ logger = get_logger("TEST")
 @allure.feature("Add Car Page (Let the car work)")
 @allure.story("Positive Add Car")
 @allure.severity(allure.severity_level.CRITICAL)
-@pytest.mark.xfail(reason="Баг окружения: Сервер отваливается по таймауту при создании машины через UI")
 @pytest.mark.parametrize("fuel_type, car_class, scenario", [
     ("Petrol", "Economy", "Добавление бензиновой машины эконом-класса"),
     ("Electric", "Premium", "Добавление премиального электрокара")
@@ -1131,11 +1306,57 @@ def test_add_car_success(authenticated_driver, fuel_type, car_class, scenario):
         # Нажимаем кнопку Y'alla!
         add_car_page.submit()
 
-        # Проверка: читаем текст из модального окна H3
-        actual_message = add_car_page.get_global_message_text()
-        assert "Car added" in actual_message, f"Машина не добавилась! Текст ошибки: {actual_message}"
+        # Проверка:
+        assert add_car_page.is_form_cleared() is True, "Форма не очистилась! Машина не добавлена."
 
         logger.info("--- ТЕСТ УСПЕШНО ЗАВЕРШЕН ---")
+
+
+@allure.epic("UI Testing")
+@allure.feature("Add Car Page (Let the car work)")
+@allure.story("Negative Add Car - Duplicate Serial Number")
+@allure.severity(allure.severity_level.CRITICAL)
+def test_add_car_duplicate(authenticated_driver, auth_api):
+    with allure.step("API PRECONDITION: Создаем машину через бэкенд"):
+        car = CarGenerator.get_random_car()
+        car_payload = {
+            "serialNumber": car.reg_number,
+            "manufacture": car.make,
+            "model": car.model,
+            "year": str(car.year),
+            "fuel": car.fuel,
+            "seats": int(car.seats),
+            "carClass": car.car_class,
+            "pricePerDay": float(car.price),
+            "about": car.about,
+            "city": car.city
+        }
+        response = auth_api.add_car(car_payload)
+        assert response.status_code == 200, "Пререквизит упал: не удалось создать машину через API"
+        logger.info(f"API успешно создал машину с номером: {car.reg_number}")
+
+    with allure.step("UI SCENARIO: Пытаемся добавить машину с тем же номером"):
+        add_car_page = AddCarPage(authenticated_driver)
+        add_car_page.open()
+
+        # Заполняем форму ТЕМИ ЖЕ сгенерированными данными (главное - тот же reg_number)
+        add_car_page.fill_city(car.city)
+        add_car_page.fill_text_fields(car)
+        add_car_page.fill_dropdowns(car)
+
+        add_car_page.submit()
+
+    with allure.step("UI ASSERT: Проверка обработки дубликата фронтендом"):
+        # 1. Проверяем появление правильного текста ошибки
+        error_text = add_car_page.get_submit_error_text()
+        logger.info(f"Фронтенд выдал ошибку: {error_text}")
+
+        assert error_text == "Failed to submit car", f"Ожидалась ошибка 'Failed to submit car', но получили '{error_text}'"
+
+        # 2. Проверяем, что форма НЕ очистилась (данные остались на месте)
+        # Обращаемся к элементу правильно, чтобы PyCharm не ругался!
+        current_make_value = add_car_page.find(add_car_page.MAKE_INPUT).get_attribute("value")
+        assert current_make_value == car.make, "Форма неожиданно очистилась после ошибки сервера!"
 
 ============================================================
 📄 FILE: .\tests\test_api_car.py
@@ -1564,41 +1785,74 @@ def test_login_negative_backend(driver, email, password, scenario):
         assert login_page.get_global_message_text() == "Login failed", "Неверный текст ошибки бэкенда"
 
 ============================================================
+📄 FILE: .\tests\test_playwright_add_car.py
+============================================================
+
+import os
+import allure
+from playwright.sync_api import Page
+from pages.pw_login_page import PwLoginPage
+from pages.pw_add_car_page import PwAddCarPage
+from data.data_generator import CarGenerator
+from utils.logger import get_logger
+
+VALID_EMAIL = os.getenv("USER_EMAIL")
+VALID_PASSWORD = os.getenv("USER_PASSWORD")
+logger = get_logger("TEST")
+
+@allure.epic("Playwright Testing")
+@allure.feature("Cars Management")
+@allure.story("Real E2E Car Addition")
+@allure.title("Реальное добавление машины (E2E Playwright)")
+def test_real_add_car_success(page: Page):
+    # Генерируем 100% случайную валидную машину (генератор сам позаботится об уникальности reg_number)
+    car = CarGenerator.get_random_car()
+    logger.info(f"Playwright будет создавать машину: {car}")
+
+    with allure.step("Авторизация"):
+        login_page = PwLoginPage(page)
+        login_page.open()
+        login_page.login(VALID_EMAIL, VALID_PASSWORD)
+        login_page.click_ok_button()
+
+    with allure.step("Переход на форму и отправка данных"):
+        add_car_page = PwAddCarPage(page)
+        add_car_page.open()
+        add_car_page.fill_form(car) # Передаем весь объект-датакласс!
+        add_car_page.submit()
+
+    with allure.step("Проверка через ожидание очистки формы"):
+        add_car_page.check_form_cleared()
+        logger.info(f"Машина с номером {car.reg_number} успешно добавлена через Playwright!")
+
+============================================================
 📄 FILE: .\tests\test_playwright_login.py
 ============================================================
 
 import os
 import allure
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Page
+from pages.pw_login_page import PwLoginPage
 
 VALID_EMAIL = os.getenv("USER_EMAIL")
 VALID_PASSWORD = os.getenv("USER_PASSWORD")
 
-
 @allure.epic("Playwright Testing")
 @allure.feature("Login")
-@allure.story("Positive Login")
-@allure.title("Успешная авторизация (Playwright версия)")
+@allure.story("Positive Login (POM)")
+@allure.title("Успешная авторизация (Playwright + POM)")
 def test_pw_login_success(page: Page):
-    with allure.step("1. Открытие страницы логина"):
-        # page.goto сам дождется, пока страница полностью загрузится
-        page.goto("https://icarro-v1.netlify.app/login")
+    # Инициализируем наш новый Page Object
+    pw_login_page = PwLoginPage(page)
 
-    with allure.step("2. Ввод учетных данных и отправка формы"):
-        # Playwright сам ждет, пока поля появятся и станут интерактивными!
-        # Пароль нигде в Allure не логируется, всё безопасно.
-        page.locator("input[name='username']").fill(VALID_EMAIL)
-        page.locator("input[name='password']").fill(VALID_PASSWORD)
-        page.locator("button[type='submit']").click()
+    # 1. Открываем страницу и логинимся
+    pw_login_page.open()
+    pw_login_page.login(VALID_EMAIL, VALID_PASSWORD)
 
-    with allure.step("3. Проверка успешной авторизации"):
-        # Умный expect() будет опрашивать DOM, пока не появится нужный текст
-        expect(page.locator("h3")).to_have_text("You are logged in success")
-
-        page.get_by_role("link", name="OK", exact=True).click()
-
-        # Ждем появления кнопки Logout
-        expect(page.locator("button.navigation-link")).to_be_visible()
+    # 2. Проверяем результаты
+    pw_login_page.check_success_message()
+    pw_login_page.click_ok_button()
+    pw_login_page.check_logout_button_visible()
 
 ============================================================
 📄 FILE: .\tests\test_registration.py
