@@ -987,9 +987,11 @@ class PwLoginPage(PwBasePage):
     def fill_email(self, email: str):
         self.email_input.fill(email)
 
-    @allure.step("Ввод пароля")
+    #@allure.step("Ввод пароля")
     def fill_password(self, password: str):
-        self.password_input.fill(password)
+        # ИСПОЛЬЗУЕМ КОНТЕКСТНЫЙ МЕНЕДЖЕР ВНУТРИ
+        with allure.step("Ввод пароля: ********"):
+            self.password_input.fill(password)
 
     @allure.step("Клик по кнопке отправки")
     def submit_login(self):
@@ -1770,18 +1772,21 @@ def test_login_success(driver):
 @allure.feature("Login Page")
 @allure.story("Negative Login - Frontend Validation")
 @allure.severity(allure.severity_level.NORMAL)
-@pytest.mark.parametrize("email, password, expected_error, scenario", [
-    ("123", VALID_PASSWORD, "Wrong email format", "Невалидный формат email"),
-    (VALID_EMAIL, "", "Password is required", "Пустой пароль")
+@pytest.mark.parametrize("email, pass_condition, expected_error, scenario", [
+    ("123", "valid", "Wrong email format", "Невалидный формат email"),
+    (VALID_EMAIL, "empty", "Password is required", "Пустой пароль")
 ])
-def test_login_negative_frontend(driver, email, password, expected_error, scenario):
-    """Проверка ошибок, которые отлавливаются на стороне браузера (без отправки на сервер)"""
+def test_login_negative_frontend(driver, email, pass_condition, expected_error, scenario):
     with allure.step(f"Сценарий: {scenario}"):
         login_page = LoginPage(driver)
         login_page.open()
 
+        # БЕЗОПАСНАЯ ЛОГИКА: Достаем реальный пароль только внутри функции!
+        actual_password = VALID_PASSWORD if pass_condition == "valid" else ""
+
         login_page.fill_email(email)
-        login_page.fill_password(password)
+        # В метод уйдет реальный пароль, но Allure увидит в параметрах только слово "valid"
+        login_page.fill_password(actual_password)
         login_page.remove_focus()
 
         assert login_page.get_error_message_text() == expected_error, f"Ожидалась ошибка: {expected_error}"
@@ -1795,20 +1800,25 @@ def test_login_negative_frontend(driver, email, password, expected_error, scenar
 @allure.feature("Login Page")
 @allure.story("Negative Login - Backend Validation")
 @allure.severity(allure.severity_level.CRITICAL)
-@pytest.mark.parametrize("email, password, scenario", [
-    ("fake_user_12345@gmail.com", VALID_PASSWORD, "Несуществующий пользователь"),
-    (VALID_EMAIL, "WrongPassword123!", "Неверный пароль")
+@pytest.mark.parametrize("email_condition, pass_condition, scenario", [
+    # Вместо реальных данных из .env передаем текстовые флаги
+    ("fake_user_12345@gmail.com", "valid_pass", "Несуществующий пользователь"),
+    ("valid_email", "WrongPassword123!", "Неверный пароль")
 ])
-def test_login_negative_backend(driver, email, password, scenario):
+def test_login_negative_backend(driver, email_condition, pass_condition, scenario):
     """Проверка ошибок, которые возвращает сервер после попытки авторизации"""
     with allure.step(f"Сценарий: {scenario}"):
         login_page = LoginPage(driver)
         login_page.open()
 
-        # Здесь мы отправляем форму полностью
-        login_page.login(email, password)
+        # БЕЗОПАСНАЯ ЛОГИКА: Расшифровываем флаги внутри теста
+        actual_email = VALID_EMAIL if email_condition == "valid_email" else email_condition
+        actual_password = VALID_PASSWORD if pass_condition == "valid_pass" else pass_condition
 
-        # Ожидаем глобальное сообщение об ошибке (оно одинаковое для обоих сценариев)
+        # Отправляем форму (в браузер уходят реальные креды, а в отчет Allure - только слова из параметризации)
+        login_page.login(actual_email, actual_password)
+
+        # Ожидаем глобальное сообщение об ошибке
         assert login_page.get_global_message_text() == "Login failed", "Неверный текст ошибки бэкенда"
 
 ============================================================
