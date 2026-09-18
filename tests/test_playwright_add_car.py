@@ -36,9 +36,9 @@ def test_real_add_car_success(page: Page):
         logger.info(f"Машина с номером {car.reg_number} успешно добавлена через Playwright!")
 
 
-@allure.epic("Playwright Testing")
-@allure.feature("Cars Management")
-@allure.story("Negative Add Car - Duplicate")
+@allure.epic("Hybrid Testing")
+@allure.feature("Playwright: Cars Management")
+@allure.story("API Setup -> UI Duplicate Check (Negative)")
 @allure.title("Создание дубликата машины (Playwright + API)")
 def test_pw_add_car_duplicate(page: Page, auth_api):
     car = CarGenerator.get_random_car()
