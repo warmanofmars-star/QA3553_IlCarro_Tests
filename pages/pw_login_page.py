@@ -27,9 +27,11 @@ class PwLoginPage(PwBasePage):
     def fill_email(self, email: str):
         self.email_input.fill(email)
 
-    @allure.step("Ввод пароля")
+    #@allure.step("Ввод пароля")
     def fill_password(self, password: str):
-        self.password_input.fill(password)
+        # ИСПОЛЬЗУЕМ КОНТЕКСТНЫЙ МЕНЕДЖЕР ВНУТРИ
+        with allure.step("Ввод пароля: ********"):
+            self.password_input.fill(password)
 
     @allure.step("Клик по кнопке отправки")
     def submit_login(self):
