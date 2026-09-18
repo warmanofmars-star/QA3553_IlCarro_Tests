@@ -5,6 +5,8 @@ from selenium import webdriver
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from dotenv import load_dotenv
+from selenium.webdriver.support.events import EventFiringWebDriver
+from utils.listener import IlCarroListener
 
 # Загружаем переменные из .env
 load_dotenv()
@@ -50,8 +52,12 @@ def driver():
             driver_instance.maximize_window()
 
     driver_instance.implicitly_wait(5)
-    yield driver_instance
-    driver_instance.quit()
+
+    # === НАДЕВАЕМ ШПИОНА НА ДРАЙВЕР ПЕРЕД ВЫДАЧЕЙ ===
+    decorated_driver = EventFiringWebDriver(driver_instance, IlCarroListener())
+
+    yield decorated_driver
+    decorated_driver.quit()
 
 
 # --- АВТОМАТИЧЕСКИЕ СКРИНШОТЫ ПРИ ПАДЕНИИ ---
