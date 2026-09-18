@@ -1,2 +1,0 @@
-[94m18:22:09 - [2769] - INFO - Playwright будет создавать машину: Car(city='Nazareth', make='Howard, Martinez and Lynn', model='So', year='2019', fuel='Diesel', gear='Manual', wd='FWD', doors='5', seats='2', car_class='Business', reg_number='PE-493-KX', price='771', about='Hand son season area loss.', photo_path=None)[0m
-[94m18:22:12 - [2769] - INFO - Машина с номером PE-493-KX успешно добавлена через Playwright![0m
