@@ -1,0 +1,13 @@
+INFO     UI:listener.py:10 Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+INFO     UI:listener.py:13 Поиск элемента -> By: id, Value: 'city'
+INFO     UI:listener.py:36 Ввод данных в поле формы...
+INFO     UI:listener.py:36 Ввод данных в поле формы...
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: '[data-testid='city-option'][data-value='Nazareth']'
+INFO     UI:listener.py:30 Клик по элементу <div> с текстом: 'Nazareth'
+INFO     UI:listener.py:13 Поиск элемента -> By: id, Value: 'dates'
+INFO     UI:listener.py:30 Клик по элементу <input> с текстом: ''
+INFO     UI:listener.py:13 Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='30']]'
+INFO     UI:listener.py:30 Клик по элементу <button> с текстом: '30'
+INFO     UI:listener.py:13 Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='6']]'
+INFO     UI:listener.py:13 Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='6']]'
+INFO     UI:listener.py:13 Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='6']]'

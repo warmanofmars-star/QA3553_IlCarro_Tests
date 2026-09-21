@@ -1,0 +1,8 @@
+[32;20m[2026-09-21 13:51:41] [INFO] [UI] - Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
+[32;20m[2026-09-21 13:51:41] [INFO] [UI] - Поиск элемента -> By: id, Value: 'dates'[0m
+[32;20m[2026-09-21 13:51:42] [INFO] [UI] - Клик по элементу <input> с текстом: ''[0m
+[32;20m[2026-09-21 13:51:42] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '.daterange-popover'[0m
+[32;20m[2026-09-21 13:51:42] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '.rdrDayToday'[0m
+[32;20m[2026-09-21 13:51:42] [INFO] [UI] - Поиск элемента -> By: id, Value: 'city'[0m
+[32;20m[2026-09-21 13:51:42] [INFO] [UI] - Клик по элементу <input> с текстом: ''[0m
+[32;20m[2026-09-21 13:51:42] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '.daterange-popover'[0m

@@ -1,0 +1,2 @@
+INFO     TEST:test_playwright_add_car.py:20 Playwright будет создавать машину: Car(city='Jerusalem', make='Wilkinson, Brooks and Haas', model='Property', year='2020', fuel='Hybrid', gear='Automatic', wd='AWD', doors='3', seats='5', car_class='Premium', reg_number='AH-459-PN', price='306', about='Player feel process those.', photo_path=None)
+INFO     TEST:test_playwright_add_car.py:36 Машина с номером AH-459-PN успешно добавлена через Playwright!

@@ -1,2 +1,0 @@
-INFO     TEST:test_playwright_add_car.py:20 Playwright будет создавать машину: Car(city='Sderot', make='Miles-Chavez', model='Weight', year='2016', fuel='Hybrid', gear='Manual', wd='AWD', doors='5', seats='2', car_class='Premium', reg_number='TD-391-YZ', price='887', about='Occur pressure close magazine fine night break.', photo_path=None)
-INFO     TEST:test_playwright_add_car.py:36 Машина с номером TD-391-YZ успешно добавлена через Playwright!
