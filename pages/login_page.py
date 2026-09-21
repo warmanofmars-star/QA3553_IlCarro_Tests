@@ -17,7 +17,8 @@ class LoginPage(BasePage):
     # Универсальные локаторы сообщений (без хардкода текста)
     PAGE_TITLE = (By.CSS_SELECTOR, "h1.title")
     ERROR_MESSAGE = (By.CSS_SELECTOR, ".error")  # Текст ошибки под полем ввода
-    GLOBAL_MESSAGE = (By.CSS_SELECTOR, "h3")  # Текст в модальном окне (успех/фейл)
+    GLOBAL_MESSAGE = (By.CSS_SELECTOR, "h3")  # Текст в модальном окне (заголовок)
+    GLOBAL_MESSAGE_DETAILS = (By.CSS_SELECTOR, "p")  # Детали ошибки (текст под заголовком)
 
     # --- ДЕЙСТВИЯ ---
     def open(self):
@@ -54,3 +55,7 @@ class LoginPage(BasePage):
     def get_global_message_text(self):
         """Читает текст из модального окна (успешный вход или ошибка бэкенда)"""
         return self.get_text(self.GLOBAL_MESSAGE)
+
+    def get_global_message_details_text(self):
+        """Читает детальный текст ошибки из модального окна"""
+        return self.get_text(self.GLOBAL_MESSAGE_DETAILS)

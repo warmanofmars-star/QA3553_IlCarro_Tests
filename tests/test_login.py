@@ -59,23 +59,29 @@ def test_login_negative_frontend(driver, email, pass_condition, expected_error, 
 @allure.feature("Login Page")
 @allure.story("Negative Login - Backend Validation")
 @allure.severity(allure.severity_level.CRITICAL)
-@pytest.mark.parametrize("email_condition, pass_condition, scenario", [
-    # Вместо реальных данных из .env передаем текстовые флаги
-    ("fake_user_12345@gmail.com", "valid_pass", "Несуществующий пользователь"),
-    ("valid_email", "WrongPassword123!", "Неверный пароль")
+@pytest.mark.parametrize("email_condition, pass_condition, expected_details, scenario", [
+    ("fake_user_12345@gmail.com", "valid_pass", "Login or Password incorrect", "Несуществующий пользователь"),
+    ("valid_email", "WrongPassword123!", "Login or Password incorrect", "Неверный пароль")
 ])
-def test_login_negative_backend(driver, email_condition, pass_condition, scenario):
+def test_login_negative_backend(driver, email_condition, pass_condition, expected_details, scenario):
     """Проверка ошибок, которые возвращает сервер после попытки авторизации"""
     with allure.step(f"Сценарий: {scenario}"):
         login_page = LoginPage(driver)
         login_page.open()
 
-        # БЕЗОПАСНАЯ ЛОГИКА: Расшифровываем флаги внутри теста
         actual_email = VALID_EMAIL if email_condition == "valid_email" else email_condition
         actual_password = VALID_PASSWORD if pass_condition == "valid_pass" else pass_condition
 
-        # Отправляем форму (в браузер уходят реальные креды, а в отчет Allure - только слова из параметризации)
         login_page.login(actual_email, actual_password)
 
-        # Ожидаем глобальное сообщение об ошибке
-        assert login_page.get_global_message_text() == "Login failed", "Неверный текст ошибки бэкенда"
+        # 1. Ожидаем глобальное сообщение об ошибке (Заголовок)
+        assert login_page.get_global_message_text() == "Login failed", "Неверный заголовок ошибки бэкенда"
+
+        # 2. ПРОВЕРКА ДИНАМИЧЕСКОГО БАГА ФРОНТЕНДА
+        actual_details = login_page.get_global_message_details_text()
+
+        if "[object Object]" in actual_details:
+            pytest.xfail("ПЛАВАЮЩИЙ БАГ ФРОНТЕНДА: React не успел распарсить JSON и вывел [object Object]")
+        else:
+            assert expected_details in actual_details, \
+                f"Ожидали текст '{expected_details}', а получили '{actual_details}'"

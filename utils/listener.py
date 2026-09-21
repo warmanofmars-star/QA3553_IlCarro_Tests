@@ -14,9 +14,21 @@ class IlCarroListener(AbstractEventListener):
 
     def before_click(self, element, driver):
         try:
-            element_text = element.text
             tag_name = element.tag_name
-            self.logger.info(f"Клик по элементу <{tag_name}> с текстом: '{element_text}'")
+
+            # 1. Запрещаем собирать текст с глобальных контейнеров
+            if tag_name.lower() in ['body', 'html', 'form']:
+                self.logger.info(f"Клик по фону <{tag_name}> (снятие фокуса/сабмит)")
+            else:
+                # 2. Вычитываем текст и убираем переносы строк для красоты лога
+                element_text = element.text.replace('\n', ' ').strip()
+
+                # 3. Защита от спама: обрезаем текст длиннее 50 символов
+                if len(element_text) > 50:
+                    element_text = element_text[:47] + "..."
+
+                self.logger.info(f"Клик по элементу <{tag_name}> с текстом: '{element_text}'")
+
         except WebDriverException:
             self.logger.info("Клик по элементу (текст недоступен)")
 

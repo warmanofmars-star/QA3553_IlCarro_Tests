@@ -84,7 +84,7 @@ def test_registration_existing_user(driver):
     with allure.step("Сценарий: Регистрация уже существующего пользователя"):
         registration_page = RegistrationPage(driver)
 
-        # Подсовываем данные юзера, который 100% есть в базе (мы же под ним логинимся)
+        # Подсовываем данные юзера, который 100% есть в базе
         user = UserGenerator.get_random_user(email=VALID_EMAIL, password=VALID_PASSWORD)
 
         registration_page.open_registration_form()
@@ -93,9 +93,20 @@ def test_registration_existing_user(driver):
 
         registration_page.submit_registration()
 
-        # Проверяем ответ от бэкенда
+        # 1. Проверяем заголовок модалки
         assert registration_page.confirmation_text() == "Registration failed", "Бэкенд не отбил регистрацию существующего юзера!"
 
+        # 2. ПРОВЕРКА ДИНАМИЧЕСКОГО БАГА ФРОНТЕНДА
+        actual_error_details = registration_page.confirmation_text_1()
+
+        if "[object Object]" in actual_error_details:
+            # Если словили состояние гонки - прерываем тест, помечаем желтым (XFAIL)
+            # Пайплайн останется зеленым, но баг будет зафиксирован в Allure
+            pytest.xfail("ПЛАВАЮЩИЙ БАГ ФРОНТЕНДА: React не успел распарсить JSON и вывел [object Object]")
+        else:
+            # Если модалка отрендерилась нормально (как при ручном вводе) - проверяем бизнес-логику
+            assert "User already exists" in actual_error_details, \
+                f"Ожидали текст 'User already exists', а получили '{actual_error_details}'"
 
 # --- НЕГАТИВНЫЙ ТЕСТ: ЧЕКБОКС (Отдельный флоу) ---
 @allure.epic("UI Testing")
