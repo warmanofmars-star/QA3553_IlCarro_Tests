@@ -1,0 +1,2 @@
+INFO     TEST:test_playwright_add_car.py:20 Playwright будет создавать машину: Car(city='Eilat', make='Spencer-Simmons', model='Into', year='2019', fuel='Petrol', gear='Automatic', wd='AWD', doors='2', seats='5', car_class='Premium', reg_number='SV-498-UN', price='338', about='Though beat phone.', photo_path=None)
+INFO     TEST:test_playwright_add_car.py:36 Машина с номером SV-498-UN успешно добавлена через Playwright!
