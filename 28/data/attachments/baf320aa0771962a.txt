@@ -1,0 +1,2 @@
+INFO     TEST:test_playwright_add_car.py:20 Playwright будет создавать машину: Car(city='Bat Yam', make='Whitney Inc', model='Medical', year='2022', fuel='Diesel', gear='Manual', wd='RWD', doors='4', seats='7', car_class='Economy', reg_number='UX-314-XA', price='920', about='Again study doctor rise.', photo_path=None)
+INFO     TEST:test_playwright_add_car.py:36 Машина с номером UX-314-XA успешно добавлена через Playwright!
