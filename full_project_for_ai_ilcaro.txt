@@ -1317,7 +1317,7 @@ class SearchPage(BasePage):
     @staticmethod
     def get_day_locator(day):
         xpath = f"//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='{day}']]"
-        return (By.XPATH, xpath)
+        return By.XPATH, xpath
 
     def open(self):
         self.open_url(self.ENDPOINT)
@@ -1348,19 +1348,27 @@ class SearchPage(BasePage):
     def select_date_range(self, start_date, end_date):
         self.click_dates_input()
 
-        # Умная логика: если месяц начала поездки больше текущего, перелистываем календарь
         current_month = datetime.now().month
-        target_month = start_date.month
 
-        # Вычисляем, сколько раз нужно нажать "вперед"
-        months_diff = target_month - current_month
-        if months_diff > 0:
-            for _ in range(months_diff):
+        # --- 1. ПЕРЕХОД К МЕСЯЦУ НАЧАЛА ПОЕЗДКИ ---
+        start_months_diff = start_date.month - current_month
+        if start_months_diff > 0:
+            for _ in range(start_months_diff):
                 self.click_next_month()
 
-        # Кликаем по дням
+        # Кликаем дату начала
         self.click(self.get_day_locator(start_date.day))
+
+        # --- 2. ПЕРЕХОД К МЕСЯЦУ КОНЦА ПОЕЗДКИ ---
+        # Проверяем, не выпала ли конечная дата на следующий месяц
+        end_months_diff = end_date.month - start_date.month
+        if end_months_diff > 0:
+            for _ in range(end_months_diff):
+                self.click_next_month()
+
+        # Теперь безопасно кликаем дату конца, так как нужный месяц 100% на экране
         self.click(self.get_day_locator(end_date.day))
+
 
     @allure.step("Ожидание смены месяца (завершение анимации)")
     def wait_for_month_to_change(self, old_month):
