@@ -1,0 +1,2 @@
+INFO     TEST:test_playwright_add_car.py:20 Playwright будет создавать машину: Car(city='Haifa', make='Sanders, Ford and Gonzalez', model='Manage', year='2019', fuel='Hybrid', gear='Automatic', wd='FWD', doors='4', seats='5', car_class='Premium', reg_number='HJ-063-BC', price='116', about='Someone believe first contain.', photo_path=None)
+INFO     TEST:test_playwright_add_car.py:36 Машина с номером HJ-063-BC успешно добавлена через Playwright!

@@ -1,0 +1,2 @@
+[32;20m[2026-09-21 14:26:40] [INFO] [TEST] - Playwright будет создавать машину: Car(city='Haifa', make='Sanders, Ford and Gonzalez', model='Manage', year='2019', fuel='Hybrid', gear='Automatic', wd='FWD', doors='4', seats='5', car_class='Premium', reg_number='HJ-063-BC', price='116', about='Someone believe first contain.', photo_path=None)[0m
+[32;20m[2026-09-21 14:26:42] [INFO] [TEST] - Машина с номером HJ-063-BC успешно добавлена через Playwright![0m

@@ -1,0 +1,22 @@
+INFO     UI:listener.py:10 Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+INFO     UI:listener.py:13 Поиск элемента -> By: id, Value: 'city'
+INFO     UI:listener.py:36 Ввод данных в поле формы...
+INFO     UI:listener.py:36 Ввод данных в поле формы...
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: '[data-testid='city-option'][data-value='Ashdod']'
+INFO     UI:listener.py:30 Клик по элементу <div> с текстом: 'Ashdod'
+INFO     UI:listener.py:13 Поиск элемента -> By: id, Value: 'dates'
+INFO     UI:listener.py:30 Клик по элементу <input> с текстом: ''
+INFO     UI:listener.py:13 Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='22']]'
+INFO     UI:listener.py:30 Клик по элементу <button> с текстом: '22'
+INFO     UI:listener.py:13 Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='26']]'
+INFO     UI:listener.py:30 Клик по элементу <button> с текстом: '26'
+INFO     UI:listener.py:13 Поиск элемента -> By: id, Value: 'city'
+INFO     UI:listener.py:30 Клик по элементу <input> с текстом: ''
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: 'button[type='submit']'
+INFO     UI:listener.py:30 Клик по элементу <button> с текстом: 'Yalla!'
+INFO     IlCarro:results_page.py:19 Ждем обновления URL с параметрами поиска...
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: 'a.car-container'
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: 'a.car-container'
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: '.details-card > div > div:first-child'
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: '.car-price-value'
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: '.car-img-container'

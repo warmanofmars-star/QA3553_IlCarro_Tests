@@ -1,0 +1,2 @@
+[32;20m[2026-09-21 14:27:03] [INFO] [UI] - Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
+[32;20m[2026-09-21 14:27:03] [INFO] [UI] - Поиск элемента -> By: id, Value: 'dates'[0m
