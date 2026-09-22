@@ -1,4 +1,5 @@
 import allure
+import os
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -13,8 +14,9 @@ logger = get_logger()
 
 
 class BasePage:
-    BASE_URL = "https://icarro-v1.netlify.app"
-    DEFAULT_TIMEOUT = 15  # Увеличили с 5 до 15 секунд специально для медленных CI-серверов
+    # Берем ссылку из .env, а если ее там нет — используем дефолтную
+    BASE_URL = os.getenv("UI_BASE_URL", "https://icarro-v1.netlify.app")
+    DEFAULT_TIMEOUT = 15
 
     def __init__(self, driver):
         self.driver = driver

@@ -9,6 +9,8 @@ USER_EMAIL=warman.of.mars@gmail.com
 USER_PASSWORD=z2I8A@U!Hl3T2&@h
 ENABLE_CONSOLE_LOGS=true
 PW_TIMEOUT=10000
+UI_BASE_URL=https://icarro-v1.netlify.app
+API_BASE_URL=https://ilcarro-backend.herokuapp.com
 
 ============================================================
 📄 FILE: .\conftest.py
@@ -869,6 +871,7 @@ class AddCarPage(BasePage):
 ============================================================
 
 import allure
+import os
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -883,8 +886,9 @@ logger = get_logger()
 
 
 class BasePage:
-    BASE_URL = "https://icarro-v1.netlify.app"
-    DEFAULT_TIMEOUT = 15  # Увеличили с 5 до 15 секунд специально для медленных CI-серверов
+    # Берем ссылку из .env, а если ее там нет — используем дефолтную
+    BASE_URL = os.getenv("UI_BASE_URL", "https://icarro-v1.netlify.app")
+    DEFAULT_TIMEOUT = 15
 
     def __init__(self, driver):
         self.driver = driver
@@ -1128,7 +1132,7 @@ from playwright.sync_api import Page
 class PwBasePage:
     def __init__(self, page: Page):
         self.page = page
-        self.base_url = "https://icarro-v1.netlify.app"
+        self.base_url = os.getenv("UI_BASE_URL", "https://icarro-v1.netlify.app")
         # Читаем таймаут из .env (по умолчанию 10000 мс, если переменной нет)
         pw_timeout = os.getenv("PW_TIMEOUT", "10000")
         self.expect_timeout = int(pw_timeout)
