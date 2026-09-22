@@ -1,8 +1,14 @@
 import allure
 import datetime
 
+import pytest
+
 from api.car_api import IlCarroAPI
 from data.data_generator import CarGenerator
+
+from jsonschema import validate
+from jsonschema.exceptions import ValidationError
+from schemas.car_schemas import GET_CARS_RESPONSE_SCHEMA
 
 @allure.epic("API Testing")
 @allure.feature("Car Controller")
@@ -59,6 +65,16 @@ def test_api_car_lifecycle(auth_api):
     with allure.step("2. Проверяем, что машина появилась в списке 'My Cars'"):
         response_get = auth_api.get_my_cars()
         assert response_get.status_code == 200, "Ошибка получения списка машин"
+
+        response_json = response_get.json()
+
+        # МАГИЯ ЗДЕСЬ: Валидируем всю структуру ответа одной строчкой!
+        try:
+            validate(instance=response_json, schema=GET_CARS_RESPONSE_SCHEMA)
+        except ValidationError as e:
+            pytest.fail(f"Бэкенд вернул невалидную структуру JSON!\nОшибка: {e.message}")
+
+        # Старая бизнес-проверка (остается на месте)
         cars_list = response_get.json().get("cars", [])
         serial_numbers_in_db = [car.get("serialNumber") for car in cars_list]
         assert serial_number in serial_numbers_in_db, f"Машина с номером {serial_number} не найдена в базе!"

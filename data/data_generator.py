@@ -5,6 +5,9 @@ from faker import Faker
 from models.user import User
 from api.car_api import IlCarroAPI
 from models.car import Car
+from utils.logger import get_logger
+
+logger = get_logger("DATA")
 
 # Инициализируем Faker один раз
 fake = Faker('en_US')
@@ -80,8 +83,9 @@ class SearchDataGenerator:
                 if safe_cities:
                     return random.choice(safe_cities)
         except Exception as e:
-            print(f"Не удалось получить города из API. Ошибка: {e}")
+            logger.error(f"Не удалось получить города из API. Ошибка: {e}") # <-- Заменили print
 
+        logger.warning(f"Используем fallback-города: {cls.FALLBACK_CITIES}")  # <-- Добавили логирование fallback'а
         return random.choice(cls.FALLBACK_CITIES)
 
     @staticmethod

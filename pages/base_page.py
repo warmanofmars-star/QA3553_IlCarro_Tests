@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.remote.webelement import WebElement
 
 # Импортируем наш инженерный логгер
 from utils.logger import get_logger
@@ -24,13 +25,13 @@ class BasePage:
         self.driver.get(full_url)
 
     @allure.step("Поиск элемента: {locator}")
-    def find(self, locator):
+    def find(self, locator: tuple[str, str]) -> WebElement:
         return WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
             EC.presence_of_element_located(locator)
         )
 
     @allure.step("Клик по элементу: {locator}")
-    def click(self, locator):
+    def click(self, locator: tuple[str, str]) -> None:
         element = WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
             EC.element_to_be_clickable(locator)
         )

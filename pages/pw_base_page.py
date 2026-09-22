@@ -1,3 +1,4 @@
+import os
 import allure
 from playwright.sync_api import Page
 
@@ -5,8 +6,9 @@ class PwBasePage:
     def __init__(self, page: Page):
         self.page = page
         self.base_url = "https://icarro-v1.netlify.app"
-        # Playwright работает в миллисекундах. Установим 10 секунд для всех проверок
-        self.expect_timeout = 10000
+        # Читаем таймаут из .env (по умолчанию 10000 мс, если переменной нет)
+        pw_timeout = os.getenv("PW_TIMEOUT", "10000")
+        self.expect_timeout = int(pw_timeout)
 
     @allure.step("Открытие URL: {path}")
     def open_url(self, path: str = ""):

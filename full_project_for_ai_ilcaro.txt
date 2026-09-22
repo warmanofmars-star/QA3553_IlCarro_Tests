@@ -8,6 +8,7 @@ HEADLESS_MODE=true
 USER_EMAIL=warman.of.mars@gmail.com
 USER_PASSWORD=z2I8A@U!Hl3T2&@h
 ENABLE_CONSOLE_LOGS=true
+PW_TIMEOUT=10000
 
 ============================================================
 📄 FILE: .\conftest.py
@@ -438,6 +439,10 @@ jobs:
 import requests
 import os
 import allure
+from utils.logger import get_logger
+
+# 2. Создаем отдельный канал логирования для API
+logger = get_logger("API")
 
 
 class IlCarroAPI:
@@ -450,6 +455,10 @@ class IlCarroAPI:
         # Перенесли шаг внутрь. Переменную password нигде не выводим!
         with allure.step(f"API: Авторизация пользователя {username}"):
             url = f"{self.BASE_URL}/v1/user/login/usernamepassword"
+
+            # 3. Фиксируем отправку запроса (без пароля!)
+            logger.info(f"POST {url} [User: {username}]")
+
             payload = {
                 "username": username,
                 "password": password
@@ -458,12 +467,18 @@ class IlCarroAPI:
 
             if response.status_code == 200:
                 self.token = response.json().get("accessToken")
-
+                logger.info("Авторизация успешна (Token получен)")
+            else:
+                logger.error(f"Ошибка авторизации: {response.status_code} - {response.text}")
             return response
 
     @allure.step("API: Добавление новой машины")
     def add_car(self, car_payload):
         url = f"{self.BASE_URL}/v1/cars"
+
+        # Вытаскиваем серийный номер из пейлоада для красивого лога
+        serial = car_payload.get('serialNumber', 'UNKNOWN')
+        logger.info(f"POST {url} [Создание машины: {serial}]")
 
         # Сваггер требует передавать токен в заголовке Authorization (Bearer Authentication)
         headers = {
@@ -471,38 +486,72 @@ class IlCarroAPI:
         }
 
         response = requests.post(url, json=car_payload, headers=headers)
+
+        # Добавили ветвление успеха и ошибки
+        if response.status_code == 200:
+            logger.info(f"Машина {serial} успешно создана в БД")
+        else:
+            logger.error(f"Ошибка создания машины {serial}: {response.status_code} - {response.text}")
+
         return response
 
     @allure.step("API: Получение списка своих машин")
     def get_my_cars(self):
         url = f"{self.BASE_URL}/v1/cars/my"
+        logger.info(f"GET {url} [Запрос списка своих машин]")
+
         headers = {
             "Authorization": f"Bearer {self.token}"
         }
-        return requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers)
+
+        if response.status_code != 200:
+            logger.error(f"Ошибка получения списка машин: {response.status_code} - {response.text}")
+
+        return response
 
     @allure.step("API: Удаление машины по серийному номеру {serial_number}")
     def delete_car(self, serial_number):
         url = f"{self.BASE_URL}/v1/cars/{serial_number}"
+        logger.info(f"DELETE {url} [Удаление машины: {serial_number}]")
+
         headers = {
             "Authorization": f"Bearer {self.token}"
         }
-        return requests.delete(url, headers=headers)
+        response = requests.delete(url, headers=headers)
+
+        if response.status_code == 200:
+            logger.info(f"Машина {serial_number} успешно удалена")
+        else:
+            logger.error(f"Ошибка удаления машины {serial_number}: {response.status_code} - {response.text}")
+
+        return response
 
     @allure.step("API: Поиск машин в городе {city}")
     def search_cars(self, city, start_date, end_date):
         url = f"{self.BASE_URL}/v1/cars/search"
+        logger.info(f"POST {url} [Поиск: {city}, даты: {start_date} - {end_date}]")
+
         payload = {
             "city": city,
             "startDate": start_date,
             "endDate": end_date
         }
-        # Поиск доступен без авторизации, поэтому headers не передаем
-        return requests.post(url, json=payload)
+        response = requests.post(url, json=payload)
+
+        if response.status_code == 200:
+            cars_count = len(response.json().get("cars", []))
+            logger.info(f"Поиск успешен. Найдено машин: {cars_count}")
+        else:
+            logger.error(f"Ошибка поиска в городе {city}: {response.status_code} - {response.text}")
+
+        return response
 
     @allure.step("API: Бронирование машины {serial_number}")
     def book_car(self, serial_number, start_date, end_date):
         url = f"{self.BASE_URL}/v1/cars/{serial_number}/booking"
+        logger.info(f"POST {url} [Бронирование: {serial_number}, даты: {start_date} - {end_date}]")
+
         payload = {
             "startDate": start_date,
             "endDate": end_date
@@ -510,12 +559,26 @@ class IlCarroAPI:
         headers = {
             "Authorization": f"Bearer {self.token}"
         }
-        return requests.post(url, json=payload, headers=headers)
+        response = requests.post(url, json=payload, headers=headers)
+
+        if response.status_code == 200:
+            logger.info(f"Машина {serial_number} успешно забронирована")
+        else:
+            logger.error(f"Ошибка бронирования машины {serial_number}: {response.status_code} - {response.text}")
+
+        return response
 
     @allure.step("API: Получение списка доступных городов")
     def get_cities(self):
         url = f"{self.BASE_URL}/v1/cars/cities"
-        return requests.get(url)
+        logger.info(f"GET {url} [Запрос списка городов]")
+
+        response = requests.get(url)
+
+        if response.status_code != 200:
+            logger.error(f"Ошибка получения списка городов: {response.status_code} - {response.text}")
+
+        return response
 
 ============================================================
 📄 FILE: .\api\__init__.py
@@ -534,6 +597,9 @@ from faker import Faker
 from models.user import User
 from api.car_api import IlCarroAPI
 from models.car import Car
+from utils.logger import get_logger
+
+logger = get_logger("DATA")
 
 # Инициализируем Faker один раз
 fake = Faker('en_US')
@@ -609,8 +675,9 @@ class SearchDataGenerator:
                 if safe_cities:
                     return random.choice(safe_cities)
         except Exception as e:
-            print(f"Не удалось получить города из API. Ошибка: {e}")
+            logger.error(f"Не удалось получить города из API. Ошибка: {e}") # <-- Заменили print
 
+        logger.warning(f"Используем fallback-города: {cls.FALLBACK_CITIES}")  # <-- Добавили логирование fallback'а
         return random.choice(cls.FALLBACK_CITIES)
 
     @staticmethod
@@ -806,6 +873,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.remote.webelement import WebElement
 
 # Импортируем наш инженерный логгер
 from utils.logger import get_logger
@@ -827,13 +895,13 @@ class BasePage:
         self.driver.get(full_url)
 
     @allure.step("Поиск элемента: {locator}")
-    def find(self, locator):
+    def find(self, locator: tuple[str, str]) -> WebElement:
         return WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
             EC.presence_of_element_located(locator)
         )
 
     @allure.step("Клик по элементу: {locator}")
-    def click(self, locator):
+    def click(self, locator: tuple[str, str]) -> None:
         element = WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
             EC.element_to_be_clickable(locator)
         )
@@ -1053,6 +1121,7 @@ class PwAddCarPage(PwBasePage):
 📄 FILE: .\pages\pw_base_page.py
 ============================================================
 
+import os
 import allure
 from playwright.sync_api import Page
 
@@ -1060,8 +1129,9 @@ class PwBasePage:
     def __init__(self, page: Page):
         self.page = page
         self.base_url = "https://icarro-v1.netlify.app"
-        # Playwright работает в миллисекундах. Установим 10 секунд для всех проверок
-        self.expect_timeout = 10000
+        # Читаем таймаут из .env (по умолчанию 10000 мс, если переменной нет)
+        pw_timeout = os.getenv("PW_TIMEOUT", "10000")
+        self.expect_timeout = int(pw_timeout)
 
     @allure.step("Открытие URL: {path}")
     def open_url(self, path: str = ""):
@@ -1416,6 +1486,71 @@ class SearchPage(BasePage):
 
 
 ============================================================
+📄 FILE: .\schemas\car_schemas.py
+============================================================
+
+# schemas/car_schemas.py
+
+# Схема для дат бронирования (вложена внутри машины)
+BOOKED_PERIOD_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "email": {"type": "string"},
+        "startDate": {"type": "string"},
+        "endDate": {"type": "string"}
+    }
+}
+
+# Строгий контракт CarDto из Swagger
+CAR_OBJECT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "serialNumber": {"type": "string"},
+        "manufacture": {"type": "string"},
+        "model": {"type": "string"},
+        "year": {"type": "string"},
+        "fuel": {"type": "string"},
+        "seats": {"type": "integer"},  # Swagger указывает четко: integer (int32)
+        "carClass": {"type": "string"},
+        "pricePerDay": {"type": "number"}, # Swagger: number (double)
+        "about": {"type": "string"},
+        "city": {"type": "string"},
+        "lat": {"type": "number"}, # Координаты (могут вернуться, даже если не отправляли)
+        "lng": {"type": "number"},
+        "image": {"type": ["string", "null"]},
+        "owner": {"type": "string"},
+        "bookedPeriods": {
+            "type": "array",
+            "items": BOOKED_PERIOD_SCHEMA
+        }
+    },
+    # Строго берем массив required из Swagger-документации:
+    "required": [
+        "carClass", "city", "fuel", "manufacture", "model",
+        "pricePerDay", "seats", "serialNumber", "year"
+    ]
+}
+
+# Схема ответа CarsDto
+GET_CARS_RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "cars": {
+            "type": "array",
+            "items": CAR_OBJECT_SCHEMA
+        }
+    },
+    # Мы не ставим "cars" в required жестко, так как при пустом списке может вернуться {}
+    # в зависимости от реализации, но если массив есть, он должен быть валидным.
+}
+
+============================================================
+📄 FILE: .\schemas\__init__.py
+============================================================
+
+
+
+============================================================
 📄 FILE: .\tests\test_add_car.py
 ============================================================
 
@@ -1516,8 +1651,14 @@ def test_add_car_duplicate(authenticated_driver, auth_api):
 import allure
 import datetime
 
+import pytest
+
 from api.car_api import IlCarroAPI
 from data.data_generator import CarGenerator
+
+from jsonschema import validate
+from jsonschema.exceptions import ValidationError
+from schemas.car_schemas import GET_CARS_RESPONSE_SCHEMA
 
 @allure.epic("API Testing")
 @allure.feature("Car Controller")
@@ -1574,6 +1715,16 @@ def test_api_car_lifecycle(auth_api):
     with allure.step("2. Проверяем, что машина появилась в списке 'My Cars'"):
         response_get = auth_api.get_my_cars()
         assert response_get.status_code == 200, "Ошибка получения списка машин"
+
+        response_json = response_get.json()
+
+        # МАГИЯ ЗДЕСЬ: Валидируем всю структуру ответа одной строчкой!
+        try:
+            validate(instance=response_json, schema=GET_CARS_RESPONSE_SCHEMA)
+        except ValidationError as e:
+            pytest.fail(f"Бэкенд вернул невалидную структуру JSON!\nОшибка: {e.message}")
+
+        # Старая бизнес-проверка (остается на месте)
         cars_list = response_get.json().get("cars", [])
         serial_numbers_in_db = [car.get("serialNumber") for car in cars_list]
         assert serial_number in serial_numbers_in_db, f"Машина с номером {serial_number} не найдена в базе!"
