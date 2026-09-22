@@ -1,0 +1,3 @@
+[32;20m[2026-09-22 17:12:01] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов][0m
+[32;20m[2026-09-22 17:12:02] [INFO] [TEST] - Playwright будет создавать машину: Car(city='Kfar Saba', make='Greene PLC', model='Week', year='2021', fuel='Diesel', gear='Automatic', wd='AWD', doors='5', seats='7', car_class='Premium', reg_number='UD-718-JW', price='941', about='Ground for live girl life.', photo_path=None)[0m
+[32;20m[2026-09-22 17:12:04] [INFO] [TEST] - Машина с номером UD-718-JW успешно добавлена через Playwright![0m

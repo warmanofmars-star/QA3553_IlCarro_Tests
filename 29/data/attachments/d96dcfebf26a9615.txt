@@ -1,0 +1,9 @@
+INFO     API:car_api.py:22 POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com]
+INFO     API:car_api.py:32 Авторизация успешна (Token получен)
+INFO     API:car_api.py:136 GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов]
+INFO     API:car_api.py:43 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: MX-738-AW]
+INFO     API:car_api.py:54 Машина MX-738-AW успешно создана в БД
+INFO     API:car_api.py:63 GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+INFO     API:car_api.py:78 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/MX-738-AW [Удаление машины: MX-738-AW]
+INFO     API:car_api.py:86 Машина MX-738-AW успешно удалена
+INFO     API:car_api.py:63 GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]

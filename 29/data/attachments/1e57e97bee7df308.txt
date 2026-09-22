@@ -1,0 +1,32 @@
+INFO     API:car_api.py:22 POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com]
+INFO     API:car_api.py:32 Авторизация успешна (Token получен)
+INFO     API:car_api.py:136 GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов]
+INFO     API:car_api.py:136 GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов]
+INFO     API:car_api.py:43 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: SE-043-PY]
+INFO     API:car_api.py:54 Машина SE-043-PY успешно создана в БД
+INFO     UI:listener.py:10 Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+INFO     UI:listener.py:13 Поиск элемента -> By: id, Value: 'city'
+INFO     UI:listener.py:36 Ввод данных в поле формы...
+INFO     UI:listener.py:36 Ввод данных в поле формы...
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: '[data-testid='city-option'][data-value='Haifa']'
+INFO     UI:listener.py:30 Клик по элементу <div> с текстом: 'Haifa'
+INFO     UI:listener.py:13 Поиск элемента -> By: id, Value: 'dates'
+INFO     UI:listener.py:30 Клик по элементу <input> с текстом: ''
+INFO     UI:listener.py:13 Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='27']]'
+INFO     UI:listener.py:30 Клик по элементу <button> с текстом: '27'
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: '.rdrNextButton'
+INFO     UI:listener.py:30 Клик по элементу <button> с текстом: ''
+INFO     UI:listener.py:13 Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='2']]'
+INFO     UI:listener.py:30 Клик по элементу <button> с текстом: '2'
+INFO     UI:listener.py:13 Поиск элемента -> By: id, Value: 'city'
+INFO     UI:listener.py:30 Клик по элементу <input> с текстом: ''
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: 'button[type='submit']'
+INFO     UI:listener.py:30 Клик по элементу <button> с текстом: 'Yalla!'
+INFO     IlCarro:results_page.py:19 Ждем обновления URL с параметрами поиска...
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: 'a.car-container'
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: 'a.car-container'
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: '.details-card > div > div:first-child'
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: '.car-price-value'
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: '.car-img-container'
+INFO     API:car_api.py:78 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/SE-043-PY [Удаление машины: SE-043-PY]
+INFO     API:car_api.py:86 Машина SE-043-PY успешно удалена

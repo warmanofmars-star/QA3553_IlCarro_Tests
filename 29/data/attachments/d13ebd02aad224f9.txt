@@ -1,0 +1,11 @@
+[32;20m[2026-09-22 17:11:35] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com][0m
+[32;20m[2026-09-22 17:11:35] [INFO] [API] - Авторизация успешна (Token получен)[0m
+[32;20m[2026-09-22 17:11:35] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов][0m
+[32;20m[2026-09-22 17:11:36] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: XP-119-GX][0m
+[32;20m[2026-09-22 17:11:36] [INFO] [API] - Машина XP-119-GX успешно создана в БД[0m
+[32;20m[2026-09-22 17:11:36] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars/search [Поиск: Bnei Brak, даты: 2026-09-23 - 2026-09-29][0m
+[32;20m[2026-09-22 17:11:37] [INFO] [API] - Поиск успешен. Найдено машин: 5[0m
+[32;20m[2026-09-22 17:11:37] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars/XP-119-GX/booking [Бронирование: XP-119-GX, даты: 2026-09-23 - 2026-09-29][0m
+[32;20m[2026-09-22 17:11:37] [INFO] [API] - Машина XP-119-GX успешно забронирована[0m
+[32;20m[2026-09-22 17:11:37] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/XP-119-GX [Удаление машины: XP-119-GX][0m
+[32;20m[2026-09-22 17:11:38] [INFO] [API] - Машина XP-119-GX успешно удалена[0m
