@@ -1,0 +1,60 @@
+[32;20m[2026-09-22 18:12:53] [INFO] [UI] - Переход по ссылке: https://icarro-v1.netlify.app/login[0m
+[32;20m[2026-09-22 18:12:53] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='username']'[0m
+[32;20m[2026-09-22 18:12:54] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:54] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:54] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='password']'[0m
+[32;20m[2026-09-22 18:12:54] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:54] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:54] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'button[type='submit']'[0m
+[32;20m[2026-09-22 18:12:54] [INFO] [UI] - Клик по элементу <button> с текстом: 'Y’alla!'[0m
+[32;20m[2026-09-22 18:12:54] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'button.navigation-link'[0m
+[32;20m[2026-09-22 18:12:55] [INFO] [TEST] - --- ЗАПУСК ТЕСТА: Добавление бензиновой машины эконом-класса ---[0m
+[32;20m[2026-09-22 18:12:55] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов][0m
+[32;20m[2026-09-22 18:12:55] [INFO] [TEST] - Сгенерированные данные: Car(city='Kfar Saba', make='Dawson PLC', model='Across', year='2021', fuel='Petrol', gear='Automatic', wd='AWD', doors='5', seats='5', car_class='Economy', reg_number='NG-220-HH', price='684', about='Magazine add avoid but effort.', photo_path=None)[0m
+[32;20m[2026-09-22 18:12:55] [INFO] [UI] - Переход по ссылке: https://icarro-v1.netlify.app/let-car-work[0m
+[32;20m[2026-09-22 18:12:55] [INFO] [UI] - Поиск элемента -> By: id, Value: 'city'[0m
+[32;20m[2026-09-22 18:12:55] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:55] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:55] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '[data-testid='city-option'][data-value='Kfar Saba']'[0m
+[32;20m[2026-09-22 18:12:55] [INFO] [UI] - Клик по элементу <div> с текстом: 'Kfar Saba'[0m
+[32;20m[2026-09-22 18:12:55] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='manufacture']'[0m
+[32;20m[2026-09-22 18:12:55] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='model']'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='year']'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='doors']'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='seats']'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='carClass']'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='serialNumber']'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='pricePerDay']'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'textarea[name='about']'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'select[name='fuel']'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: xpath, Value: './/option[normalize-space(.) = "Petrol"]'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Клик по элементу <option> с текстом: 'Petrol'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'select[name='gear']'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: xpath, Value: './/option[normalize-space(.) = "Automatic"]'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Клик по элементу <option> с текстом: 'Automatic'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'select[name='wheelsDrive']'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: xpath, Value: './/option[normalize-space(.) = "AWD"]'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Клик по элементу <option> с текстом: 'AWD'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'button[type='submit']'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Клик по элементу <button> с текстом: 'Submit'[0m
+[32;20m[2026-09-22 18:12:56] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='manufacture']'[0m
+[32;20m[2026-09-22 18:12:57] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='manufacture']'[0m
+[32;20m[2026-09-22 18:12:57] [INFO] [TEST] - --- ТЕСТ УСПЕШНО ЗАВЕРШЕН ---[0m

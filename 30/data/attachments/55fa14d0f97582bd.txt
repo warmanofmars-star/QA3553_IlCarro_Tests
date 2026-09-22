@@ -1,0 +1,5 @@
+[32;20m[2026-09-22 18:13:05] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com][0m
+[32;20m[2026-09-22 18:13:06] [INFO] [API] - Авторизация успешна (Token получен)[0m
+[32;20m[2026-09-22 18:13:06] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов][0m
+[32;20m[2026-09-22 18:13:06] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: VD-612-NM][0m
+[32;20m[2026-09-22 18:13:07] [INFO] [API] - Машина VD-612-NM успешно создана в БД[0m

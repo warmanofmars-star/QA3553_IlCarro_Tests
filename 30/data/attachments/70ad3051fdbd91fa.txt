@@ -1,0 +1,30 @@
+[32;20m[2026-09-22 18:13:23] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com][0m
+[32;20m[2026-09-22 18:13:23] [INFO] [API] - Авторизация успешна (Token получен)[0m
+[32;20m[2026-09-22 18:13:23] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов][0m
+[32;20m[2026-09-22 18:13:24] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов][0m
+[32;20m[2026-09-22 18:13:24] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: TH-868-YP][0m
+[32;20m[2026-09-22 18:13:24] [INFO] [API] - Машина TH-868-YP успешно создана в БД[0m
+[32;20m[2026-09-22 18:13:24] [INFO] [UI] - Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Поиск элемента -> By: id, Value: 'city'[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '[data-testid='city-option'][data-value='Ramat Gan']'[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Клик по элементу <div> с текстом: 'Ramat Gan'[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Поиск элемента -> By: id, Value: 'dates'[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Клик по элементу <input> с текстом: ''[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='23']]'[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Клик по элементу <button> с текстом: '23'[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='25']]'[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Клик по элементу <button> с текстом: '25'[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Поиск элемента -> By: id, Value: 'city'[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Клик по элементу <input> с текстом: ''[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'button[type='submit']'[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Клик по элементу <button> с текстом: 'Yalla!'[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [IlCarro] - Ждем обновления URL с параметрами поиска...[0m
+[32;20m[2026-09-22 18:13:25] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'a.car-container'[0m
+[32;20m[2026-09-22 18:13:26] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'a.car-container'[0m
+[32;20m[2026-09-22 18:13:26] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '.details-card > div > div:first-child'[0m
+[32;20m[2026-09-22 18:13:26] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '.car-price-value'[0m
+[32;20m[2026-09-22 18:13:26] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '.car-img-container'[0m
+[32;20m[2026-09-22 18:13:26] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/TH-868-YP [Удаление машины: TH-868-YP][0m
+[32;20m[2026-09-22 18:13:26] [INFO] [API] - Машина TH-868-YP успешно удалена[0m

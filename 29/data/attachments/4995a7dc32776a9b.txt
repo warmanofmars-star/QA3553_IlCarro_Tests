@@ -1,5 +1,0 @@
-INFO     API:car_api.py:22 POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com]
-INFO     API:car_api.py:32 Авторизация успешна (Token получен)
-INFO     API:car_api.py:136 GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов]
-INFO     API:car_api.py:43 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: YY-121-YC]
-INFO     API:car_api.py:54 Машина YY-121-YC успешно создана в БД
