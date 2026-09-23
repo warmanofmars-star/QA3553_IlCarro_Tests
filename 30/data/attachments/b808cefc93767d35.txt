@@ -1,3 +1,0 @@
-INFO     API:car_api.py:136 GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов]
-INFO     API:car_api.py:43 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: TI-081-VR]
-ERROR    API:car_api.py:56 Ошибка создания машины TI-081-VR: 401 - {"timestamp":"2026-09-22T18:13:11","status":401,"error":"Unauthorized","message":"JWT strings must contain exactly 2 period characters. Found: 0","path":"/v1/cars"}

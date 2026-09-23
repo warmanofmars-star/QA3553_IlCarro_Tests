@@ -1,0 +1,3 @@
+INFO     API:car_api.py:136 GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов]
+INFO     TEST:test_playwright_add_car.py:20 Playwright будет создавать машину: Car(city='Herzliya', make='Foster, Turner and Simpson', model='Standard', year='2014', fuel='Electric', gear='Manual', wd='FWD', doors='5', seats='4', car_class='Premium', reg_number='WB-368-MW', price='351', about='Region day reveal factor operation its kind.', photo_path=None)
+INFO     TEST:test_playwright_add_car.py:36 Машина с номером WB-368-MW успешно добавлена через Playwright!

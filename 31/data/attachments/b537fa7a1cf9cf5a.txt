@@ -1,0 +1,60 @@
+[32;20m[2026-09-23 11:02:14] [INFO] [UI] - Переход по ссылке: https://icarro-v1.netlify.app/login[0m
+[32;20m[2026-09-23 11:02:14] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='username']'[0m
+[32;20m[2026-09-23 11:02:14] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:14] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:14] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='password']'[0m
+[32;20m[2026-09-23 11:02:14] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:14] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:14] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'button[type='submit']'[0m
+[32;20m[2026-09-23 11:02:14] [INFO] [UI] - Клик по элементу <button> с текстом: 'Y’alla!'[0m
+[32;20m[2026-09-23 11:02:14] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'button.navigation-link'[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [TEST] - --- ЗАПУСК ТЕСТА: Добавление премиального электрокара ---[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов][0m
+[32;20m[2026-09-23 11:02:15] [INFO] [TEST] - Сгенерированные данные: Car(city='Nazareth', make='Williams-Maxwell', model='Meet', year='2017', fuel='Electric', gear='Manual', wd='AWD', doors='5', seats='6', car_class='Premium', reg_number='CS-863-WX', price='210', about='Model almost someone economic guess choice.', photo_path=None)[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Переход по ссылке: https://icarro-v1.netlify.app/let-car-work[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Поиск элемента -> By: id, Value: 'city'[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '[data-testid='city-option'][data-value='Nazareth']'[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Клик по элементу <div> с текстом: 'Nazareth'[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='manufacture']'[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='model']'[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='year']'[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='doors']'[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='seats']'[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='carClass']'[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='serialNumber']'[0m
+[32;20m[2026-09-23 11:02:15] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='pricePerDay']'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'textarea[name='about']'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'select[name='fuel']'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Поиск элемента -> By: xpath, Value: './/option[normalize-space(.) = "Electric"]'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Клик по элементу <option> с текстом: 'Electric'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'select[name='gear']'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Поиск элемента -> By: xpath, Value: './/option[normalize-space(.) = "Manual"]'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Клик по элементу <option> с текстом: 'Manual'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'select[name='wheelsDrive']'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Поиск элемента -> By: xpath, Value: './/option[normalize-space(.) = "AWD"]'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Клик по элементу <option> с текстом: 'AWD'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'button[type='submit']'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Клик по элементу <button> с текстом: 'Submit'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='manufacture']'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='manufacture']'[0m
+[32;20m[2026-09-23 11:02:16] [INFO] [TEST] - --- ТЕСТ УСПЕШНО ЗАВЕРШЕН ---[0m

@@ -1,0 +1,11 @@
+INFO     API:car_api.py:22 POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com]
+INFO     API:car_api.py:32 Авторизация успешна (Token получен)
+INFO     API:car_api.py:136 GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов]
+INFO     API:car_api.py:43 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: FS-195-IT]
+INFO     API:car_api.py:54 Машина FS-195-IT успешно создана в БД
+INFO     API:car_api.py:95 POST https://ilcarro-backend.herokuapp.com/v1/cars/search [Поиск: Ramat Gan, даты: 2026-09-24 - 2026-09-30]
+INFO     API:car_api.py:106 Поиск успешен. Найдено машин: 19
+INFO     API:car_api.py:115 POST https://ilcarro-backend.herokuapp.com/v1/cars/FS-195-IT/booking [Бронирование: FS-195-IT, даты: 2026-09-24 - 2026-09-30]
+INFO     API:car_api.py:127 Машина FS-195-IT успешно забронирована
+INFO     API:car_api.py:78 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/FS-195-IT [Удаление машины: FS-195-IT]
+INFO     API:car_api.py:86 Машина FS-195-IT успешно удалена

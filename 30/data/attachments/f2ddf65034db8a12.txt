@@ -1,9 +1,0 @@
-INFO     API:car_api.py:22 POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com]
-INFO     API:car_api.py:32 Авторизация успешна (Token получен)
-INFO     API:car_api.py:136 GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов]
-INFO     API:car_api.py:43 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: RN-469-UY]
-INFO     API:car_api.py:54 Машина RN-469-UY успешно создана в БД
-INFO     API:car_api.py:63 GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
-INFO     API:car_api.py:78 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/RN-469-UY [Удаление машины: RN-469-UY]
-INFO     API:car_api.py:86 Машина RN-469-UY успешно удалена
-INFO     API:car_api.py:63 GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]

@@ -1,0 +1,5 @@
+[32;20m[2026-09-23 11:02:20] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com][0m
+[32;20m[2026-09-23 11:02:21] [INFO] [API] - Авторизация успешна (Token получен)[0m
+[32;20m[2026-09-23 11:02:21] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов][0m
+[32;20m[2026-09-23 11:02:21] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: DT-709-EH][0m
+[32;20m[2026-09-23 11:02:21] [INFO] [API] - Машина DT-709-EH успешно создана в БД[0m

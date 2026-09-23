@@ -1,0 +1,9 @@
+[32;20m[2026-09-23 11:02:21] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com][0m
+[32;20m[2026-09-23 11:02:21] [INFO] [API] - Авторизация успешна (Token получен)[0m
+[32;20m[2026-09-23 11:02:21] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов][0m
+[32;20m[2026-09-23 11:02:21] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: AO-577-LJ][0m
+[32;20m[2026-09-23 11:02:22] [INFO] [API] - Машина AO-577-LJ успешно создана в БД[0m
+[32;20m[2026-09-23 11:02:22] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин][0m
+[32;20m[2026-09-23 11:02:23] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/AO-577-LJ [Удаление машины: AO-577-LJ][0m
+[32;20m[2026-09-23 11:02:23] [INFO] [API] - Машина AO-577-LJ успешно удалена[0m
+[32;20m[2026-09-23 11:02:23] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин][0m
