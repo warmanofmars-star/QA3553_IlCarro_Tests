@@ -32,8 +32,10 @@ jobs:
         env:
           USER_EMAIL: ${{ secrets.USER_EMAIL }}
           USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+          UI_BASE_URL: "https://icarro-v1.netlify.app"
+          API_BASE_URL: "https://ilcarro-backend.herokuapp.com"
           HEADLESS_MODE: "true"
-        run: pytest tests/ --clean-alluredir --alluredir=allure-results
+        run: pytest tests/ -n 3 --clean-alluredir --alluredir=allure-results
         continue-on-error: true
 
       - name: Generate Allure Report

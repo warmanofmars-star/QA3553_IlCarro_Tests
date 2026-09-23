@@ -400,8 +400,10 @@ jobs:
         env:
           USER_EMAIL: ${{ secrets.USER_EMAIL }}
           USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+          UI_BASE_URL: "https://icarro-v1.netlify.app"
+          API_BASE_URL: "https://ilcarro-backend.herokuapp.com"
           HEADLESS_MODE: "true"
-        run: pytest tests/ --clean-alluredir --alluredir=allure-results
+        run: pytest tests/ -n 3 --clean-alluredir --alluredir=allure-results
         continue-on-error: true
 
       - name: Generate Allure Report
@@ -594,6 +596,8 @@ class IlCarroAPI:
 
 import random
 import string
+import json  # Добавили
+import os    # Добавили
 from datetime import datetime, timedelta
 from faker import Faker
 from models.user import User
@@ -643,6 +647,23 @@ class UserGenerator:
 
         # Распаковываем словарь прямо в модель User
         return User(**data)
+
+    @staticmethod
+    def save_created_user(user: User):
+        """Сохраняет данные успешно зарегистрированного пользователя в файл."""
+        user_data = {
+            "name": user.name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "password": user.password
+        }
+
+        # Сохраняем в папку logs, так как она уже гарантированно создается нашим логгером
+        filepath = os.path.join("logs", "registered_users.jsonl")
+
+        # Режим 'a' (append) безопасно дописывает строку в конец файла
+        with open(filepath, "a", encoding="utf-8") as f:
+            f.write(json.dumps(user_data) + "\n")
 
 
 class SearchDataGenerator:
@@ -1555,6 +1576,77 @@ GET_CARS_RESPONSE_SCHEMA = {
 
 
 ============================================================
+📄 FILE: .\scripts\export_cars.py
+============================================================
+
+import os
+import requests
+import json
+from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+# Загружаем переменные окружения из файла .env (если он есть)
+load_dotenv()
+
+# Берем ссылку из окружения, оставляя надежный фоллбэк
+BASE_URL = os.getenv("API_BASE_URL", "https://ilcarro-backend.herokuapp.com")
+
+
+def export_all_available_cars():
+    print(f"🌍 1. Запрашиваем список городов с сервера: {BASE_URL}")
+    cities_resp = requests.get(f"{BASE_URL}/v1/cars/cities")
+
+    if cities_resp.status_code != 200:
+        print(f"❌ Ошибка получения городов: {cities_resp.status_code}")
+        return
+
+    cities = [c["city"] for c in cities_resp.json().get("cities", [])]
+    print(f"✅ Найдено городов: {len(cities)}")
+
+    # Берем широкий диапазон: с завтрашнего дня и на 30 дней вперед
+    start_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+    end_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
+
+    all_cars = []
+
+    print(f"🚗 2. Начинаем сбор машин (Даты: {start_date} - {end_date})...")
+    for city in cities:
+        payload = {
+            "city": city,
+            "startDate": start_date,
+            "endDate": end_date
+        }
+
+        search_resp = requests.post(f"{BASE_URL}/v1/cars/search", json=payload)
+
+        if search_resp.status_code == 200:
+            found_cars = search_resp.json().get("cars", [])
+            all_cars.extend(found_cars)
+            print(f"  📍 {city}: найдено {len(found_cars)} машин")
+        else:
+            print(f"  ⚠️ {city}: ошибка поиска ({search_resp.status_code})")
+
+    # 3. Очистка от дубликатов
+    unique_cars = {car["serialNumber"]: car for car in all_cars}.values()
+
+    # 4. Сохранение в JSON
+    filepath = "full_cars_database.json"
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(list(unique_cars), f, indent=4, ensure_ascii=False)
+
+    print(f"\n🎉 Готово! Успешно выгружено {len(unique_cars)} уникальных машин в файл {filepath}")
+
+
+if __name__ == "__main__":
+    export_all_available_cars()
+
+============================================================
+📄 FILE: .\scripts\__init__.py
+============================================================
+
+
+
+============================================================
 📄 FILE: .\tests\test_add_car.py
 ============================================================
 
@@ -2287,6 +2379,9 @@ def test_registration_success(driver):
     assert registration_page.confirmation_text_1() == "You are logged in success", "Текст успешного входа не совпадает!"
     registration_page.close_window()
 
+    # МАГИЯ: Сохраняем юзера для истории только после всех успешных assert'ов
+    UserGenerator.save_created_user(user)
+    logger.info(f"Свежий аккаунт {user.email} успешно сохранен в архив!")
 
 # ===========================================================================
 # ПАРАМЕТРИЗОВАННЫЙ НЕГАТИВНЫЙ ТЕСТ: Фронтенд-валидация

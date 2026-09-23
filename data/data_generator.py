@@ -1,5 +1,7 @@
 import random
 import string
+import json  # Добавили
+import os    # Добавили
 from datetime import datetime, timedelta
 from faker import Faker
 from models.user import User
@@ -49,6 +51,23 @@ class UserGenerator:
 
         # Распаковываем словарь прямо в модель User
         return User(**data)
+
+    @staticmethod
+    def save_created_user(user: User):
+        """Сохраняет данные успешно зарегистрированного пользователя в файл."""
+        user_data = {
+            "name": user.name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "password": user.password
+        }
+
+        # Сохраняем в папку logs, так как она уже гарантированно создается нашим логгером
+        filepath = os.path.join("logs", "registered_users.jsonl")
+
+        # Режим 'a' (append) безопасно дописывает строку в конец файла
+        with open(filepath, "a", encoding="utf-8") as f:
+            f.write(json.dumps(user_data) + "\n")
 
 
 class SearchDataGenerator:
