@@ -43,9 +43,8 @@ def test_registration_success(driver):
     assert registration_page.confirmation_text_1() == "You are logged in success", "Текст успешного входа не совпадает!"
     registration_page.close_window()
 
-    # МАГИЯ: Сохраняем юзера для истории только после всех успешных assert'ов
+    # Сохраняем локально в jsonl файл
     UserGenerator.save_created_user(user)
-    logger.info(f"Свежий аккаунт {user.email} успешно сохранен в архив!")
 
 # ===========================================================================
 # ПАРАМЕТРИЗОВАННЫЙ НЕГАТИВНЫЙ ТЕСТ: Фронтенд-валидация

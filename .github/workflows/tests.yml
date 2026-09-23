@@ -35,7 +35,7 @@ jobs:
           UI_BASE_URL: "https://icarro-v1.netlify.app"
           API_BASE_URL: "https://ilcarro-backend.herokuapp.com"
           HEADLESS_MODE: "true"
-        run: pytest tests/ -n 3 --clean-alluredir --alluredir=allure-results
+        run: pytest tests/ --clean-alluredir --alluredir=allure-results
         continue-on-error: true
 
       - name: Generate Allure Report
@@ -55,6 +55,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: allure-history
+
 
       # --- ОТПРАВКА УВЕДОМЛЕНИЯ В ТЕЛЕГРАМ ---
       - name: Send Telegram Notification

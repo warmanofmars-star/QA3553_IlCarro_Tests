@@ -11,6 +11,8 @@ ENABLE_CONSOLE_LOGS=true
 PW_TIMEOUT=10000
 UI_BASE_URL=https://icarro-v1.netlify.app
 API_BASE_URL=https://ilcarro-backend.herokuapp.com
+TELEGRAM_TOKEN=8714477900:AAFs_dKG5HB_yZuwRYRURq_7TgFwODOvn8s
+TELEGRAM_TO=101220870
 
 ============================================================
 📄 FILE: .\conftest.py
@@ -403,7 +405,7 @@ jobs:
           UI_BASE_URL: "https://icarro-v1.netlify.app"
           API_BASE_URL: "https://ilcarro-backend.herokuapp.com"
           HEADLESS_MODE: "true"
-        run: pytest tests/ -n 3 --clean-alluredir --alluredir=allure-results
+        run: pytest tests/ --clean-alluredir --alluredir=allure-results
         continue-on-error: true
 
       - name: Generate Allure Report
@@ -423,6 +425,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: allure-history
+
 
       # --- ОТПРАВКА УВЕДОМЛЕНИЯ В ТЕЛЕГРАМ ---
       - name: Send Telegram Notification
@@ -594,6 +597,7 @@ class IlCarroAPI:
 📄 FILE: .\data\data_generator.py
 ============================================================
 
+import requests
 import random
 import string
 import json  # Добавили
@@ -2379,9 +2383,8 @@ def test_registration_success(driver):
     assert registration_page.confirmation_text_1() == "You are logged in success", "Текст успешного входа не совпадает!"
     registration_page.close_window()
 
-    # МАГИЯ: Сохраняем юзера для истории только после всех успешных assert'ов
+    # Сохраняем локально в jsonl файл
     UserGenerator.save_created_user(user)
-    logger.info(f"Свежий аккаунт {user.email} успешно сохранен в архив!")
 
 # ===========================================================================
 # ПАРАМЕТРИЗОВАННЫЙ НЕГАТИВНЫЙ ТЕСТ: Фронтенд-валидация
