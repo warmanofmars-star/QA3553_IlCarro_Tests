@@ -583,6 +583,8 @@ class IlCarroAPI:
 ============================================================
 
 import random
+import uuid
+from pathlib import Path
 import string
 import json
 import os
@@ -644,9 +646,14 @@ class UserGenerator:
             "password": user.password
         }
 
-        # Вычисляем абсолютный путь к корню проекта (на уровень выше от папки data)
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        filepath = os.path.join(project_root, "logs", "registered_users.jsonl")
+        # Вычисляем абсолютный корень проекта (на 2 уровня выше этого файла)
+        project_root = Path(__file__).resolve().parent.parent
+        log_dir = project_root / "logs"
+
+        # Гарантируем, что папка logs существует (создаст, если её нет)
+        log_dir.mkdir(exist_ok=True)
+
+        filepath = log_dir / "registered_users.jsonl"
 
         with open(filepath, "a", encoding="utf-8") as f:
             f.write(json.dumps(user_data) + "\n")
@@ -727,7 +734,7 @@ class CarGenerator:
             "doors": str(random.randint(2, 5)),
             "seats": str(random.randint(2, 7)),
             "car_class": random.choice(["Economy", "Business", "Premium"]),
-            "reg_number": fake.unique.bothify(text='??-###-??').upper(),
+            "reg_number": f"IL-{uuid.uuid4().hex[:8].upper()}",
             "price": str(random.randint(100, 1000)),
             "about": fake.sentence(),
             "photo_path": None
@@ -794,6 +801,9 @@ import allure
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from pages.base_page import BasePage
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 
 class AddCarPage(BasePage):
@@ -864,9 +874,15 @@ class AddCarPage(BasePage):
 
     @allure.step("Проверка наличия скрытых ошибок валидации на форме")
     def get_form_errors(self):
-        # Ищем все элементы с классом error и возвращаем их текст
-        errors = self.driver.find_elements(By.CSS_SELECTOR, ".error")
-        return [err.text for err in errors if err.text != ""]
+        try:
+            # Ждем до 3 секунд, пока в DOM не появится хотя бы один элемент с классом .error
+            errors = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".error"))
+            )
+            return [err.text for err in errors if err.text != ""]
+        except TimeoutException:
+            # Если за 3 секунды ни одной ошибки не появилось — возвращаем пустой список
+            return []
 
     @allure.step("Проверка сброса формы (ожидание успешного добавления)")
     def is_form_cleared(self) -> bool:
@@ -1316,6 +1332,8 @@ class RegistrationPage(BasePage):
 ============================================================
 
 import allure
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from pages.base_page import BasePage
@@ -1339,12 +1357,17 @@ class ResultsPage(BasePage):
             message="Поисковый запрос не выполнился: URL не обновился!"
         )
 
-
     @allure.step("Проверка, есть ли найденные машины")
     def has_cars(self):
-        # Быстрый опрос DOM без долгого таймаута
-        cars = self.driver.find_elements(*self.CAR_CARD_LINK)
-        return len(cars) > 0
+        try:
+            # Даем фронтенду 3 секунды на отрисовку DOM-дерева
+            WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located(self.CAR_CARD_LINK)
+            )
+            return True
+        except TimeoutException:
+            # Если за 3 секунды карточки не появились — выдача действительно пустая
+            return False
 
     # --- ДЕЙСТВИЯ ---
     @allure.step("Получение данных первой машины из списка")
@@ -1849,8 +1872,11 @@ def test_api_add_car_unauthorized():
     with allure.step("Попытка создать машину без токена авторизации"):
         response = api.add_car(car_payload)
 
-    with allure.step("Проверка статуса 401 Unauthorized"):
-        assert response.status_code == 401, f"Ожидался статус 401, но получен {response.status_code}"
+    with allure.step("Проверка статуса 403 Forbidden (или 401)"):
+        # Spring Boot часто отдает 403 при полном отсутствии хидера,
+        # поэтому для стабильности принимаем оба варианта блокировки
+        assert response.status_code in [401, 403], \
+            f"Ожидался статус блокировки (401/403), но получен {response.status_code}"
 
 
 @allure.epic("API Testing")
@@ -2418,10 +2444,6 @@ def get_short_complex_password():
     return ''.join(pwd_list)
 
 
-# Генерируем пароль один раз при сборе тестов
-DYNAMIC_SHORT_PWD = get_short_complex_password()
-
-
 # ===========================================================================
 # НЕГАТИВНЫЙ ТЕСТ: Бэкенд-валидация (Пользователь уже существует)
 # ===========================================================================
@@ -2432,14 +2454,17 @@ DYNAMIC_SHORT_PWD = get_short_complex_password()
 @pytest.mark.parametrize("password_variant, scenario", [
     (VALID_PASSWORD, "Занятый email + Тот же пароль"),
     ("Qwe12345!_new", "Занятый email + Другой пароль (валидный формат)"),
-    (DYNAMIC_SHORT_PWD, f"Занятый email + Короткий сложный пароль ('{DYNAMIC_SHORT_PWD}')")
+    ("DYNAMIC_SHORT", "Занятый email + Короткий сложный пароль") # <--- Статичная строка
 ])
 def test_registration_existing_user(driver, password_variant, scenario):
     with allure.step(f"Сценарий: {scenario}"):
         registration_page = RegistrationPage(driver)
 
+        # Генерируем пароль прямо ВНУТРИ теста, если поймали метку
+        actual_password = get_short_complex_password() if password_variant == "DYNAMIC_SHORT" else password_variant
+
         # Подсовываем занятый email и перебираем пароли из параметризации
-        user = UserGenerator.get_random_user(email=VALID_EMAIL, password=password_variant)
+        user = UserGenerator.get_random_user(email=VALID_EMAIL, password=actual_password)
 
         registration_page.open_registration_form()
         registration_page.fill_registration_form(user)

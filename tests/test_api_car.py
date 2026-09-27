@@ -114,8 +114,11 @@ def test_api_add_car_unauthorized():
     with allure.step("Попытка создать машину без токена авторизации"):
         response = api.add_car(car_payload)
 
-    with allure.step("Проверка статуса 401 Unauthorized"):
-        assert response.status_code == 401, f"Ожидался статус 401, но получен {response.status_code}"
+    with allure.step("Проверка статуса 403 Forbidden (или 401)"):
+        # Spring Boot часто отдает 403 при полном отсутствии хидера,
+        # поэтому для стабильности принимаем оба варианта блокировки
+        assert response.status_code in [401, 403], \
+            f"Ожидался статус блокировки (401/403), но получен {response.status_code}"
 
 
 @allure.epic("API Testing")

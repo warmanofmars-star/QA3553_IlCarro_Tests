@@ -93,10 +93,6 @@ def get_short_complex_password():
     return ''.join(pwd_list)
 
 
-# Генерируем пароль один раз при сборе тестов
-DYNAMIC_SHORT_PWD = get_short_complex_password()
-
-
 # ===========================================================================
 # НЕГАТИВНЫЙ ТЕСТ: Бэкенд-валидация (Пользователь уже существует)
 # ===========================================================================
@@ -107,14 +103,17 @@ DYNAMIC_SHORT_PWD = get_short_complex_password()
 @pytest.mark.parametrize("password_variant, scenario", [
     (VALID_PASSWORD, "Занятый email + Тот же пароль"),
     ("Qwe12345!_new", "Занятый email + Другой пароль (валидный формат)"),
-    (DYNAMIC_SHORT_PWD, f"Занятый email + Короткий сложный пароль ('{DYNAMIC_SHORT_PWD}')")
+    ("DYNAMIC_SHORT", "Занятый email + Короткий сложный пароль") # <--- Статичная строка
 ])
 def test_registration_existing_user(driver, password_variant, scenario):
     with allure.step(f"Сценарий: {scenario}"):
         registration_page = RegistrationPage(driver)
 
+        # Генерируем пароль прямо ВНУТРИ теста, если поймали метку
+        actual_password = get_short_complex_password() if password_variant == "DYNAMIC_SHORT" else password_variant
+
         # Подсовываем занятый email и перебираем пароли из параметризации
-        user = UserGenerator.get_random_user(email=VALID_EMAIL, password=password_variant)
+        user = UserGenerator.get_random_user(email=VALID_EMAIL, password=actual_password)
 
         registration_page.open_registration_form()
         registration_page.fill_registration_form(user)

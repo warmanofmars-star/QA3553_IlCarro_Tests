@@ -1,4 +1,6 @@
 import random
+import uuid
+from pathlib import Path
 import string
 import json
 import os
@@ -60,9 +62,14 @@ class UserGenerator:
             "password": user.password
         }
 
-        # Вычисляем абсолютный путь к корню проекта (на уровень выше от папки data)
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        filepath = os.path.join(project_root, "logs", "registered_users.jsonl")
+        # Вычисляем абсолютный корень проекта (на 2 уровня выше этого файла)
+        project_root = Path(__file__).resolve().parent.parent
+        log_dir = project_root / "logs"
+
+        # Гарантируем, что папка logs существует (создаст, если её нет)
+        log_dir.mkdir(exist_ok=True)
+
+        filepath = log_dir / "registered_users.jsonl"
 
         with open(filepath, "a", encoding="utf-8") as f:
             f.write(json.dumps(user_data) + "\n")
@@ -143,7 +150,7 @@ class CarGenerator:
             "doors": str(random.randint(2, 5)),
             "seats": str(random.randint(2, 7)),
             "car_class": random.choice(["Economy", "Business", "Premium"]),
-            "reg_number": fake.unique.bothify(text='??-###-??').upper(),
+            "reg_number": f"IL-{uuid.uuid4().hex[:8].upper()}",
             "price": str(random.randint(100, 1000)),
             "about": fake.sentence(),
             "photo_path": None

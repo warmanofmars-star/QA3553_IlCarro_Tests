@@ -3,6 +3,9 @@ import allure
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from pages.base_page import BasePage
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 
 class AddCarPage(BasePage):
@@ -73,9 +76,15 @@ class AddCarPage(BasePage):
 
     @allure.step("Проверка наличия скрытых ошибок валидации на форме")
     def get_form_errors(self):
-        # Ищем все элементы с классом error и возвращаем их текст
-        errors = self.driver.find_elements(By.CSS_SELECTOR, ".error")
-        return [err.text for err in errors if err.text != ""]
+        try:
+            # Ждем до 3 секунд, пока в DOM не появится хотя бы один элемент с классом .error
+            errors = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".error"))
+            )
+            return [err.text for err in errors if err.text != ""]
+        except TimeoutException:
+            # Если за 3 секунды ни одной ошибки не появилось — возвращаем пустой список
+            return []
 
     @allure.step("Проверка сброса формы (ожидание успешного добавления)")
     def is_form_cleared(self) -> bool:
