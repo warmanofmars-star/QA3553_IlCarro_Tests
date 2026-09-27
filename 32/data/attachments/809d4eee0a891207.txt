@@ -1,0 +1,2 @@
+[32;20m[2026-09-27 08:55:30] [INFO] [TEST] - Playwright будет создавать машину: Car(city='Dimona', make='Taylor and Sons', model='Grow', year='2020', fuel='Diesel', gear='Manual', wd='FWD', doors='2', seats='3', car_class='Business', reg_number='IL-6189E149', price='687', about='Up building political speech stand forward.', photo_path=None)[0m
+[32;20m[2026-09-27 08:55:32] [INFO] [TEST] - Машина с номером IL-6189E149 успешно добавлена через Playwright![0m
