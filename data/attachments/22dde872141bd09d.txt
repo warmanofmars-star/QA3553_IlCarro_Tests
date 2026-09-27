@@ -1,0 +1,3 @@
+INFO     UI:listener.py:10 Переход по ссылке: https://icarro-v1.netlify.app/
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: '[href='/register']'
+INFO     UI:listener.py:30 Клик по элементу <a> с текстом: 'Sign up'

@@ -1,0 +1,8 @@
+[32;20m[2026-09-27 19:44:07] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com][0m
+[32;20m[2026-09-27 19:44:08] [INFO] [API] - Авторизация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-09-27 19:44:08] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-4874B5FD][0m
+[32;20m[2026-09-27 19:44:08] [INFO] [API] - Машина IL-4874B5FD успешно создана в БД[0m
+[32;20m[2026-09-27 19:44:08] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин][0m
+[32;20m[2026-09-27 19:44:09] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-4874B5FD [Удаление машины: IL-4874B5FD][0m
+[32;20m[2026-09-27 19:44:09] [INFO] [API] - Машина IL-4874B5FD успешно удалена[0m
+[32;20m[2026-09-27 19:44:09] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин][0m
