@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # Фиксируем стабильную версию Linux для предсказуемости
 
     steps:
       - name: Checkout code
@@ -35,27 +35,25 @@ jobs:
           UI_BASE_URL: "https://icarro-v1.netlify.app"
           API_BASE_URL: "https://ilcarro-backend.herokuapp.com"
           HEADLESS_MODE: "true"
-        run: pytest tests/ -n 3 --clean-alluredir --alluredir=allure-results
+        # Запускаем наши 3 потока с генерацией сырых данных Allure
+        run: pytest tests/ -n 3 --clean-alluredir --reruns 2 --reruns-delay 2 --alluredir=allure-results
         continue-on-error: true
 
+      # --- БЕЗОТКАЗНАЯ ГЕНЕРАЦИЯ ОТЧЕТА ЧЕРЕЗ NPM (БЕЗ DOCKER) ---
       - name: Generate Allure Report
-        uses: simple-elf/allure-report-action@master
         if: always()
-        id: allure-report
-        with:
-          allure_results: allure-results
-          gh_pages: gh-pages
-          allure_report: allure-report
-          allure_history: allure-history
+        run: |
+          npm install -g allure-commandline --save-dev
+          allure generate allure-results -o allure-report --clean
 
+      # --- ПУБЛИКАЦИЯ СГЕНЕРИРОВАННОЙ ПАПКИ В GH-PAGES ---
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: allure-history
-
+          publish_dir: allure-report
 
       # --- ОТПРАВКА УВЕДОМЛЕНИЯ В ТЕЛЕГРАМ ---
       - name: Send Telegram Notification
