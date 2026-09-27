@@ -219,3 +219,5 @@ __marimo__/
 
 # Logger Logs
 logs/
+
+*.txt
