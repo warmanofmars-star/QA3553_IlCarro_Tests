@@ -1,2 +1,0 @@
-INFO     TEST:test_playwright_add_car.py:20 Playwright будет создавать машину: Car(city='Dimona', make='Taylor and Sons', model='Grow', year='2020', fuel='Diesel', gear='Manual', wd='FWD', doors='2', seats='3', car_class='Business', reg_number='IL-6189E149', price='687', about='Up building political speech stand forward.', photo_path=None)
-INFO     TEST:test_playwright_add_car.py:36 Машина с номером IL-6189E149 успешно добавлена через Playwright!

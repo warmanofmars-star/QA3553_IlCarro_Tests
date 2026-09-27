@@ -1,8 +1,0 @@
-[32;20m[2026-09-27 08:55:09] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com][0m
-[32;20m[2026-09-27 08:55:09] [INFO] [API] - Авторизация успешна (Token получен и вшит в сессию)[0m
-[32;20m[2026-09-27 08:55:09] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-3ABDADE1][0m
-[32;20m[2026-09-27 08:55:10] [INFO] [API] - Машина IL-3ABDADE1 успешно создана в БД[0m
-[32;20m[2026-09-27 08:55:10] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин][0m
-[32;20m[2026-09-27 08:55:10] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-3ABDADE1 [Удаление машины: IL-3ABDADE1][0m
-[32;20m[2026-09-27 08:55:10] [INFO] [API] - Машина IL-3ABDADE1 успешно удалена[0m
-[32;20m[2026-09-27 08:55:10] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин][0m

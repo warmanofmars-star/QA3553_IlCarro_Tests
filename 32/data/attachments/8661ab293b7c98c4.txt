@@ -1,2 +1,0 @@
-INFO     API:car_api.py:43 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-518AED71]
-ERROR    API:car_api.py:51 Ошибка создания машины IL-518AED71: 403 -

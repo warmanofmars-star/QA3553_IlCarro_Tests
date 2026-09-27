@@ -1,4 +1,0 @@
-[32;20m[2026-09-27 08:55:32] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com][0m
-[32;20m[2026-09-27 08:55:32] [INFO] [API] - Авторизация успешна (Token получен и вшит в сессию)[0m
-[32;20m[2026-09-27 08:55:32] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-FA9C03BE][0m
-[32;20m[2026-09-27 08:55:32] [INFO] [API] - Машина IL-FA9C03BE успешно создана в БД[0m
