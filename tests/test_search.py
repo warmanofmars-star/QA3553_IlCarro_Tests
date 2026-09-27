@@ -5,6 +5,7 @@ from data.data_generator import SearchDataGenerator
 from pages.results_page import ResultsPage
 from utils.logger import get_logger
 
+
 logger = get_logger()
 
 @allure.epic("UI Testing")
@@ -17,6 +18,7 @@ def test_search_form_dynamic(driver):
 
     city = SearchDataGenerator.get_random_city()
     start_date, end_date = SearchDataGenerator.get_safe_future_dates()
+
     expected_dates_str = f"{start_date.month}/{start_date.day}/{start_date.year} - {end_date.month}/{end_date.day}/{end_date.year}"
 
     with allure.step(f"Параметры: Город - {city}, Даты: {expected_dates_str}"):

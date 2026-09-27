@@ -1,8 +1,7 @@
-import requests
 import random
 import string
-import json  # Добавили
-import os    # Добавили
+import json
+import os
 from datetime import datetime, timedelta
 from faker import Faker
 from models.user import User
@@ -14,6 +13,7 @@ logger = get_logger("DATA")
 
 # Инициализируем Faker один раз
 fake = Faker('en_US')
+
 
 class UserGenerator:
 
@@ -47,10 +47,7 @@ class UserGenerator:
             "password": cls.generate_valid_password()
         }
 
-        # Если мы передали какие-то кривые данные для негативного теста - заменяем ими валидные
         data.update(overrides)
-
-        # Распаковываем словарь прямо в модель User
         return User(**data)
 
     @staticmethod
@@ -63,19 +60,20 @@ class UserGenerator:
             "password": user.password
         }
 
-        # Сохраняем в папку logs, так как она уже гарантированно создается нашим логгером
-        filepath = os.path.join("logs", "registered_users.jsonl")
+        # Вычисляем абсолютный путь к корню проекта (на уровень выше от папки data)
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        filepath = os.path.join(project_root, "logs", "registered_users.jsonl")
 
-        # Режим 'a' (append) безопасно дописывает строку в конец файла
         with open(filepath, "a", encoding="utf-8") as f:
             f.write(json.dumps(user_data) + "\n")
 
 
 class SearchDataGenerator:
-    # Запасной список на случай, если бэкенд недоступен
     FALLBACK_CITIES = ["Tel Aviv", "Jerusalem", "Haifa"]
 
-    # Список, который мы вытащили из фронтенда (JS-код)
+    # Сюда мы сохраним результат первого успешного запроса к API
+    _cached_safe_cities = None
+
     UI_CITIES = [
         "Tel Aviv", "Jerusalem", "Haifa", "Rishon LeZion", "Petah Tikva", "Ashdod",
         "Netanya", "Beersheba", "Bnei Brak", "Holon", "Ramat Gan", "Ashkelon",
@@ -90,22 +88,27 @@ class SearchDataGenerator:
 
     @classmethod
     def get_random_city(cls):
+        # 1. Если список уже есть в памяти (кеш), отдаем его мгновенно без сети!
+        if cls._cached_safe_cities:
+            return random.choice(cls._cached_safe_cities)
+
+        # 2. Если кеш пуст, делаем один запрос
         try:
             api = IlCarroAPI()
             response = api.get_cities()
 
             if response.status_code == 200:
                 api_cities = [city_obj.get("city") for city_obj in response.json().get("cities", [])]
-
-                # Используем cls.UI_CITIES для обращения к константе класса
                 safe_cities = list(set(api_cities).intersection(set(cls.UI_CITIES)))
 
                 if safe_cities:
-                    return random.choice(safe_cities)
+                    # Сохраняем в кеш для всех будущих вызовов
+                    cls._cached_safe_cities = safe_cities
+                    return random.choice(cls._cached_safe_cities)
         except Exception as e:
-            logger.error(f"Не удалось получить города из API. Ошибка: {e}") # <-- Заменили print
+            logger.error(f"Не удалось получить города из API. Ошибка: {e}")
 
-        logger.warning(f"Используем fallback-города: {cls.FALLBACK_CITIES}")  # <-- Добавили логирование fallback'а
+        logger.warning(f"Используем fallback-города: {cls.FALLBACK_CITIES}")
         return random.choice(cls.FALLBACK_CITIES)
 
     @staticmethod
@@ -123,15 +126,12 @@ class CarGenerator:
     GEAR_TYPES = ["Automatic", "Manual"]
     WD_TYPES = ["AWD", "FWD", "RWD"]
 
-    # Берем безопасные списки как в учебном проекте, чтобы избежать скрытых багов длины строки
     MAKE_TYPES = ["Toyota", "Honda", "Ford", "BMW", "Mazda"]
     MODEL_TYPES = ["Camry", "Civic", "Focus", "X5", "Premium"]
     CLASS_TYPES = ["Economy", "Comfort", "Business", "Premium"]
 
     @staticmethod
     def get_random_car(**overrides) -> Car:
-        """Генерирует случайную машину. Позволяет переопределять любые поля через **overrides"""
-        # Базовые случайные данные (используем Faker и твои списки)
         data = {
             "city": SearchDataGenerator.get_random_city(),
             "make": fake.company(),
@@ -149,8 +149,5 @@ class CarGenerator:
             "photo_path": None
         }
 
-        # Накатываем сверху те значения, которые мы передали в тест (если они есть)
         data.update(overrides)
-
-        # Распаковываем словарь в наш красивый датакласс Car!
         return Car(**data)

@@ -8,27 +8,30 @@ class PwAddCarPage(PwBasePage):
         super().__init__(page)
         self.endpoint = "/let-car-work"
 
-        # --- ЛОКАТОРЫ ---
-        self.city_input = page.locator("id=city")
+        # --- ЛОКАТОРЫ (В стиле Playwright) ---
+        self.city_input = page.locator("#city")
         self.city_option = page.locator("[data-testid='city-option']").first
 
-        self.make_input = page.locator("input[name='manufacture']")
-        self.model_input = page.locator("input[name='model']")
-        self.year_input = page.locator("input[name='year']")
-        self.doors_input = page.locator("input[name='doors']")
-        self.seats_input = page.locator("input[name='seats']")
-        self.class_input = page.locator("input[name='carClass']")
+        # Убираем избыточный тег 'input', оставляя чистый атрибут
+        self.make_input = page.locator("[name='manufacture']")
+        self.model_input = page.locator("[name='model']")
+        self.year_input = page.locator("[name='year']")
+        self.doors_input = page.locator("[name='doors']")
+        self.seats_input = page.locator("[name='seats']")
+        self.class_input = page.locator("[name='carClass']")
 
-        self.fuel_select = page.locator("select[name='fuel']")
-        self.gear_select = page.locator("select[name='gear']")
-        self.wd_select = page.locator("select[name='wheelsDrive']")
+        self.fuel_select = page.locator("[name='fuel']")
+        self.gear_select = page.locator("[name='gear']")
+        self.wd_select = page.locator("[name='wheelsDrive']")
 
-        self.serial_input = page.locator("input[name='serialNumber']")
-        self.price_input = page.locator("input[name='pricePerDay']")
-        self.about_input = page.locator("textarea[name='about']")
+        self.serial_input = page.locator("[name='serialNumber']")
+        self.price_input = page.locator("[name='pricePerDay']")
+        self.about_input = page.locator("[name='about']")
 
         self.submit_btn = page.locator("button[type='submit']")
-        self.submit_error_message = page.locator("div.error[role='alert']")
+
+        # МАГИЯ PLAYWRIGHT: Ищем элемент не по CSS-классу, а по его смыслу на странице
+        self.submit_error_message = page.get_by_role("alert")
 
     # --- ДЕЙСТВИЯ ---
     @allure.step("Открытие страницы добавления машины")

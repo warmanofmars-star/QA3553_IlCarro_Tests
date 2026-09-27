@@ -71,7 +71,6 @@ def driver():
         if not is_headless:
             driver_instance.maximize_window()
 
-    driver_instance.implicitly_wait(5)
 
     # === НАДЕВАЕМ ШПИОНА НА ДРАЙВЕР ПЕРЕД ВЫДАЧЕЙ ===
     decorated_driver = EventFiringWebDriver(driver_instance, IlCarroListener())
@@ -443,12 +442,11 @@ jobs:
 📄 FILE: .\api\car_api.py
 ============================================================
 
-import requests
 import os
+import requests
 import allure
 from utils.logger import get_logger
 
-# 2. Создаем отдельный канал логирования для API
 logger = get_logger("API")
 
 
@@ -456,25 +454,28 @@ class IlCarroAPI:
     BASE_URL = os.getenv("API_BASE_URL", "https://ilcarro-backend.herokuapp.com")
 
     def __init__(self):
+        # 1. Открываем единую сессию при создании клиента
+        self.session = requests.Session()
         self.token = None
 
     def login(self, username, password):
-        # Перенесли шаг внутрь. Переменную password нигде не выводим!
         with allure.step(f"API: Авторизация пользователя {username}"):
             url = f"{self.BASE_URL}/v1/user/login/usernamepassword"
-
-            # 3. Фиксируем отправку запроса (без пароля!)
             logger.info(f"POST {url} [User: {username}]")
 
             payload = {
                 "username": username,
                 "password": password
             }
-            response = requests.post(url, json=payload)
+            # 2. Запрос делаем через сессию
+            response = self.session.post(url, json=payload)
 
             if response.status_code == 200:
                 self.token = response.json().get("accessToken")
-                logger.info("Авторизация успешна (Token получен)")
+                # 3. МАГИЯ: Один раз кладем токен в заголовки сессии,
+                # и он автоматически будет прикрепляться ко всем будущим запросам!
+                self.session.headers.update({"Authorization": f"Bearer {self.token}"})
+                logger.info("Авторизация успешна (Token получен и вшит в сессию)")
             else:
                 logger.error(f"Ошибка авторизации: {response.status_code} - {response.text}")
             return response
@@ -482,19 +483,12 @@ class IlCarroAPI:
     @allure.step("API: Добавление новой машины")
     def add_car(self, car_payload):
         url = f"{self.BASE_URL}/v1/cars"
-
-        # Вытаскиваем серийный номер из пейлоада для красивого лога
         serial = car_payload.get('serialNumber', 'UNKNOWN')
         logger.info(f"POST {url} [Создание машины: {serial}]")
 
-        # Сваггер требует передавать токен в заголовке Authorization (Bearer Authentication)
-        headers = {
-            "Authorization": f"Bearer {self.token}"
-        }
+        # 4. Обрати внимание: параметра headers больше нет, код стал чище
+        response = self.session.post(url, json=car_payload)
 
-        response = requests.post(url, json=car_payload, headers=headers)
-
-        # Добавили ветвление успеха и ошибки
         if response.status_code == 200:
             logger.info(f"Машина {serial} успешно создана в БД")
         else:
@@ -507,10 +501,7 @@ class IlCarroAPI:
         url = f"{self.BASE_URL}/v1/cars/my"
         logger.info(f"GET {url} [Запрос списка своих машин]")
 
-        headers = {
-            "Authorization": f"Bearer {self.token}"
-        }
-        response = requests.get(url, headers=headers)
+        response = self.session.get(url)
 
         if response.status_code != 200:
             logger.error(f"Ошибка получения списка машин: {response.status_code} - {response.text}")
@@ -522,10 +513,7 @@ class IlCarroAPI:
         url = f"{self.BASE_URL}/v1/cars/{serial_number}"
         logger.info(f"DELETE {url} [Удаление машины: {serial_number}]")
 
-        headers = {
-            "Authorization": f"Bearer {self.token}"
-        }
-        response = requests.delete(url, headers=headers)
+        response = self.session.delete(url)
 
         if response.status_code == 200:
             logger.info(f"Машина {serial_number} успешно удалена")
@@ -544,7 +532,7 @@ class IlCarroAPI:
             "startDate": start_date,
             "endDate": end_date
         }
-        response = requests.post(url, json=payload)
+        response = self.session.post(url, json=payload)
 
         if response.status_code == 200:
             cars_count = len(response.json().get("cars", []))
@@ -563,10 +551,7 @@ class IlCarroAPI:
             "startDate": start_date,
             "endDate": end_date
         }
-        headers = {
-            "Authorization": f"Bearer {self.token}"
-        }
-        response = requests.post(url, json=payload, headers=headers)
+        response = self.session.post(url, json=payload)
 
         if response.status_code == 200:
             logger.info(f"Машина {serial_number} успешно забронирована")
@@ -580,7 +565,7 @@ class IlCarroAPI:
         url = f"{self.BASE_URL}/v1/cars/cities"
         logger.info(f"GET {url} [Запрос списка городов]")
 
-        response = requests.get(url)
+        response = self.session.get(url)
 
         if response.status_code != 200:
             logger.error(f"Ошибка получения списка городов: {response.status_code} - {response.text}")
@@ -597,11 +582,10 @@ class IlCarroAPI:
 📄 FILE: .\data\data_generator.py
 ============================================================
 
-import requests
 import random
 import string
-import json  # Добавили
-import os    # Добавили
+import json
+import os
 from datetime import datetime, timedelta
 from faker import Faker
 from models.user import User
@@ -613,6 +597,7 @@ logger = get_logger("DATA")
 
 # Инициализируем Faker один раз
 fake = Faker('en_US')
+
 
 class UserGenerator:
 
@@ -646,10 +631,7 @@ class UserGenerator:
             "password": cls.generate_valid_password()
         }
 
-        # Если мы передали какие-то кривые данные для негативного теста - заменяем ими валидные
         data.update(overrides)
-
-        # Распаковываем словарь прямо в модель User
         return User(**data)
 
     @staticmethod
@@ -662,19 +644,20 @@ class UserGenerator:
             "password": user.password
         }
 
-        # Сохраняем в папку logs, так как она уже гарантированно создается нашим логгером
-        filepath = os.path.join("logs", "registered_users.jsonl")
+        # Вычисляем абсолютный путь к корню проекта (на уровень выше от папки data)
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        filepath = os.path.join(project_root, "logs", "registered_users.jsonl")
 
-        # Режим 'a' (append) безопасно дописывает строку в конец файла
         with open(filepath, "a", encoding="utf-8") as f:
             f.write(json.dumps(user_data) + "\n")
 
 
 class SearchDataGenerator:
-    # Запасной список на случай, если бэкенд недоступен
     FALLBACK_CITIES = ["Tel Aviv", "Jerusalem", "Haifa"]
 
-    # Список, который мы вытащили из фронтенда (JS-код)
+    # Сюда мы сохраним результат первого успешного запроса к API
+    _cached_safe_cities = None
+
     UI_CITIES = [
         "Tel Aviv", "Jerusalem", "Haifa", "Rishon LeZion", "Petah Tikva", "Ashdod",
         "Netanya", "Beersheba", "Bnei Brak", "Holon", "Ramat Gan", "Ashkelon",
@@ -689,22 +672,27 @@ class SearchDataGenerator:
 
     @classmethod
     def get_random_city(cls):
+        # 1. Если список уже есть в памяти (кеш), отдаем его мгновенно без сети!
+        if cls._cached_safe_cities:
+            return random.choice(cls._cached_safe_cities)
+
+        # 2. Если кеш пуст, делаем один запрос
         try:
             api = IlCarroAPI()
             response = api.get_cities()
 
             if response.status_code == 200:
                 api_cities = [city_obj.get("city") for city_obj in response.json().get("cities", [])]
-
-                # Используем cls.UI_CITIES для обращения к константе класса
                 safe_cities = list(set(api_cities).intersection(set(cls.UI_CITIES)))
 
                 if safe_cities:
-                    return random.choice(safe_cities)
+                    # Сохраняем в кеш для всех будущих вызовов
+                    cls._cached_safe_cities = safe_cities
+                    return random.choice(cls._cached_safe_cities)
         except Exception as e:
-            logger.error(f"Не удалось получить города из API. Ошибка: {e}") # <-- Заменили print
+            logger.error(f"Не удалось получить города из API. Ошибка: {e}")
 
-        logger.warning(f"Используем fallback-города: {cls.FALLBACK_CITIES}")  # <-- Добавили логирование fallback'а
+        logger.warning(f"Используем fallback-города: {cls.FALLBACK_CITIES}")
         return random.choice(cls.FALLBACK_CITIES)
 
     @staticmethod
@@ -722,15 +710,12 @@ class CarGenerator:
     GEAR_TYPES = ["Automatic", "Manual"]
     WD_TYPES = ["AWD", "FWD", "RWD"]
 
-    # Берем безопасные списки как в учебном проекте, чтобы избежать скрытых багов длины строки
     MAKE_TYPES = ["Toyota", "Honda", "Ford", "BMW", "Mazda"]
     MODEL_TYPES = ["Camry", "Civic", "Focus", "X5", "Premium"]
     CLASS_TYPES = ["Economy", "Comfort", "Business", "Premium"]
 
     @staticmethod
     def get_random_car(**overrides) -> Car:
-        """Генерирует случайную машину. Позволяет переопределять любые поля через **overrides"""
-        # Базовые случайные данные (используем Faker и твои списки)
         data = {
             "city": SearchDataGenerator.get_random_city(),
             "make": fake.company(),
@@ -748,10 +733,7 @@ class CarGenerator:
             "photo_path": None
         }
 
-        # Накатываем сверху те значения, которые мы передали в тест (если они есть)
         data.update(overrides)
-
-        # Распаковываем словарь в наш красивый датакласс Car!
         return Car(**data)
 
 ============================================================
@@ -1077,27 +1059,30 @@ class PwAddCarPage(PwBasePage):
         super().__init__(page)
         self.endpoint = "/let-car-work"
 
-        # --- ЛОКАТОРЫ ---
-        self.city_input = page.locator("id=city")
+        # --- ЛОКАТОРЫ (В стиле Playwright) ---
+        self.city_input = page.locator("#city")
         self.city_option = page.locator("[data-testid='city-option']").first
 
-        self.make_input = page.locator("input[name='manufacture']")
-        self.model_input = page.locator("input[name='model']")
-        self.year_input = page.locator("input[name='year']")
-        self.doors_input = page.locator("input[name='doors']")
-        self.seats_input = page.locator("input[name='seats']")
-        self.class_input = page.locator("input[name='carClass']")
+        # Убираем избыточный тег 'input', оставляя чистый атрибут
+        self.make_input = page.locator("[name='manufacture']")
+        self.model_input = page.locator("[name='model']")
+        self.year_input = page.locator("[name='year']")
+        self.doors_input = page.locator("[name='doors']")
+        self.seats_input = page.locator("[name='seats']")
+        self.class_input = page.locator("[name='carClass']")
 
-        self.fuel_select = page.locator("select[name='fuel']")
-        self.gear_select = page.locator("select[name='gear']")
-        self.wd_select = page.locator("select[name='wheelsDrive']")
+        self.fuel_select = page.locator("[name='fuel']")
+        self.gear_select = page.locator("[name='gear']")
+        self.wd_select = page.locator("[name='wheelsDrive']")
 
-        self.serial_input = page.locator("input[name='serialNumber']")
-        self.price_input = page.locator("input[name='pricePerDay']")
-        self.about_input = page.locator("textarea[name='about']")
+        self.serial_input = page.locator("[name='serialNumber']")
+        self.price_input = page.locator("[name='pricePerDay']")
+        self.about_input = page.locator("[name='about']")
 
         self.submit_btn = page.locator("button[type='submit']")
-        self.submit_error_message = page.locator("div.error[role='alert']")
+
+        # МАГИЯ PLAYWRIGHT: Ищем элемент не по CSS-классу, а по его смыслу на странице
+        self.submit_error_message = page.get_by_role("alert")
 
     # --- ДЕЙСТВИЯ ---
     @allure.step("Открытие страницы добавления машины")
@@ -2519,6 +2504,7 @@ from data.data_generator import SearchDataGenerator
 from pages.results_page import ResultsPage
 from utils.logger import get_logger
 
+
 logger = get_logger()
 
 @allure.epic("UI Testing")
@@ -2531,6 +2517,7 @@ def test_search_form_dynamic(driver):
 
     city = SearchDataGenerator.get_random_city()
     start_date, end_date = SearchDataGenerator.get_safe_future_dates()
+
     expected_dates_str = f"{start_date.month}/{start_date.day}/{start_date.year} - {end_date.month}/{end_date.day}/{end_date.year}"
 
     with allure.step(f"Параметры: Город - {city}, Даты: {expected_dates_str}"):

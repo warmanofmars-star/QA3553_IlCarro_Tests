@@ -51,7 +51,6 @@ def driver():
         if not is_headless:
             driver_instance.maximize_window()
 
-    driver_instance.implicitly_wait(5)
 
     # === НАДЕВАЕМ ШПИОНА НА ДРАЙВЕР ПЕРЕД ВЫДАЧЕЙ ===
     decorated_driver = EventFiringWebDriver(driver_instance, IlCarroListener())

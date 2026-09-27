@@ -1,9 +1,8 @@
-import requests
 import os
+import requests
 import allure
 from utils.logger import get_logger
 
-# 2. Создаем отдельный канал логирования для API
 logger = get_logger("API")
 
 
@@ -11,25 +10,28 @@ class IlCarroAPI:
     BASE_URL = os.getenv("API_BASE_URL", "https://ilcarro-backend.herokuapp.com")
 
     def __init__(self):
+        # 1. Открываем единую сессию при создании клиента
+        self.session = requests.Session()
         self.token = None
 
     def login(self, username, password):
-        # Перенесли шаг внутрь. Переменную password нигде не выводим!
         with allure.step(f"API: Авторизация пользователя {username}"):
             url = f"{self.BASE_URL}/v1/user/login/usernamepassword"
-
-            # 3. Фиксируем отправку запроса (без пароля!)
             logger.info(f"POST {url} [User: {username}]")
 
             payload = {
                 "username": username,
                 "password": password
             }
-            response = requests.post(url, json=payload)
+            # 2. Запрос делаем через сессию
+            response = self.session.post(url, json=payload)
 
             if response.status_code == 200:
                 self.token = response.json().get("accessToken")
-                logger.info("Авторизация успешна (Token получен)")
+                # 3. МАГИЯ: Один раз кладем токен в заголовки сессии,
+                # и он автоматически будет прикрепляться ко всем будущим запросам!
+                self.session.headers.update({"Authorization": f"Bearer {self.token}"})
+                logger.info("Авторизация успешна (Token получен и вшит в сессию)")
             else:
                 logger.error(f"Ошибка авторизации: {response.status_code} - {response.text}")
             return response
@@ -37,19 +39,12 @@ class IlCarroAPI:
     @allure.step("API: Добавление новой машины")
     def add_car(self, car_payload):
         url = f"{self.BASE_URL}/v1/cars"
-
-        # Вытаскиваем серийный номер из пейлоада для красивого лога
         serial = car_payload.get('serialNumber', 'UNKNOWN')
         logger.info(f"POST {url} [Создание машины: {serial}]")
 
-        # Сваггер требует передавать токен в заголовке Authorization (Bearer Authentication)
-        headers = {
-            "Authorization": f"Bearer {self.token}"
-        }
+        # 4. Обрати внимание: параметра headers больше нет, код стал чище
+        response = self.session.post(url, json=car_payload)
 
-        response = requests.post(url, json=car_payload, headers=headers)
-
-        # Добавили ветвление успеха и ошибки
         if response.status_code == 200:
             logger.info(f"Машина {serial} успешно создана в БД")
         else:
@@ -62,10 +57,7 @@ class IlCarroAPI:
         url = f"{self.BASE_URL}/v1/cars/my"
         logger.info(f"GET {url} [Запрос списка своих машин]")
 
-        headers = {
-            "Authorization": f"Bearer {self.token}"
-        }
-        response = requests.get(url, headers=headers)
+        response = self.session.get(url)
 
         if response.status_code != 200:
             logger.error(f"Ошибка получения списка машин: {response.status_code} - {response.text}")
@@ -77,10 +69,7 @@ class IlCarroAPI:
         url = f"{self.BASE_URL}/v1/cars/{serial_number}"
         logger.info(f"DELETE {url} [Удаление машины: {serial_number}]")
 
-        headers = {
-            "Authorization": f"Bearer {self.token}"
-        }
-        response = requests.delete(url, headers=headers)
+        response = self.session.delete(url)
 
         if response.status_code == 200:
             logger.info(f"Машина {serial_number} успешно удалена")
@@ -99,7 +88,7 @@ class IlCarroAPI:
             "startDate": start_date,
             "endDate": end_date
         }
-        response = requests.post(url, json=payload)
+        response = self.session.post(url, json=payload)
 
         if response.status_code == 200:
             cars_count = len(response.json().get("cars", []))
@@ -118,10 +107,7 @@ class IlCarroAPI:
             "startDate": start_date,
             "endDate": end_date
         }
-        headers = {
-            "Authorization": f"Bearer {self.token}"
-        }
-        response = requests.post(url, json=payload, headers=headers)
+        response = self.session.post(url, json=payload)
 
         if response.status_code == 200:
             logger.info(f"Машина {serial_number} успешно забронирована")
@@ -135,7 +121,7 @@ class IlCarroAPI:
         url = f"{self.BASE_URL}/v1/cars/cities"
         logger.info(f"GET {url} [Запрос списка городов]")
 
-        response = requests.get(url)
+        response = self.session.get(url)
 
         if response.status_code != 200:
             logger.error(f"Ошибка получения списка городов: {response.status_code} - {response.text}")
