@@ -1,2 +1,0 @@
-[32;20m[2026-09-27 19:44:30] [INFO] [TEST] - Playwright будет создавать машину: Car(city='Herzliya', make='Monroe Group', model='Him', year='2024', fuel='Petrol', gear='Automatic', wd='AWD', doors='5', seats='4', car_class='Business', reg_number='IL-A0D6ADDB', price='468', about='World cost hotel.', photo_path=None)[0m
-[32;20m[2026-09-27 19:44:34] [INFO] [TEST] - Машина с номером IL-A0D6ADDB успешно добавлена через Playwright![0m

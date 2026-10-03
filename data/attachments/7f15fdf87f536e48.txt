@@ -1,8 +1,0 @@
-INFO     API:car_api.py:20 POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com]
-INFO     API:car_api.py:34 Авторизация успешна (Token получен и вшит в сессию)
-INFO     API:car_api.py:43 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-4874B5FD]
-INFO     API:car_api.py:49 Машина IL-4874B5FD успешно создана в БД
-INFO     API:car_api.py:58 GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
-INFO     API:car_api.py:70 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-4874B5FD [Удаление машины: IL-4874B5FD]
-INFO     API:car_api.py:75 Машина IL-4874B5FD успешно удалена
-INFO     API:car_api.py:58 GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]

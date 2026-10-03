@@ -1,0 +1,2 @@
+[32;20m[2026-10-03 19:02:51] [INFO] [TEST] - Playwright будет создавать машину: Car(city='Sderot', make='Brown PLC', model='American', year='2024', fuel='Diesel', gear='Automatic', wd='AWD', doors='5', seats='3', car_class='Economy', reg_number='IL-66F54422', price='213', about='American herself arm mission receive.', photo_path=None)[0m
+[32;20m[2026-10-03 19:02:53] [INFO] [TEST] - Машина с номером IL-66F54422 успешно добавлена через Playwright![0m

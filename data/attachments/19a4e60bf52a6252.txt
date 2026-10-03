@@ -1,4 +1,0 @@
-INFO     API:car_api.py:20 POST https://ilcarro-backend.herokuapp.com/v1/user/login/usernamepassword [User: warman.of.mars@gmail.com]
-INFO     API:car_api.py:34 Авторизация успешна (Token получен и вшит в сессию)
-INFO     API:car_api.py:43 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-B772AB15]
-INFO     API:car_api.py:49 Машина IL-B772AB15 успешно создана в БД

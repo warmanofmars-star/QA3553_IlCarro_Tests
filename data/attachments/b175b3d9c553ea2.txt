@@ -1,0 +1,4 @@
+[32;20m[2026-10-03 19:02:53] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_166b585527@example.com][0m
+[32;20m[2026-10-03 19:02:53] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-03 19:02:53] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-025820A0][0m
+[32;20m[2026-10-03 19:02:53] [INFO] [API] - Машина IL-025820A0 успешно создана в БД[0m
