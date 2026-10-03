@@ -1,38 +1,40 @@
-# 🚗 IlCarro Test Automation Framework
+# 🚗 IlCarro Hybrid Test Automation Framework
 
-Robust, production-ready hybrid test automation framework for the "IlCarro" (Car Rental) web application.
+[![UI Tests in Docker](https://github.com/warmanofmars-star/QA3553_IlCarro_Tests/actions/workflows/tests.yml/badge.svg)](https://github.com/warmanofmars-star/QA3553_IlCarro_Tests/actions)
+📊 **Live Allure Report:** [View Dashboard](https://warmanofmars-star.github.io/QA3553_IlCarro_Tests/)
 
-This project demonstrates a senior-level approach to QA automation, combining classic UI testing, API integration, and modern tools to ensure fast, stable, and secure test execution.
+Robust, production-ready hybrid test automation framework for the "IlCarro" (Car Rental) web application, featuring a fully containerized **Infrastructure as Code (IaC)** approach.
+
+This project demonstrates a senior-level approach to QA automation, combining classic UI testing, API integration, remote browser execution via Selenoid, advanced network mocking, and modern container orchestration.
 
 ## 🛠️ Tech Stack
 * **Language:** Python 3.12
-* **Frameworks:** Pytest, Selenium WebDriver, Playwright (Sync API)
+* **UI Frameworks:** Selenium WebDriver, Playwright (Sync API)
 * **API Testing:** Requests
-* **Data Generation:** Faker
-* **Reporting:** Allure Report
-* **CI/CD:** GitHub Actions, GitHub Pages
+* **Containerization & Orchestration:** Docker, Docker Compose, Selenoid (with video-recorder)
+* **Test Runner:** Pytest (with `pytest-xdist` for parallel execution)
+* **Data Generation:** Faker & UUID
+* **Reporting:** Allure Report (with embedded test session videos)
+* **CI/CD:** GitHub Actions (Fully containerized pipeline)
 * **Notifications:** Telegram Bot API
 
 ## 🚀 Key Architectural Features
 
-* **Hybrid Testing Approach:** Tests use API calls to set up preconditions (e.g., creating a car or user) and teardown data, drastically reducing UI test execution time and ensuring test isolation.
-* **Dual Framework Support:** Implemented primarily using **Selenium (Page Object Model)** with an integrated **Playwright** module to demonstrate modern tool capabilities (Strict Mode, Auto-waiting, Browser Contexts).
-* **Smart Browser Cascading:** The framework automatically detects the environment. It runs headless Google Chrome in CI/CD (GitHub Actions) for consistency, but gracefully falls back to Microsoft Edge for local execution if Chrome is unavailable.
-* **Dynamic Data Generation & Caching:** Uses dynamic querying to the backend API to fetch a valid list of cities for testing. The response is cached in memory (Singleton pattern) to prevent backend DDOS during parallel execution.
+* **Dockerized Infrastructure (IaC):** The entire test environment (framework, Selenoid hub, Chrome instances, video recording) is orchestrated via Docker Compose, guaranteeing absolute consistency across local machines and CI/CD.
+* **Strict Data Isolation (Sandbox Users):** Employs a robust `temp_user` fixture that dynamically registers a unique user via API before each test. This eliminates race conditions during aggressive parallel execution (`pytest-xdist`) and leaves the database unpolluted.
+* **Automatic Video Attachment:** Every Selenium test execution session is recorded via FFmpeg/Selenoid. The resulting `.mp4` files are automatically attached to the Allure report upon teardown.
+* **Hybrid Testing Approach:** Tests use API calls to set up preconditions (e.g., creating a car or user) and teardown data, drastically reducing UI test execution time.
+* **Network Interception & Mocking:** Utilizes Playwright's `page.route()` to intercept backend requests (e.g., fetching city lists) and inject mock responses, allowing strict isolation of frontend UI rendering logic from backend stability.
+* **Dual Framework Support:** Implemented primarily using **Selenium (Page Object Model)** with an integrated **Playwright** module to demonstrate modern tool capabilities.
 * **Security & Log Masking:** Sensitive data (passwords, tokens) are strictly masked (********) in all console outputs, test logs, and Allure reports.
-* **Data Integrity Auditing:** Includes isolated Gray-box tests (test_dictionaries.py) to strictly validate frontend autocomplete dictionaries against backend API responses, automatically detecting silent business bugs and mapping mismatches without breaking functional UI tests.
-* **Parallel Execution Ready:** Configured to run concurrently using `pytest-xdist` with strictly isolated test environments and thread-safe data generation (using UUIDs to prevent Faker collisions across workers).
-* **Data-Driven Testing (DDT):** Extensively utilizes `@pytest.mark.parametrize` to execute complex positive and negative test scenarios (e.g., isolating frontend validation from backend API errors) from a single test function, ensuring high coverage while strictly adhering to the DRY principle.
-* **Modern Data Modeling:** Implements Python `@dataclass` for representing test entities (e.g., `User`, `Car`). This architectural choice ensures clean object instantiation, dynamic payload overriding via `**kwargs`, and highly readable automatic logging of generated test data.
-* **Context-Aware Custom Logging:** Features a proprietary logging utility that dynamically adapts to the execution environment. It writes thread-safe logs to individual files during local debugging, but smartly mutes file I/O during parallel `xdist` runs to prevent OS-level file locks, relying entirely on Allure's stdout capture.
-* **API Connection Pooling:** Utilizes `requests.Session()` for backend interactions, reusing TCP connections (Keep-Alive) and automatically managing Bearer tokens, which significantly reduces execution time in hybrid setups.
-* **Executive-Ready Reporting:** Allure reports are deeply structured using `@allure.epic`, `feature`, and `story`. Complex cross-platform scenarios are prominently isolated in the **"Hybrid Testing"** epic for immediate visibility of API+UI integrations.
+* **Context-Aware Custom Logging:** Features a proprietary logging utility that dynamically adapts to the execution environment, preventing OS-level file locks during parallel runs.
+* **API Connection Pooling:** Utilizes `requests.Session()` for backend interactions, reusing TCP connections and automatically managing Bearer tokens.
 
 ## ⚙️ Setup & Installation
 
 1. Clone the repository:
 ```bash
-git clone [https://github.com/warmanofmars-star/QA3553_IlCarro_Tests.git](https://github.com/warmanofmars-star/QA3553_IlCarro_Tests.git)
+git clone https://github.com/warmanofmars-star/QA3553_IlCarro_Tests.git
 ```
 
 2. Create and activate a virtual environment.
@@ -40,7 +42,7 @@ git clone [https://github.com/warmanofmars-star/QA3553_IlCarro_Tests.git](https:
 3. Install dependencies:
 ```bash
 pip install -r requirements.txt
-playwright install
+playwright install chromium
 ```
 
 4. Create a `.env` file in the root directory and add your credentials:
@@ -48,14 +50,20 @@ playwright install
 USER_EMAIL=your_test_email@gmail.com
 USER_PASSWORD=your_secure_password
 HEADLESS_MODE=false
+USE_SELENOID=false
 ENABLE_CONSOLE_LOGS=true
 ```
 
 ## 🏃‍♂️ How to Run Tests
 
-**Run all tests (Selenium UI, API, and Playwright) in parallel with 3 workers:**
+**Run tests in the isolated Docker container (Recommended):**
 ```bash
-pytest tests/ -s -n 3 --clean-alluredir --alluredir=allure-results
+docker compose up --build --exit-code-from qa-framework
+```
+
+**Run locally via Pytest (parallel execution):**
+```bash
+pytest tests/ -n 3 --clean-alluredir --alluredir=allure-results
 ```
 
 **Run modern Playwright tests (headed mode for debugging):**
@@ -69,27 +77,30 @@ allure serve allure-results
 ```
 
 ## 📊 CI/CD Pipeline
-The project is fully integrated with **GitHub Actions**. Upon every manual dispatch, the pipeline:
-1. Sets up the Python environment and installs dependencies.
-2. Executes the full test suite in headless mode.
-3. Generates an Allure Report.
-4. Deploys the report to GitHub Pages.
-5. Sends a Telegram notification with a direct link to the test results.
+The project features an advanced **GitHub Actions** pipeline:
+* Automatically triggers on manual dispatch (`workflow_dispatch`).
+* Spins up a clean Linux runner, builds the Docker Compose stack, and executes all tests in parallel.
+* Securely injects credentials via **GitHub Secrets**.
+* Generates and deploys the Allure report to **GitHub Pages**.
+* Sends automated execution status notifications with a direct link to Telegram.
 
 ## 🏗 Project Structure
 ```text
 QA3553_IlCarro_Tests/
-├── .github/workflows/    # CI/CD pipeline configuration
+├── .github/workflows/    # CI/CD pipeline configuration (tests.yml)
 ├── api/                  # API Client (Requests) for backend interactions
-├── data/                 # Test data generators (Faker)
+├── data/                 # Test data generators (Faker, UUID)
 ├── models/               # Data classes (Car, User)
 ├── pages/                # Page Object Model classes (Selenium & Playwright)
+├── selenoid/             # Selenoid configuration (browsers.json)
 ├── tests/                # Test suites grouped by context
 ├── utils/                # Custom logger, WebDriver listener, API helpers
 ├── logs/                 # Auto-rotating local log files
-├── conftest.py           # Pytest fixtures and WebDriver/Playwright setup
+├── conftest.py           # Pytest fixtures, Selenoid connection, video attachment hooks
+├── Dockerfile            # Container definition for the test framework
+├── docker-compose.yml    # Infrastructure orchestration (Selenoid + Framework + Network + Volumes)
 └── requirements.txt      # Project dependencies
 ```
 
 ---
-*Author: Maxim Vinogradov*
+*Author: Maksim Vinogradov*
