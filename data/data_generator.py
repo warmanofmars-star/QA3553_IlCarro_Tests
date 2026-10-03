@@ -6,6 +6,7 @@ import json
 import os
 from datetime import datetime, timedelta
 from faker import Faker
+
 from models.user import User
 from api.car_api import IlCarroAPI
 from models.car import Car
@@ -27,7 +28,6 @@ class UserGenerator:
         digit = random.choice(string.digits)
         special = random.choice("@$#^&*!")
 
-        # Добиваем длину до 9 символов случайными буквами/цифрами
         rest = ''.join(random.choices(string.ascii_letters + string.digits, k=5))
 
         password_list = list(upper + lower + digit + special + rest)
@@ -35,17 +35,22 @@ class UserGenerator:
 
         return ''.join(password_list)
 
+    @staticmethod
+    def generate_valid_email():
+        """Генерирует абсолютно уникальный email, безопасный для xdist и БД"""
+        # uuid4() дает уникальную строку, вероятность повторения которой стремится к нулю
+        unique_id = uuid.uuid4().hex[:10]
+        return f"user_{unique_id}@example.com"
+
     @classmethod
     def get_random_user(cls, **overrides) -> User:
         """
         Генерирует случайного валидного юзера.
-        Позволяет точечно ломать любые поля через **overrides.
-        Например: get_random_user(name="")
         """
         data = {
             "name": fake.first_name(),
             "last_name": fake.last_name(),
-            "email": fake.unique.email(),  # Уникальный email "из коробки", uuid больше не нужен
+            "email": cls.generate_valid_email(),  # ЗАМЕНИЛИ FAKER НА UUID
             "password": cls.generate_valid_password()
         }
 
@@ -62,11 +67,8 @@ class UserGenerator:
             "password": user.password
         }
 
-        # Вычисляем абсолютный корень проекта (на 2 уровня выше этого файла)
         project_root = Path(__file__).resolve().parent.parent
         log_dir = project_root / "logs"
-
-        # Гарантируем, что папка logs существует (создаст, если её нет)
         log_dir.mkdir(exist_ok=True)
 
         filepath = log_dir / "registered_users.jsonl"

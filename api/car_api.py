@@ -36,6 +36,29 @@ class IlCarroAPI:
                 logger.error(f"Ошибка авторизации: {response.status_code} - {response.text}")
             return response
 
+    @allure.step("API: Регистрация нового пользователя {username}")
+    def register(self, username, password):
+        url = f"{self.BASE_URL}/v1/user/registration/usernamepassword"
+        logger.info(f"POST {url} [Регистрация: {username}]")
+
+        payload = {
+            "firstName": "Temp",
+            "lastName": "User",
+            "username": username,
+            "password": password
+        }
+        response = self.session.post(url, json=payload)
+
+        if response.status_code == 200:
+            self.token = response.json().get("accessToken")
+            # Сразу вшиваем токен, чтобы клиент был готов к работе
+            self.session.headers.update({"Authorization": f"Bearer {self.token}"})
+            logger.info("Регистрация успешна (Token получен и вшит в сессию)")
+        else:
+            logger.error(f"Ошибка регистрации: {response.status_code} - {response.text}")
+        return response
+
+
     @allure.step("API: Добавление новой машины")
     def add_car(self, car_payload):
         url = f"{self.BASE_URL}/v1/cars"

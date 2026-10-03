@@ -17,26 +17,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
+      # 👇 1. Динамически создаем .env файл для Docker
+      - name: Setup environment variables for Docker
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          playwright install chromium
+          echo "USER_EMAIL=${{ secrets.USER_EMAIL }}" >> .env
+          echo "USER_PASSWORD=${{ secrets.USER_PASSWORD }}" >> .env
 
-      - name: Run Pytest
-        env:
-          USER_EMAIL: ${{ secrets.USER_EMAIL }}
-          USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
-          UI_BASE_URL: "https://icarro-v1.netlify.app"
-          API_BASE_URL: "https://ilcarro-backend.herokuapp.com"
-          HEADLESS_MODE: "true"
-        # Запускаем наши 3 потока с генерацией сырых данных Allure
-        run: pytest tests/ -n 3 --clean-alluredir --reruns 2 --reruns-delay 2 --alluredir=allure-results
+      # 👇 2. Предварительно скачиваем тяжелые образы, чтобы тесты не падали по таймауту
+      - name: Pull Selenoid Chrome image
+        run: docker pull selenoid/chrome:128.0
+
+      - name: Pull Selenoid Video Recorder image
+        run: docker pull selenoid/video-recorder:latest-release
+
+      # 👇 3. Запускаем всю нашу инфраструктуру одной командой
+      - name: Run Tests in Docker Compose
+        run: docker compose up --build --exit-code-from qa-framework
         continue-on-error: true
 
       # --- БЕЗОТКАЗНАЯ ГЕНЕРАЦИЯ ОТЧЕТА ЧЕРЕЗ NPM (БЕЗ DOCKER) ---
@@ -63,6 +59,6 @@ jobs:
             to: ${{ secrets.TELEGRAM_TO }}
             token: ${{ secrets.TELEGRAM_TOKEN }}
             message: |
-              🤖 Автотесты IlCarro завершены!
+              🤖 Автотесты IlCarro завершены (Docker Environment)!
               📊 Посмотреть Allure-отчет можно по ссылке:
               👉 https://warmanofmars-star.github.io/QA3553_IlCarro_Tests/

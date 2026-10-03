@@ -1,0 +1,1 @@
+{"uuid": "df5df429-c92d-4cf2-a97c-d6d0ec9da2c4", "befores": [{"name": "fuel_type", "status": "passed", "start": 1791052853231, "stop": 1791052853231}], "afters": [{"name": "fuel_type::<lambda>", "start": 1791052855516}], "start": 1791052853231, "stop": 1791052855516}
