@@ -1,0 +1,2 @@
+INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-E6A0100E]
+ERROR    API:car_api.py:74 Ошибка создания машины IL-E6A0100E: 403 -

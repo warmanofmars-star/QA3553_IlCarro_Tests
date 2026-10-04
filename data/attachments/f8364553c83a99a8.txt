@@ -1,0 +1,68 @@
+
+[INFO] Маршрутизация в изолированный Docker-контейнер (Selenoid)...
+[32;20m[2026-10-04 20:07:37] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_e1f6fc472f@example.com][0m
+[32;20m[2026-10-04 20:07:38] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-04 20:07:38] [INFO] [UI] - Переход по ссылке: https://icarro-v1.netlify.app/login[0m
+[32;20m[2026-10-04 20:07:38] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='username']'[0m
+[32;20m[2026-10-04 20:07:39] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='username']'[0m
+[32;20m[2026-10-04 20:07:39] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:39] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:39] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='password']'[0m
+[32;20m[2026-10-04 20:07:39] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:39] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:39] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'button[type='submit']'[0m
+[32;20m[2026-10-04 20:07:39] [INFO] [UI] - Клик по элементу <button> с текстом: 'Y’alla!'[0m
+[32;20m[2026-10-04 20:07:39] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'button.navigation-link'[0m
+[32;20m[2026-10-04 20:07:39] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'button.navigation-link'[0m
+[32;20m[2026-10-04 20:07:39] [INFO] [TEST] - --- ЗАПУСК ТЕСТА: Добавление премиального электрокара ---[0m
+[32;20m[2026-10-04 20:07:39] [INFO] [TEST] - Сгенерированные данные: Car(city='Jerusalem', make='Bond, Butler and Smith', model='Unit', year='2022', fuel='Electric', gear='Manual', wd='AWD', doors='4', seats='4', car_class='Premium', reg_number='IL-D16533BD', price='746', about='Ability national wall friend budget.', photo_path=None)[0m
+[32;20m[2026-10-04 20:07:39] [INFO] [UI] - Переход по ссылке: https://icarro-v1.netlify.app/let-car-work[0m
+[32;20m[2026-10-04 20:07:40] [INFO] [UI] - Поиск элемента -> By: id, Value: 'city'[0m
+[32;20m[2026-10-04 20:07:40] [INFO] [UI] - Поиск элемента -> By: id, Value: 'city'[0m
+[32;20m[2026-10-04 20:07:40] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:40] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:40] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '[data-testid='city-option'][data-value='Jerusalem']'[0m
+[32;20m[2026-10-04 20:07:40] [INFO] [UI] - Клик по элементу <div> с текстом: 'Jerusalem'[0m
+[32;20m[2026-10-04 20:07:40] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='manufacture']'[0m
+[32;20m[2026-10-04 20:07:40] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:40] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:40] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='model']'[0m
+[32;20m[2026-10-04 20:07:40] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:40] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='year']'[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='doors']'[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='seats']'[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='carClass']'[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='serialNumber']'[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='pricePerDay']'[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'textarea[name='about']'[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'select[name='fuel']'[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Поиск элемента -> By: xpath, Value: './/option[normalize-space(.) = "Electric"]'[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Клик по элементу <option> с текстом: 'Electric'[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'select[name='gear']'[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Поиск элемента -> By: xpath, Value: './/option[normalize-space(.) = "Manual"]'[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Клик по элементу <option> с текстом: 'Manual'[0m
+[32;20m[2026-10-04 20:07:41] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'select[name='wheelsDrive']'[0m
+[32;20m[2026-10-04 20:07:42] [INFO] [UI] - Поиск элемента -> By: xpath, Value: './/option[normalize-space(.) = "AWD"]'[0m
+[32;20m[2026-10-04 20:07:42] [INFO] [UI] - Клик по элементу <option> с текстом: 'AWD'[0m
+[32;20m[2026-10-04 20:07:42] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'button[type='submit']'[0m
+[32;20m[2026-10-04 20:07:42] [INFO] [UI] - Клик по элементу <button> с текстом: 'Submit'[0m
+[32;20m[2026-10-04 20:07:42] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='manufacture']'[0m
+[32;20m[2026-10-04 20:07:42] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'input[name='manufacture']'[0m
+[32;20m[2026-10-04 20:07:42] [INFO] [TEST] - --- ТЕСТ УСПЕШНО ЗАВЕРШЕН ---[0m
+
+[INFO] Видео успешно прикреплено к отчету!
