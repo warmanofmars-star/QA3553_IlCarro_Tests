@@ -1,50 +1,40 @@
-import os
 import allure
 import pytest
 from pages.login_page import LoginPage
 
-VALID_EMAIL = os.getenv("USER_EMAIL")
-VALID_PASSWORD = os.getenv("USER_PASSWORD")
 
-
-# ==========================================
-# ПОЗИТИВНЫЙ ТЕСТ
-# ==========================================
 @allure.epic("UI Testing")
 @allure.feature("Login Page")
 @allure.story("Positive Login")
 @allure.severity(allure.severity_level.BLOCKER)
-def test_login_success(driver):
+def test_login_success(driver, temp_user):
     login_page = LoginPage(driver)
     login_page.open()
-    login_page.login(VALID_EMAIL, VALID_PASSWORD)
+
+    user = temp_user["user"]  # Берем гарантированно существующего юзера
+    login_page.login(user.email, user.password)
 
     assert login_page.get_global_message_text() == "You are logged in success", "Сообщение об успехе не совпадает!"
     login_page.click_ok_button()
     assert login_page.is_logout_button_visible() == True, "Кнопка 'Log out' не найдена"
 
 
-# ==========================================
-# НЕГАТИВНЫЕ ТЕСТЫ: Фронтенд-валидация
-# ==========================================
 @allure.epic("UI Testing")
 @allure.feature("Login Page")
 @allure.story("Negative Login - Frontend Validation")
 @allure.severity(allure.severity_level.NORMAL)
 @pytest.mark.parametrize("email, pass_condition, expected_error, scenario", [
     ("123", "valid", "Wrong email format", "Невалидный формат email"),
-    (VALID_EMAIL, "empty", "Password is required", "Пустой пароль")
+    ("valid_user@example.com", "empty", "Password is required", "Пустой пароль")
 ])
 def test_login_negative_frontend(driver, email, pass_condition, expected_error, scenario):
     with allure.step(f"Сценарий: {scenario}"):
         login_page = LoginPage(driver)
         login_page.open()
 
-        # БЕЗОПАСНАЯ ЛОГИКА: Достаем реальный пароль только внутри функции!
-        actual_password = VALID_PASSWORD if pass_condition == "valid" else ""
+        actual_password = "ValidPassword123!" if pass_condition == "valid" else ""
 
         login_page.fill_email(email)
-        # В метод уйдет реальный пароль, но Allure увидит в параметрах только слово "valid"
         login_page.fill_password(actual_password)
         login_page.remove_focus()
 
@@ -52,36 +42,31 @@ def test_login_negative_frontend(driver, email, pass_condition, expected_error, 
         assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована"
 
 
-# ==========================================
-# НЕГАТИВНЫЕ ТЕСТЫ: Бэкенд-валидация
-# ==========================================
 @allure.epic("UI Testing")
 @allure.feature("Login Page")
 @allure.story("Negative Login - Backend Validation")
 @allure.severity(allure.severity_level.CRITICAL)
 @pytest.mark.parametrize("email_condition, pass_condition, expected_details, scenario", [
-    ("fake_user_12345@gmail.com", "valid_pass", "Login or Password incorrect", "Несуществующий пользователь"),
-    ("valid_email", "WrongPassword123!", "Login or Password incorrect", "Неверный пароль")
+    ("fake_user", "valid_pass", "Login or Password incorrect", "Несуществующий пользователь"),
+    ("valid_email", "wrong_pass", "Login or Password incorrect", "Неверный пароль")
 ])
-def test_login_negative_backend(driver, email_condition, pass_condition, expected_details, scenario):
-    """Проверка ошибок, которые возвращает сервер после попытки авторизации"""
+def test_login_negative_backend(driver, temp_user, email_condition, pass_condition, expected_details, scenario):
     with allure.step(f"Сценарий: {scenario}"):
         login_page = LoginPage(driver)
         login_page.open()
 
-        actual_email = VALID_EMAIL if email_condition == "valid_email" else email_condition
-        actual_password = VALID_PASSWORD if pass_condition == "valid_pass" else pass_condition
+        user = temp_user["user"]  # Запрашиваем валидного юзера для микса данных
+
+        actual_email = user.email if email_condition == "valid_email" else "fake_user_12345@gmail.com"
+        actual_password = user.password if pass_condition == "valid_pass" else "WrongPassword123!"
 
         login_page.login(actual_email, actual_password)
 
-        # 1. Ожидаем глобальное сообщение об ошибке (Заголовок)
         assert login_page.get_global_message_text() == "Login failed", "Неверный заголовок ошибки бэкенда"
-
-        # 2. ПРОВЕРКА ДИНАМИЧЕСКОГО БАГА ФРОНТЕНДА
         actual_details = login_page.get_global_message_details_text()
 
         if "[object Object]" in actual_details:
-            pytest.xfail("ПЛАВАЮЩИЙ БАГ ФРОНТЕНДА: React не успел распарсить JSON и вывел [object Object]")
+            pytest.xfail("ПЛАВАЮЩИЙ БАГ ФРОНТЕНДА: React не успел распарсить JSON")
         else:
             assert expected_details in actual_details, \
                 f"Ожидали текст '{expected_details}', а получили '{actual_details}'"
