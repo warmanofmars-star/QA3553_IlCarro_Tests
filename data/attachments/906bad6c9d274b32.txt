@@ -1,2 +1,0 @@
-[32;20m[2026-10-04 07:52:58] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-503C7C11][0m
-[31;20m[2026-10-04 07:52:58] [ERROR] [API] - Ошибка создания машины IL-503C7C11: 403 - [0m

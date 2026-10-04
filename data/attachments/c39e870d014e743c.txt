@@ -1,0 +1,2 @@
+INFO     TEST:test_playwright_add_car.py:20 Playwright будет создавать машину: Car(city='Bat Yam', make='Matthews and Sons', model='After', year='2010', fuel='Electric', gear='Manual', wd='RWD', doors='2', seats='3', car_class='Premium', reg_number='IL-25075EBD', price='126', about='Yeah somebody company still.', photo_path=None)
+INFO     TEST:test_playwright_add_car.py:36 Машина с номером IL-25075EBD успешно добавлена через Playwright!
