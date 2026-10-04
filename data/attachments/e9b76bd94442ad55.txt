@@ -1,0 +1,5 @@
+[32;20m[2026-10-04 07:52:55] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_3bd22e8dea@example.com][0m
+[32;20m[2026-10-04 07:52:56] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-04 07:52:56] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов][0m
+[32;20m[2026-10-04 07:52:57] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-8F08B819][0m
+[32;20m[2026-10-04 07:52:57] [INFO] [API] - Машина IL-8F08B819 успешно создана в БД[0m

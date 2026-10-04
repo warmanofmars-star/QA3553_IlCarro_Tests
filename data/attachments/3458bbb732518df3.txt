@@ -1,0 +1,11 @@
+[32;20m[2026-10-04 07:52:55] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_38b5d69399@example.com][0m
+[32;20m[2026-10-04 07:52:56] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-04 07:52:56] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов][0m
+[32;20m[2026-10-04 07:52:57] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-3AB41D32][0m
+[32;20m[2026-10-04 07:52:57] [INFO] [API] - Машина IL-3AB41D32 успешно создана в БД[0m
+[32;20m[2026-10-04 07:52:57] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars/search [Поиск: Ashkelon, даты: 2026-10-05 - 2026-10-11][0m
+[32;20m[2026-10-04 07:52:57] [INFO] [API] - Поиск успешен. Найдено машин: 14[0m
+[32;20m[2026-10-04 07:52:57] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars/IL-3AB41D32/booking [Бронирование: IL-3AB41D32, даты: 2026-10-05 - 2026-10-11][0m
+[32;20m[2026-10-04 07:52:57] [INFO] [API] - Машина IL-3AB41D32 успешно забронирована[0m
+[32;20m[2026-10-04 07:52:57] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-3AB41D32 [Удаление машины: IL-3AB41D32][0m
+[32;20m[2026-10-04 07:52:57] [INFO] [API] - Машина IL-3AB41D32 успешно удалена[0m

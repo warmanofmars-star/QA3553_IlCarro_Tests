@@ -1,2 +1,0 @@
-INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-8E75130C]
-ERROR    API:car_api.py:74 Ошибка создания машины IL-8E75130C: 403 -

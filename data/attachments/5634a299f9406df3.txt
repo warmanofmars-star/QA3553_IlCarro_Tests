@@ -1,0 +1,2 @@
+INFO     TEST:test_playwright_add_car.py:20 Playwright будет создавать машину: Car(city='Eilat', make='Myers, Galloway and Nelson', model='Claim', year='2013', fuel='Hybrid', gear='Manual', wd='FWD', doors='2', seats='5', car_class='Premium', reg_number='IL-4CA1A064', price='944', about='Thing fund way about ten carry.', photo_path=None)
+INFO     TEST:test_playwright_add_car.py:36 Машина с номером IL-4CA1A064 успешно добавлена через Playwright!
