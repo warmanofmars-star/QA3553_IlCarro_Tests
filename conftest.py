@@ -172,3 +172,29 @@ def authenticated_driver(driver, temp_user):
 
 def pytest_make_parametrize_id(val):
     return str(val)
+
+
+@pytest.fixture
+def page(context):
+    """
+    Переопределяем базовую фикстуру Playwright для авто-сохранения видео в Allure.
+    Она прозрачно заменяет стандартный page во всех тестах.
+    """
+    page = context.new_page()
+    yield page
+
+    # 1. Запоминаем путь к видео (если запись была включена флагом --video=on)
+    video_path = page.video.path() if page.video else None
+
+    # 2. КРИТИЧЕСКИЙ ШАГ: Принудительно закрываем страницу и контекст.
+    # Если этого не сделать, Playwright не успеет финализировать и сохранить .mp4 файл.
+    page.close()
+    context.close()
+
+    # 3. Прикрепляем готовый файл в Allure
+    if video_path and os.path.exists(video_path):
+        allure.attach.file(
+            video_path,
+            name="Видео Playwright",
+            attachment_type=allure.attachment_type.MP4
+        )

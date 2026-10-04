@@ -41,5 +41,5 @@ services:
       - USER_PASSWORD=${USER_PASSWORD}
       - UI_BASE_URL=https://icarro-v1.netlify.app
       - API_BASE_URL=https://ilcarro-backend.herokuapp.com
-    # Дефолтная команда запуска (3 потока, xdist)
-    command: pytest tests/ -n 3 --clean-alluredir --alluredir=allure-results
+    # Дефолтная команда запуска (3 потока, xdist + видео для Playwright)
+    command: pytest tests/ -n 3 --video=on --clean-alluredir --alluredir=allure-results
