@@ -16,6 +16,68 @@ TELEGRAM_TO=101220870
 USE_SELENOID=false
 
 ============================================================
+📄 FILE: .\commands.md
+============================================================
+
+# 🚗 Шпаргалка по командам проекта IlCarro (Cheatsheet)
+
+## 🏃‍♂️ Запуск тестов локально (Без Docker)
+Перед локальным запуском убедись, что в `.env` стоит `USE_SELENOID=false`[cite: 22].
+
+**Запуск всех тестов параллельно (в 3 потока) с генерацией отчета и видео для Playwright:**
+`pytest tests/ -n 3 --video=on --clean-alluredir --alluredir=allure-results`
+
+**Запуск конкретного файла (например, тесты добавления машины):**
+`pytest tests/test_playwright_add_car.py --clean-alluredir --alluredir=allure-results`
+
+**Запуск Playwright тестов в видимом (Headed) режиме для дебага:**
+`pytest tests/test_playwright_add_car.py -s --headed`[cite: 22]
+
+---
+
+## 📊 Работа с Allure Report
+**Сгенерировать и открыть красивый HTML-отчет в браузере:**
+`allure serve allure-results`[cite: 22]
+
+**Сгенерировать отчет в статичную папку (без открытия браузера):**
+`allure generate allure-results -o allure-report --clean`[cite: 22]
+
+---
+
+## 🐳 Запуск через Docker Compose (Изолированная среда)
+Перед запуском убедись, что в `.env` стоит `USE_SELENOID=true`[cite: 22].
+
+**Полный запуск (Сборка образа -> Запуск Селеноида -> Прогон тестов -> Выход):**
+`docker compose up --build --exit-code-from qa-framework`[cite: 22]
+
+**Остановка и удаление контейнеров (после завершения работы):**
+`docker compose down`[cite: 22]
+
+---
+
+## 🧹 Очистка и обслуживание Docker (Если что-то зависло)
+**Убить все активные контейнеры проекта и удалить сети:**
+`docker compose down -v`[cite: 22]
+
+**Удалить зависшие "сироты" (orphans) контейнеры:**
+`docker compose down --remove-orphans`[cite: 22]
+
+**ГЛОБАЛЬНАЯ ОЧИСТКА ДОКЕРА (Осторожно! Удалит все неиспользуемые контейнеры, образы и кэш на ПК):**
+`docker system prune -a --volumes`[cite: 22]
+
+**Точечно обновить образ браузера для Селеноида (если вышла новая версия Chrome):**
+`docker pull selenoid/chrome:128.0`[cite: 22]
+
+---
+
+## 🐙 Полезные команды Git
+**Заставить Git "забыть" файл, но оставить его на жестком диске (например, `.env` или `logs/`):**
+`git rm --cached <путь_к_файлу>`[cite: 22]
+
+**Обновить файл зависимостей проекта:**
+`pip freeze > requirements.txt`[cite: 22]
+
+============================================================
 📄 FILE: .\conftest.py
 ============================================================
 
@@ -32,6 +94,7 @@ from utils.listener import IlCarroListener
 from api.car_api import IlCarroAPI
 from pages.login_page import LoginPage
 from data.data_generator import UserGenerator
+from utils.logger import get_logger
 
 load_dotenv()
 
@@ -194,6 +257,37 @@ def authenticated_driver(driver, temp_user):
 def pytest_make_parametrize_id(val):
     return str(val)
 
+
+@pytest.fixture
+def page(context):
+    """
+    Переопределяем базовую фикстуру Playwright для авто-сохранения видео в Allure.
+    Она прозрачно заменяет стандартный page во всех тестах.
+    """
+    page = context.new_page()
+    yield page
+
+    # 1. Запоминаем путь к видео (если запись была включена флагом --video=on)
+    video_path = page.video.path() if page.video else None
+
+    # 2. КРИТИЧЕСКИЙ ШАГ: Принудительно закрываем страницу и контекст.
+    # Если этого не сделать, Playwright не успеет финализировать и сохранить .mp4 файл.
+    page.close()
+    context.close()
+
+    # 3. Прикрепляем готовый файл в Allure
+    if video_path and os.path.exists(video_path):
+        allure.attach.file(
+            video_path,
+            name="Видео Playwright",
+            attachment_type=allure.attachment_type.MP4
+        )
+
+@pytest.fixture(scope="session")
+def sys_logger():
+    """Глобальная фикстура логгера для тестов. Избавляет от дублирования импортов."""
+    return get_logger("TEST")
+
 ============================================================
 📄 FILE: .\docker-compose.yml
 ============================================================
@@ -241,8 +335,8 @@ services:
       - USER_PASSWORD=${USER_PASSWORD}
       - UI_BASE_URL=https://icarro-v1.netlify.app
       - API_BASE_URL=https://ilcarro-backend.herokuapp.com
-    # Дефолтная команда запуска (3 потока, xdist)
-    command: pytest tests/ -n 3 --clean-alluredir --alluredir=allure-results
+    # Дефолтная команда запуска (3 потока, xdist + видео для Playwright)
+    command: pytest tests/ -n 3 --video=on --clean-alluredir --alluredir=allure-results
 
 ============================================================
 📄 FILE: .\make_readme.py
@@ -1813,9 +1907,6 @@ import allure
 import pytest
 from pages.add_car_page import AddCarPage
 from data.data_generator import CarGenerator
-from utils.logger import get_logger
-
-logger = get_logger("TEST")
 
 
 @allure.epic("UI Testing")
@@ -1826,16 +1917,16 @@ logger = get_logger("TEST")
     ("Petrol", "Economy", "Добавление бензиновой машины эконом-класса"),
     ("Electric", "Premium", "Добавление премиального электрокара")
 ])
-def test_add_car_success(authenticated_driver, fuel_type, car_class, scenario):
+def test_add_car_success(authenticated_driver, fuel_type, car_class, scenario, sys_logger):
     with allure.step(f"Сценарий: {scenario}"):
-        logger.info(f"--- ЗАПУСК ТЕСТА: {scenario} ---")
+        sys_logger.info(f"--- ЗАПУСК ТЕСТА: {scenario} ---")
         add_car_page = AddCarPage(authenticated_driver)
 
         # Генерируем машину, ПРИНУДИТЕЛЬНО задавая ей нужный тип топлива и класс!
         car = CarGenerator.get_random_car(fuel=fuel_type, car_class=car_class)
 
         # МАГИЯ ДАТАКЛАССОВ В ДЕЙСТВИИ:
-        logger.info(f"Сгенерированные данные: {car}")
+        sys_logger.info(f"Сгенерированные данные: {car}")
 
         add_car_page.open()
 
@@ -1850,14 +1941,14 @@ def test_add_car_success(authenticated_driver, fuel_type, car_class, scenario):
         # Проверка:
         assert add_car_page.is_form_cleared() is True, "Форма не очистилась! Машина не добавлена."
 
-        logger.info("--- ТЕСТ УСПЕШНО ЗАВЕРШЕН ---")
+        sys_logger.info("--- ТЕСТ УСПЕШНО ЗАВЕРШЕН ---")
 
 
 @allure.epic("UI Testing")
 @allure.feature("Add Car Page (Let the car work)")
 @allure.story("Negative Add Car - Duplicate Serial Number")
 @allure.severity(allure.severity_level.CRITICAL)
-def test_add_car_duplicate(authenticated_driver, auth_api):
+def test_add_car_duplicate(authenticated_driver, auth_api, sys_logger):
     with allure.step("API PRECONDITION: Создаем машину через бэкенд"):
         car = CarGenerator.get_random_car()
         car_payload = {
@@ -1874,7 +1965,7 @@ def test_add_car_duplicate(authenticated_driver, auth_api):
         }
         response = auth_api.add_car(car_payload)
         assert response.status_code == 200, "Пререквизит упал: не удалось создать машину через API"
-        logger.info(f"API успешно создал машину с номером: {car.reg_number}")
+        sys_logger.info(f"API успешно создал машину с номером: {car.reg_number}")
 
     with allure.step("UI SCENARIO: Пытаемся добавить машину с тем же номером"):
         add_car_page = AddCarPage(authenticated_driver)
@@ -1890,7 +1981,7 @@ def test_add_car_duplicate(authenticated_driver, auth_api):
     with allure.step("UI ASSERT: Проверка обработки дубликата фронтендом"):
         # 1. Проверяем появление правильного текста ошибки
         error_text = add_car_page.get_submit_error_text()
-        logger.info(f"Фронтенд выдал ошибку: {error_text}")
+        sys_logger.info(f"Фронтенд выдал ошибку: {error_text}")
 
         assert error_text == "Failed to submit car", f"Ожидалась ошибка 'Failed to submit car', но получили '{error_text}'"
 
@@ -2270,53 +2361,43 @@ def test_hybrid_car_search(driver, auth_api):
 📄 FILE: .\tests\test_login.py
 ============================================================
 
-import os
 import allure
 import pytest
 from pages.login_page import LoginPage
 
-VALID_EMAIL = os.getenv("USER_EMAIL")
-VALID_PASSWORD = os.getenv("USER_PASSWORD")
 
-
-# ==========================================
-# ПОЗИТИВНЫЙ ТЕСТ
-# ==========================================
 @allure.epic("UI Testing")
 @allure.feature("Login Page")
 @allure.story("Positive Login")
 @allure.severity(allure.severity_level.BLOCKER)
-def test_login_success(driver):
+def test_login_success(driver, temp_user):
     login_page = LoginPage(driver)
     login_page.open()
-    login_page.login(VALID_EMAIL, VALID_PASSWORD)
+
+    user = temp_user["user"]  # Берем гарантированно существующего юзера
+    login_page.login(user.email, user.password)
 
     assert login_page.get_global_message_text() == "You are logged in success", "Сообщение об успехе не совпадает!"
     login_page.click_ok_button()
     assert login_page.is_logout_button_visible() == True, "Кнопка 'Log out' не найдена"
 
 
-# ==========================================
-# НЕГАТИВНЫЕ ТЕСТЫ: Фронтенд-валидация
-# ==========================================
 @allure.epic("UI Testing")
 @allure.feature("Login Page")
 @allure.story("Negative Login - Frontend Validation")
 @allure.severity(allure.severity_level.NORMAL)
 @pytest.mark.parametrize("email, pass_condition, expected_error, scenario", [
     ("123", "valid", "Wrong email format", "Невалидный формат email"),
-    (VALID_EMAIL, "empty", "Password is required", "Пустой пароль")
+    ("valid_user@example.com", "empty", "Password is required", "Пустой пароль")
 ])
 def test_login_negative_frontend(driver, email, pass_condition, expected_error, scenario):
     with allure.step(f"Сценарий: {scenario}"):
         login_page = LoginPage(driver)
         login_page.open()
 
-        # БЕЗОПАСНАЯ ЛОГИКА: Достаем реальный пароль только внутри функции!
-        actual_password = VALID_PASSWORD if pass_condition == "valid" else ""
+        actual_password = "ValidPassword123!" if pass_condition == "valid" else ""
 
         login_page.fill_email(email)
-        # В метод уйдет реальный пароль, но Allure увидит в параметрах только слово "valid"
         login_page.fill_password(actual_password)
         login_page.remove_focus()
 
@@ -2324,36 +2405,31 @@ def test_login_negative_frontend(driver, email, pass_condition, expected_error, 
         assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована"
 
 
-# ==========================================
-# НЕГАТИВНЫЕ ТЕСТЫ: Бэкенд-валидация
-# ==========================================
 @allure.epic("UI Testing")
 @allure.feature("Login Page")
 @allure.story("Negative Login - Backend Validation")
 @allure.severity(allure.severity_level.CRITICAL)
 @pytest.mark.parametrize("email_condition, pass_condition, expected_details, scenario", [
-    ("fake_user_12345@gmail.com", "valid_pass", "Login or Password incorrect", "Несуществующий пользователь"),
-    ("valid_email", "WrongPassword123!", "Login or Password incorrect", "Неверный пароль")
+    ("fake_user", "valid_pass", "Login or Password incorrect", "Несуществующий пользователь"),
+    ("valid_email", "wrong_pass", "Login or Password incorrect", "Неверный пароль")
 ])
-def test_login_negative_backend(driver, email_condition, pass_condition, expected_details, scenario):
-    """Проверка ошибок, которые возвращает сервер после попытки авторизации"""
+def test_login_negative_backend(driver, temp_user, email_condition, pass_condition, expected_details, scenario):
     with allure.step(f"Сценарий: {scenario}"):
         login_page = LoginPage(driver)
         login_page.open()
 
-        actual_email = VALID_EMAIL if email_condition == "valid_email" else email_condition
-        actual_password = VALID_PASSWORD if pass_condition == "valid_pass" else pass_condition
+        user = temp_user["user"]  # Запрашиваем валидного юзера для микса данных
+
+        actual_email = user.email if email_condition == "valid_email" else "fake_user_12345@gmail.com"
+        actual_password = user.password if pass_condition == "valid_pass" else "WrongPassword123!"
 
         login_page.login(actual_email, actual_password)
 
-        # 1. Ожидаем глобальное сообщение об ошибке (Заголовок)
         assert login_page.get_global_message_text() == "Login failed", "Неверный заголовок ошибки бэкенда"
-
-        # 2. ПРОВЕРКА ДИНАМИЧЕСКОГО БАГА ФРОНТЕНДА
         actual_details = login_page.get_global_message_details_text()
 
         if "[object Object]" in actual_details:
-            pytest.xfail("ПЛАВАЮЩИЙ БАГ ФРОНТЕНДА: React не успел распарсить JSON и вывел [object Object]")
+            pytest.xfail("ПЛАВАЮЩИЙ БАГ ФРОНТЕНДА: React не успел распарсить JSON")
         else:
             assert expected_details in actual_details, \
                 f"Ожидали текст '{expected_details}', а получили '{actual_details}'"
@@ -2362,50 +2438,47 @@ def test_login_negative_backend(driver, email_condition, pass_condition, expecte
 📄 FILE: .\tests\test_playwright_add_car.py
 ============================================================
 
-import os
 import allure
 from playwright.sync_api import Page
 from pages.pw_login_page import PwLoginPage
 from pages.pw_add_car_page import PwAddCarPage
 from data.data_generator import CarGenerator
-from utils.logger import get_logger
 
-VALID_EMAIL = os.getenv("USER_EMAIL")
-VALID_PASSWORD = os.getenv("USER_PASSWORD")
-logger = get_logger("TEST")
 
 @allure.epic("Playwright Testing")
 @allure.feature("Cars Management")
 @allure.story("Real E2E Car Addition")
 @allure.title("Реальное добавление машины (E2E Playwright)")
-def test_real_add_car_success(page: Page):
-    # Генерируем 100% случайную валидную машину (генератор сам позаботится об уникальности reg_number)
+def test_real_add_car_success(page: Page, temp_user, sys_logger): # <-- Добавили temp_user
     car = CarGenerator.get_random_car()
-    logger.info(f"Playwright будет создавать машину: {car}")
+    sys_logger.info(f"Playwright будет создавать машину: {car}")
+    user = temp_user["user"] # <-- Берем чистые креды
 
     with allure.step("Авторизация"):
         login_page = PwLoginPage(page)
         login_page.open()
-        login_page.login(VALID_EMAIL, VALID_PASSWORD)
+        login_page.login(user.email, user.password) # <-- Логинимся в песочницу
         login_page.click_ok_button()
 
     with allure.step("Переход на форму и отправка данных"):
         add_car_page = PwAddCarPage(page)
         add_car_page.open()
-        add_car_page.fill_form(car) # Передаем весь объект-датакласс!
+        add_car_page.fill_form(car)
         add_car_page.submit()
 
     with allure.step("Проверка через ожидание очистки формы"):
         add_car_page.check_form_cleared()
-        logger.info(f"Машина с номером {car.reg_number} успешно добавлена через Playwright!")
+        sys_logger.info(f"Машина с номером {car.reg_number} успешно добавлена через Playwright!")
 
 
 @allure.epic("Hybrid Testing")
 @allure.feature("Playwright: Cars Management")
 @allure.story("API Setup -> UI Duplicate Check (Negative)")
 @allure.title("Создание дубликата машины (Playwright + API)")
-def test_pw_add_car_duplicate(page: Page, auth_api):
+def test_pw_add_car_duplicate(page: Page, temp_user): # <-- Заменили auth_api на temp_user
     car = CarGenerator.get_random_car()
+    api = temp_user["api"] # <-- Достаем API-клиента песочницы
+    user = temp_user["user"] # <-- Достаем UI-креды песочницы
 
     with allure.step("API PRECONDITION: Создаем машину"):
         car_payload = {
@@ -2420,12 +2493,12 @@ def test_pw_add_car_duplicate(page: Page, auth_api):
             "about": car.about,
             "city": car.city
         }
-        auth_api.add_car(car_payload)
+        api.add_car(car_payload)
 
     with allure.step("UI SCENARIO: Пытаемся создать ту же машину через UI"):
         login_page = PwLoginPage(page)
         login_page.open()
-        login_page.login(VALID_EMAIL, VALID_PASSWORD)
+        login_page.login(user.email, user.password) # <-- Синхронизируем UI с тем же Sandbox-юзером
         login_page.click_ok_button()
 
         add_car_page = PwAddCarPage(page)
@@ -2434,38 +2507,30 @@ def test_pw_add_car_duplicate(page: Page, auth_api):
         add_car_page.submit()
 
     with allure.step("UI ASSERT: Проверка хитрой inline-ошибки"):
-        # Проверяем, что появилась та самая маленькая строчка
         add_car_page.check_submit_error("Failed to submit car")
-
-        # Проверяем, что форма зависла и не очистилась
         add_car_page.check_make_field_value(car.make)
 
 ============================================================
 📄 FILE: .\tests\test_playwright_login.py
 ============================================================
 
-import os
 import allure
 import pytest
 from playwright.sync_api import Page
 from pages.pw_login_page import PwLoginPage
 
-VALID_EMAIL = os.getenv("USER_EMAIL")
-VALID_PASSWORD = os.getenv("USER_PASSWORD")
 
 @allure.epic("Playwright Testing")
 @allure.feature("Login")
 @allure.story("Positive Login (POM)")
 @allure.title("Успешная авторизация (Playwright + POM)")
-def test_pw_login_success(page: Page):
-    # Инициализируем наш новый Page Object
+def test_pw_login_success(page: Page, temp_user):
     pw_login_page = PwLoginPage(page)
-
-    # 1. Открываем страницу и логинимся
     pw_login_page.open()
-    pw_login_page.login(VALID_EMAIL, VALID_PASSWORD)
 
-    # 2. Проверяем результаты
+    user = temp_user["user"]
+    pw_login_page.login(user.email, user.password)
+
     pw_login_page.check_success_message()
     pw_login_page.click_ok_button()
     pw_login_page.check_logout_button_visible()
@@ -2476,8 +2541,8 @@ def test_pw_login_success(page: Page):
 @allure.story("Negative Login - Frontend")
 @allure.title("Ошибки валидации формы логина (Playwright)")
 @pytest.mark.parametrize("email, password, expected_error, scenario", [
-    ("bad-email", VALID_PASSWORD, "Wrong email format", "Невалидный email"),
-    (VALID_EMAIL, "", "Password is required", "Пустой пароль")
+    ("bad-email", "ValidPass123!", "Wrong email format", "Невалидный email"),
+    ("valid_user@example.com", "", "Password is required", "Пустой пароль")
 ])
 def test_pw_login_negative(page: Page, email, password, expected_error, scenario):
     with allure.step(f"Сценарий: {scenario}"):
@@ -2488,7 +2553,6 @@ def test_pw_login_negative(page: Page, email, password, expected_error, scenario
         pw_login_page.fill_password(password)
         pw_login_page.remove_focus()
 
-        # Мощные ассерты Playwright в деле:
         pw_login_page.check_error_message(expected_error)
         pw_login_page.check_submit_button_disabled()
 
@@ -2563,30 +2627,22 @@ def test_mock_search_results(page: Page):
 📄 FILE: .\tests\test_registration.py
 ============================================================
 
-import os
 import pytest
 import allure
 import random
 import string
 from pages.registration_page import RegistrationPage
 from data.data_generator import UserGenerator
-from utils.logger import get_logger
 
-logger = get_logger("TEST")
-
-VALID_EMAIL = os.getenv("USER_EMAIL")
-VALID_PASSWORD = os.getenv("USER_PASSWORD")
 
 @allure.epic("UI Testing")
 @allure.feature("Registration Page")
 @allure.story("Navigation")
 @allure.severity(allure.severity_level.NORMAL)
-# --- ТЕСТ 1: Проверка навигации (меню) ---
 def test_navigation_to_registration(driver):
     registration_page = RegistrationPage(driver)
     registration_page.open_main_page()
     registration_page.click_registration_button_in_menu()
-
     assert "register" in registration_page.get_current_url(), "Переход из меню не удался"
 
 
@@ -2594,7 +2650,6 @@ def test_navigation_to_registration(driver):
 @allure.feature("Registration Page")
 @allure.story("Positive Registration")
 @allure.severity(allure.severity_level.BLOCKER)
-# --- ПОЗИТИВНЫЙ ТЕСТ ---
 def test_registration_success(driver):
     registration_page = RegistrationPage(driver)
     user = UserGenerator.get_random_user()
@@ -2607,13 +2662,9 @@ def test_registration_success(driver):
     assert registration_page.confirmation_text() == "Registered", "Заголовок об успехе не появился!"
     assert registration_page.confirmation_text_1() == "You are logged in success", "Текст успешного входа не совпадает!"
     registration_page.close_window()
-
-    # Сохраняем локально в jsonl файл
     UserGenerator.save_created_user(user)
 
-# ===========================================================================
-# ПАРАМЕТРИЗОВАННЫЙ НЕГАТИВНЫЙ ТЕСТ: Фронтенд-валидация
-# ===========================================================================
+
 @allure.epic("UI Testing")
 @allure.feature("Registration Page")
 @allure.story("Negative Registration - Frontend")
@@ -2630,15 +2681,12 @@ def test_registration_negative_fields(driver, field_name, invalid_value, expecte
     with allure.step(f"Сценарий: {scenario}"):
         registration_page = RegistrationPage(driver)
 
-        # Динамически создаем объект с "битым" полем (Датаклассы это отлично переваривают!)
         kwargs = {field_name: invalid_value}
         user = UserGenerator.get_random_user(**kwargs)
 
         registration_page.open_registration_form()
         registration_page.fill_registration_form(user)
         registration_page.set_policy_checkbox(True)
-
-        # Универсальный клик в пустоту для вызова onBlur валидации во всех сценариях
         registration_page.remove_focus()
 
         assert registration_page.error_message_text() == expected_error, f"Ожидалась ошибка '{expected_error}'"
@@ -2646,71 +2694,65 @@ def test_registration_negative_fields(driver, field_name, invalid_value, expecte
 
 
 def get_short_complex_password():
-    """Генерирует пароль ровно из 6 символов, но со всеми нужными форматами (для обхода фронтенда)"""
     upper = random.choice(string.ascii_uppercase)
     lower = random.choice(string.ascii_lowercase)
     digit = random.choice(string.digits)
     special = random.choice("@$#^&*!")
     rest = ''.join(random.choices(string.ascii_letters, k=2))
-
     pwd_list = list(upper + lower + digit + special + rest)
     random.shuffle(pwd_list)
     return ''.join(pwd_list)
 
 
-# ===========================================================================
-# НЕГАТИВНЫЙ ТЕСТ: Бэкенд-валидация (Пользователь уже существует)
-# ===========================================================================
 @allure.epic("UI Testing")
 @allure.feature("Registration Page")
 @allure.story("Negative Registration - Backend")
 @allure.severity(allure.severity_level.CRITICAL)
-@pytest.mark.parametrize("password_variant, scenario", [
-    (VALID_PASSWORD, "Занятый email + Тот же пароль"),
-    ("Qwe12345!_new", "Занятый email + Другой пароль (валидный формат)"),
-    ("DYNAMIC_SHORT", "Занятый email + Короткий сложный пароль") # <--- Статичная строка
+@pytest.mark.parametrize("password_strategy, scenario", [
+    ("same_password", "Занятый email + Тот же пароль"),
+    ("new_valid_password", "Занятый email + Другой пароль (валидный формат)"),
+    ("short_complex_password", "Занятый email + Короткий сложный пароль")
 ])
-def test_registration_existing_user(driver, password_variant, scenario):
+def test_registration_existing_user(driver, temp_user, password_strategy, scenario, sys_logger):
     with allure.step(f"Сценарий: {scenario}"):
         registration_page = RegistrationPage(driver)
 
-        # Генерируем пароль прямо ВНУТРИ теста, если поймали метку
-        actual_password = get_short_complex_password() if password_variant == "DYNAMIC_SHORT" else password_variant
+        # 1. Забираем уже зарегистрированного юзера из песочницы
+        existing_user = temp_user["user"]
 
-        # Подсовываем занятый email и перебираем пароли из параметризации
-        user = UserGenerator.get_random_user(email=VALID_EMAIL, password=actual_password)
+        # 2. Определяем пароль для попытки повторной регистрации
+        if password_strategy == "same_password":
+            actual_password = existing_user.password
+        elif password_strategy == "new_valid_password":
+            actual_password = "Qwe12345!_new"
+        else:
+            actual_password = get_short_complex_password()
+
+        # 3. Формируем юзера: старый email + выбранный пароль
+        user = UserGenerator.get_random_user(email=existing_user.email, password=actual_password)
 
         registration_page.open_registration_form()
         registration_page.fill_registration_form(user)
         registration_page.set_policy_checkbox(True)
 
-        # Подстраховка: если фронтенд решит заблокировать кнопку до отправки
         if registration_page.submit_button_disabled():
-            logger.info("Фронтенд заблокировал отправку формы. До бэкенда дело не дошло.")
+            sys_logger.info("Фронтенд заблокировал отправку формы. До бэкенда дело не дошло.")
             pytest.skip("Тест прерван: Фронтенд не пропустил пароль к бэкенду")
 
         registration_page.submit_registration()
 
-        # 1. Проверяем заголовок модалки
         assert registration_page.confirmation_text() == "Registration failed", "Бэкенд не отбил регистрацию!"
-
-        # 2. ПРОВЕРКА ДИНАМИЧЕСКОГО БАГА ФРОНТЕНДА
         actual_error_details = registration_page.confirmation_text_1()
 
-        # Фиксируем текст для логов и Allure
-        logger.info(f"Фактический текст в модалке: '{actual_error_details}'")
+        sys_logger.info(f"Фактический текст в модалке: '{actual_error_details}'")
 
         if "[object Object]" in actual_error_details:
-            # Ловим баг состояния гонки или двойную ошибку бэкенда
             pytest.xfail(f"ПЛАВАЮЩИЙ БАГ ФРОНТЕНДА пойман на сценарии: '{scenario}'")
         else:
-            # Проверяем бизнес-логику при нормальном рендере
             assert "User already exists" in actual_error_details, \
                 f"Ожидали текст 'User already exists', а получили '{actual_error_details}'"
 
 
-
-# --- НЕГАТИВНЫЙ ТЕСТ: ЧЕКБОКС (Отдельный флоу) ---
 @allure.epic("UI Testing")
 @allure.feature("Registration Page")
 @allure.story("Negative Registration - Checkbox")
@@ -2721,12 +2763,8 @@ def test_registration_without_check_box(driver):
 
     registration_page.open_registration_form()
     registration_page.fill_registration_form(user)
-
-    # Имитируем сомнения: поставили галочку и сразу убрали, чтобы триггернуть валидацию
     registration_page.set_policy_checkbox(True)
     registration_page.set_policy_checkbox(False)
-
-    # СНИМАЕМ ФОКУС: кликаем в пустоту
     registration_page.remove_focus()
 
     assert registration_page.error_message_text() == "You must accept the terms", "Ошибка чекбокса не появилась"
@@ -2741,16 +2779,12 @@ import pytest
 from pages.search_page import SearchPage
 from data.data_generator import SearchDataGenerator
 from pages.results_page import ResultsPage
-from utils.logger import get_logger
-
-
-logger = get_logger()
 
 @allure.epic("UI Testing")
 @allure.feature("Search Page")
 @allure.story("Search Cars Dynamic Flow")
 @allure.severity(allure.severity_level.CRITICAL)
-def test_search_form_dynamic(driver):
+def test_search_form_dynamic(driver, sys_logger):
     search_page = SearchPage(driver)
     results_page = ResultsPage(driver)
 
@@ -2776,12 +2810,12 @@ def test_search_form_dynamic(driver):
 
     # 2. Ветвление: машины найдены или пустая выдача
     if not results_page.has_cars():
-        logger.info(f"В городе '{city}' на выбранные даты нет доступных машин. Отработало пустое состояние.")
+        sys_logger.info(f"В городе '{city}' на выбранные даты нет доступных машин. Отработало пустое состояние.")
         with allure.step(f"В городе '{city}' машин нет — пустое состояние отработало штатно"):
             pass
     else:
         first_car = results_page.get_first_car_details()
-        logger.info(f"Найдена машина: ID {first_car['id']}, {first_car['title']} за ${first_car['price']}/день")
+        sys_logger.info(f"Найдена машина: ID {first_car['id']}, {first_car['title']} за ${first_car['price']}/день")
 
         with allure.step("Проверка рендера карточки автомобиля"):
             assert "title" in first_car, "Не удалось спарсить название!"

@@ -11,6 +11,7 @@ from utils.listener import IlCarroListener
 from api.car_api import IlCarroAPI
 from pages.login_page import LoginPage
 from data.data_generator import UserGenerator
+from utils.logger import get_logger
 
 load_dotenv()
 
@@ -198,3 +199,8 @@ def page(context):
             name="Видео Playwright",
             attachment_type=allure.attachment_type.MP4
         )
+
+@pytest.fixture(scope="session")
+def sys_logger():
+    """Глобальная фикстура логгера для тестов. Избавляет от дублирования импортов."""
+    return get_logger("TEST")

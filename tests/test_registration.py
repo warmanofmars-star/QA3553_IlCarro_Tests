@@ -4,9 +4,6 @@ import random
 import string
 from pages.registration_page import RegistrationPage
 from data.data_generator import UserGenerator
-from utils.logger import get_logger
-
-logger = get_logger("TEST")
 
 
 @allure.epic("UI Testing")
@@ -87,7 +84,7 @@ def get_short_complex_password():
     ("new_valid_password", "Занятый email + Другой пароль (валидный формат)"),
     ("short_complex_password", "Занятый email + Короткий сложный пароль")
 ])
-def test_registration_existing_user(driver, temp_user, password_strategy, scenario):
+def test_registration_existing_user(driver, temp_user, password_strategy, scenario, sys_logger):
     with allure.step(f"Сценарий: {scenario}"):
         registration_page = RegistrationPage(driver)
 
@@ -110,7 +107,7 @@ def test_registration_existing_user(driver, temp_user, password_strategy, scenar
         registration_page.set_policy_checkbox(True)
 
         if registration_page.submit_button_disabled():
-            logger.info("Фронтенд заблокировал отправку формы. До бэкенда дело не дошло.")
+            sys_logger.info("Фронтенд заблокировал отправку формы. До бэкенда дело не дошло.")
             pytest.skip("Тест прерван: Фронтенд не пропустил пароль к бэкенду")
 
         registration_page.submit_registration()
@@ -118,7 +115,7 @@ def test_registration_existing_user(driver, temp_user, password_strategy, scenar
         assert registration_page.confirmation_text() == "Registration failed", "Бэкенд не отбил регистрацию!"
         actual_error_details = registration_page.confirmation_text_1()
 
-        logger.info(f"Фактический текст в модалке: '{actual_error_details}'")
+        sys_logger.info(f"Фактический текст в модалке: '{actual_error_details}'")
 
         if "[object Object]" in actual_error_details:
             pytest.xfail(f"ПЛАВАЮЩИЙ БАГ ФРОНТЕНДА пойман на сценарии: '{scenario}'")

@@ -3,16 +3,12 @@ import pytest
 from pages.search_page import SearchPage
 from data.data_generator import SearchDataGenerator
 from pages.results_page import ResultsPage
-from utils.logger import get_logger
-
-
-logger = get_logger()
 
 @allure.epic("UI Testing")
 @allure.feature("Search Page")
 @allure.story("Search Cars Dynamic Flow")
 @allure.severity(allure.severity_level.CRITICAL)
-def test_search_form_dynamic(driver):
+def test_search_form_dynamic(driver, sys_logger):
     search_page = SearchPage(driver)
     results_page = ResultsPage(driver)
 
@@ -38,12 +34,12 @@ def test_search_form_dynamic(driver):
 
     # 2. Ветвление: машины найдены или пустая выдача
     if not results_page.has_cars():
-        logger.info(f"В городе '{city}' на выбранные даты нет доступных машин. Отработало пустое состояние.")
+        sys_logger.info(f"В городе '{city}' на выбранные даты нет доступных машин. Отработало пустое состояние.")
         with allure.step(f"В городе '{city}' машин нет — пустое состояние отработало штатно"):
             pass
     else:
         first_car = results_page.get_first_car_details()
-        logger.info(f"Найдена машина: ID {first_car['id']}, {first_car['title']} за ${first_car['price']}/день")
+        sys_logger.info(f"Найдена машина: ID {first_car['id']}, {first_car['title']} за ${first_car['price']}/день")
 
         with allure.step("Проверка рендера карточки автомобиля"):
             assert "title" in first_car, "Не удалось спарсить название!"

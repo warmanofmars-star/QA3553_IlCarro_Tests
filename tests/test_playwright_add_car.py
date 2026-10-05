@@ -3,17 +3,15 @@ from playwright.sync_api import Page
 from pages.pw_login_page import PwLoginPage
 from pages.pw_add_car_page import PwAddCarPage
 from data.data_generator import CarGenerator
-from utils.logger import get_logger
 
-logger = get_logger("TEST")
 
 @allure.epic("Playwright Testing")
 @allure.feature("Cars Management")
 @allure.story("Real E2E Car Addition")
 @allure.title("Реальное добавление машины (E2E Playwright)")
-def test_real_add_car_success(page: Page, temp_user): # <-- Добавили temp_user
+def test_real_add_car_success(page: Page, temp_user, sys_logger): # <-- Добавили temp_user
     car = CarGenerator.get_random_car()
-    logger.info(f"Playwright будет создавать машину: {car}")
+    sys_logger.info(f"Playwright будет создавать машину: {car}")
     user = temp_user["user"] # <-- Берем чистые креды
 
     with allure.step("Авторизация"):
@@ -30,7 +28,7 @@ def test_real_add_car_success(page: Page, temp_user): # <-- Добавили tem
 
     with allure.step("Проверка через ожидание очистки формы"):
         add_car_page.check_form_cleared()
-        logger.info(f"Машина с номером {car.reg_number} успешно добавлена через Playwright!")
+        sys_logger.info(f"Машина с номером {car.reg_number} успешно добавлена через Playwright!")
 
 
 @allure.epic("Hybrid Testing")
