@@ -1,2 +1,0 @@
-[32;20m[2026-10-04 20:08:07] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_100d24a996@example.com][0m
-[32;20m[2026-10-04 20:08:08] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m

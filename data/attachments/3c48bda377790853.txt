@@ -1,4 +1,0 @@
-[32;20m[2026-10-04 20:07:58] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_01e3137cce@example.com][0m
-[32;20m[2026-10-04 20:07:58] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
-[32;20m[2026-10-04 20:07:58] [INFO] [TEST] - Playwright будет создавать машину: Car(city='Hadera', make='Hughes and Sons', model='Develop', year='2010', fuel='Diesel', gear='Automatic', wd='AWD', doors='4', seats='6', car_class='Premium', reg_number='IL-CE1BE797', price='141', about='Interview audience friend bit record.', photo_path=None)[0m
-[32;20m[2026-10-04 20:08:01] [INFO] [TEST] - Машина с номером IL-CE1BE797 успешно добавлена через Playwright![0m

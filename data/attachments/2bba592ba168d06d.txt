@@ -1,4 +1,0 @@
-INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_01e3137cce@example.com]
-INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
-INFO     TEST:test_playwright_add_car.py:16 Playwright будет создавать машину: Car(city='Hadera', make='Hughes and Sons', model='Develop', year='2010', fuel='Diesel', gear='Automatic', wd='AWD', doors='4', seats='6', car_class='Premium', reg_number='IL-CE1BE797', price='141', about='Interview audience friend bit record.', photo_path=None)
-INFO     TEST:test_playwright_add_car.py:33 Машина с номером IL-CE1BE797 успешно добавлена через Playwright!

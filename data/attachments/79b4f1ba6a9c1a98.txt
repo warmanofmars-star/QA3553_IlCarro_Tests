@@ -1,0 +1,17 @@
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_cc261a0f00@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     UI:listener.py:10 Переход по ссылке: https://icarro-v1.netlify.app/login
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: 'input[name='username']'
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: 'input[name='username']'
+INFO     UI:listener.py:36 Ввод данных в поле формы...
+INFO     UI:listener.py:36 Ввод данных в поле формы...
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: 'input[name='password']'
+INFO     UI:listener.py:36 Ввод данных в поле формы...
+INFO     UI:listener.py:36 Ввод данных в поле формы...
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: 'button[type='submit']'
+INFO     UI:listener.py:30 Клик по элементу <button> с текстом: 'Y’alla!'
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: 'h3'
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: 'h3'
+INFO     UI:listener.py:13 Поиск элемента -> By: xpath, Value: '//*[contains(text(), 'OK')]'
+INFO     UI:listener.py:30 Клик по элементу <a> с текстом: 'OK'
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: 'button.navigation-link'
