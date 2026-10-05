@@ -22,12 +22,12 @@ This project demonstrates a senior-level approach to QA automation, combining cl
 
 * **Dockerized Infrastructure (IaC):** The entire test environment (framework, Selenoid hub, Chrome instances, video recording) is orchestrated via Docker Compose, guaranteeing absolute consistency across local machines and CI/CD.
 * **Strict Data Isolation (Sandbox Users):** Employs a robust `temp_user` fixture that dynamically registers a unique user via API before each test. This eliminates race conditions during aggressive parallel execution (`pytest-xdist`) and leaves the database unpolluted.
-* **Automatic Video Attachment:** Every Selenium test execution session is recorded via FFmpeg/Selenoid. The resulting `.mp4` files are automatically attached to the Allure report upon teardown.
+* **Universal Video Attachment:** Every Selenium test is recorded via FFmpeg/Selenoid, while Playwright tests utilize the native recording engine. All resulting .mp4 files are automatically attached to the Allure report upon teardown.
 * **Hybrid Testing Approach:** Tests use API calls to set up preconditions (e.g., creating a car or user) and teardown data, drastically reducing UI test execution time.
 * **Network Interception & Mocking:** Utilizes Playwright's `page.route()` to intercept backend requests (e.g., fetching city lists) and inject mock responses, allowing strict isolation of frontend UI rendering logic from backend stability.
 * **Dual Framework Support:** Implemented primarily using **Selenium (Page Object Model)** with an integrated **Playwright** module to demonstrate modern tool capabilities.
 * **Security & Log Masking:** Sensitive data (passwords, tokens) are strictly masked (********) in all console outputs, test logs, and Allure reports.
-* **Context-Aware Custom Logging:** Features a proprietary logging utility that dynamically adapts to the execution environment, preventing OS-level file locks during parallel runs.
+* **Context-Aware Custom Logging:** Features a proprietary logging utility, cleanly injected into test suites as a global Pytest fixture, that dynamically adapts to the execution environment, preventing OS-level file locks during parallel runs.
 * **API Connection Pooling:** Utilizes `requests.Session()` for backend interactions, reusing TCP connections and automatically managing Bearer tokens.
 
 ## ⚙️ Setup & Installation
@@ -63,7 +63,7 @@ docker compose up --build --exit-code-from qa-framework
 
 **Run locally via Pytest (parallel execution):**
 ```bash
-pytest tests/ -n 3 --clean-alluredir --alluredir=allure-results
+pytest tests/ -n 3 --video=on --clean-alluredir --alluredir=allure-results
 ```
 
 **Run modern Playwright tests (headed mode for debugging):**
