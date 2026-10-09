@@ -1,5 +1,0 @@
-INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_769eac51c8@example.com]
-INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
-INFO     API:car_api.py:145 GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов]
-INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-C30B843B]
-INFO     API:car_api.py:72 Машина IL-C30B843B успешно создана в БД

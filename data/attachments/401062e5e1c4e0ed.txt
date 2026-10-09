@@ -1,4 +1,0 @@
-INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_52369e083e@example.com]
-INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
-INFO     TEST:test_playwright_add_car.py:14 Playwright будет создавать машину: Car(city='Ashkelon', make='Brown, Johnson and Trevino', model='Level', year='2022', fuel='Electric', gear='Manual', wd='RWD', doors='5', seats='6', car_class='Economy', reg_number='IL-5DBE50D3', price='193', about='Describe girl care produce toward worry pattern.', photo_path=None)
-INFO     TEST:test_playwright_add_car.py:31 Машина с номером IL-5DBE50D3 успешно добавлена через Playwright!

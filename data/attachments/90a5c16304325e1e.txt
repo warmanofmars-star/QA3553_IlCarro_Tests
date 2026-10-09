@@ -1,0 +1,4 @@
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_c870a302a6@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     TEST:test_playwright_add_car.py:16 Playwright будет создавать машину: Car(city='Tel Aviv', make='Deleon-Harrell', model='Long', year='2020', fuel='Diesel', gear='Automatic', wd='FWD', doors='2', seats='6', car_class='Economy', reg_number='IL-6E052D1C', price='626', about='Affect the card.', photo_path=None)
+INFO     TEST:test_playwright_add_car.py:33 Машина с номером IL-6E052D1C успешно добавлена через Playwright!

@@ -1,0 +1,32 @@
+
+[INFO] Маршрутизация в изолированный Docker-контейнер (Selenoid)...
+[32;20m[2026-10-09 13:10:09] [INFO] [UI] - Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
+[32;20m[2026-10-09 13:10:09] [INFO] [UI] - Поиск элемента -> By: id, Value: 'city'[0m
+[32;20m[2026-10-09 13:10:10] [INFO] [UI] - Поиск элемента -> By: id, Value: 'city'[0m
+[32;20m[2026-10-09 13:10:10] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-09 13:10:10] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-09 13:10:10] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '[data-testid='city-option'][data-value='Givatayim']'[0m
+[32;20m[2026-10-09 13:10:10] [INFO] [UI] - Клик по элементу <div> с текстом: 'Givatayim'[0m
+[32;20m[2026-10-09 13:10:10] [INFO] [UI] - Поиск элемента -> By: id, Value: 'dates'[0m
+[32;20m[2026-10-09 13:10:10] [INFO] [UI] - Клик по элементу <input> с текстом: ''[0m
+[32;20m[2026-10-09 13:10:10] [INFO] [UI] - Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='16']]'[0m
+[32;20m[2026-10-09 13:10:10] [INFO] [UI] - Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='16']]'[0m
+[32;20m[2026-10-09 13:10:10] [INFO] [UI] - Клик по элементу <button> с текстом: '16'[0m
+[32;20m[2026-10-09 13:10:10] [INFO] [UI] - Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='21']]'[0m
+[32;20m[2026-10-09 13:10:10] [INFO] [UI] - Клик по элементу <button> с текстом: '21'[0m
+[32;20m[2026-10-09 13:10:11] [INFO] [UI] - Поиск элемента -> By: id, Value: 'city'[0m
+[32;20m[2026-10-09 13:10:11] [INFO] [UI] - Клик по элементу <input> с текстом: ''[0m
+[32;20m[2026-10-09 13:10:11] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'button[type='submit']'[0m
+[32;20m[2026-10-09 13:10:11] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'button[type='submit']'[0m
+[32;20m[2026-10-09 13:10:11] [INFO] [UI] - Клик по элементу <button> с текстом: 'Yalla!'[0m
+[32;20m[2026-10-09 13:10:11] [INFO] [IlCarro] - Ждем обновления URL с параметрами поиска...[0m
+[32;20m[2026-10-09 13:10:11] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'a.car-container'[0m
+[32;20m[2026-10-09 13:10:11] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'a.car-container'[0m
+[32;20m[2026-10-09 13:10:12] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'a.car-container'[0m
+[32;20m[2026-10-09 13:10:12] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'a.car-container'[0m
+[32;20m[2026-10-09 13:10:12] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '.details-card > div > div:first-child'[0m
+[32;20m[2026-10-09 13:10:12] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '.car-price-value'[0m
+[32;20m[2026-10-09 13:10:12] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '.car-img-container'[0m
+[32;20m[2026-10-09 13:10:12] [INFO] [TEST] - Найдена машина: ID NZ-058-FF, Johnson, Luna and Carroll View (2011) за $903.0/день[0m
+
+[INFO] Видео успешно прикреплено к отчету!

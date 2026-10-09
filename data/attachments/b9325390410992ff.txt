@@ -1,0 +1,11 @@
+[32;20m[2026-10-09 13:09:11] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_53931327c6@example.com][0m
+[32;20m[2026-10-09 13:09:11] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-09 13:09:11] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов][0m
+[32;20m[2026-10-09 13:09:11] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-D7E1F713][0m
+[32;20m[2026-10-09 13:09:12] [INFO] [API] - Машина IL-D7E1F713 успешно создана в БД[0m
+[32;20m[2026-10-09 13:09:12] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars/search [Поиск: Kfar Saba, даты: 2026-10-10 - 2026-10-16][0m
+[32;20m[2026-10-09 13:09:12] [INFO] [API] - Поиск успешен. Найдено машин: 14[0m
+[32;20m[2026-10-09 13:09:12] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars/IL-D7E1F713/booking [Бронирование: IL-D7E1F713, даты: 2026-10-10 - 2026-10-16][0m
+[32;20m[2026-10-09 13:09:12] [INFO] [API] - Машина IL-D7E1F713 успешно забронирована[0m
+[32;20m[2026-10-09 13:09:12] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-D7E1F713 [Удаление машины: IL-D7E1F713][0m
+[32;20m[2026-10-09 13:09:12] [INFO] [API] - Машина IL-D7E1F713 успешно удалена[0m

@@ -1,1 +1,0 @@
-[32;20m[2026-10-05 16:05:42] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов][0m
