@@ -1,10 +1,12 @@
 import allure
+import pytest
 from playwright.sync_api import Page
 from pages.pw_login_page import PwLoginPage
 from pages.pw_add_car_page import PwAddCarPage
 from data.data_generator import CarGenerator
 
 
+@pytest.mark.smoke
 @allure.epic("Playwright Testing")
 @allure.feature("Cars Management")
 @allure.story("Real E2E Car Addition")
@@ -31,6 +33,8 @@ def test_real_add_car_success(page: Page, temp_user, sys_logger): # <-- Доба
         sys_logger.info(f"Машина с номером {car.reg_number} успешно добавлена через Playwright!")
 
 
+@pytest.mark.hybrid
+@pytest.mark.regression
 @allure.epic("Hybrid Testing")
 @allure.feature("Playwright: Cars Management")
 @allure.story("API Setup -> UI Duplicate Check (Negative)")

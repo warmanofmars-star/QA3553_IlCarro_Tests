@@ -5,7 +5,7 @@ import string
 from pages.registration_page import RegistrationPage
 from data.data_generator import UserGenerator
 
-
+@pytest.mark.smoke
 @allure.epic("UI Testing")
 @allure.feature("Registration Page")
 @allure.story("Navigation")
@@ -17,6 +17,7 @@ def test_navigation_to_registration(driver):
     assert "register" in registration_page.get_current_url(), "Переход из меню не удался"
 
 
+@pytest.mark.smoke
 @allure.epic("UI Testing")
 @allure.feature("Registration Page")
 @allure.story("Positive Registration")
@@ -36,6 +37,7 @@ def test_registration_success(driver):
     UserGenerator.save_created_user(user)
 
 
+@pytest.mark.regression
 @allure.epic("UI Testing")
 @allure.feature("Registration Page")
 @allure.story("Negative Registration - Frontend")
@@ -75,6 +77,7 @@ def get_short_complex_password():
     return ''.join(pwd_list)
 
 
+@pytest.mark.regression
 @allure.epic("UI Testing")
 @allure.feature("Registration Page")
 @allure.story("Negative Registration - Backend")
@@ -124,6 +127,7 @@ def test_registration_existing_user(driver, temp_user, password_strategy, scenar
                 f"Ожидали текст 'User already exists', а получили '{actual_error_details}'"
 
 
+@pytest.mark.regression
 @allure.epic("UI Testing")
 @allure.feature("Registration Page")
 @allure.story("Negative Registration - Checkbox")

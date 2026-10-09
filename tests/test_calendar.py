@@ -1,5 +1,8 @@
 import allure
 from pages.search_page import SearchPage
+import pytest
+
+pytestmark = pytest.mark.regression
 
 
 @allure.epic("UI Testing")

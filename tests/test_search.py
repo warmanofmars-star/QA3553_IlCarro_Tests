@@ -4,6 +4,8 @@ from pages.search_page import SearchPage
 from data.data_generator import SearchDataGenerator
 from pages.results_page import ResultsPage
 
+
+@pytest.mark.smoke
 @allure.epic("UI Testing")
 @allure.feature("Search Page")
 @allure.story("Search Cars Dynamic Flow")
@@ -52,6 +54,7 @@ def test_search_form_dynamic(driver, sys_logger):
                 pytest.fail(f"Фронтенд вывел некорректный формат цены: {first_car['price']}")
 
 
+@pytest.mark.regression
 @allure.epic("UI Testing")
 @allure.feature("Search Page")
 @allure.story("Negative Search - Empty City Validation")
@@ -68,6 +71,7 @@ def test_search_empty_city_validation(driver):
     assert search_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована при пустом городе"
 
 
+@pytest.mark.regression
 @allure.epic("UI Testing")
 @allure.feature("Search Page")
 @allure.story("Negative Search - Dates Manual Input Blocked")

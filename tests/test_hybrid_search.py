@@ -1,9 +1,12 @@
 import allure
+import pytest
 from data.data_generator import CarGenerator, SearchDataGenerator
 from pages.search_page import SearchPage
 from pages.results_page import ResultsPage
 
 
+@pytest.mark.hybrid
+@pytest.mark.smoke
 @allure.epic("Hybrid Testing")
 @allure.feature("Search functionality")
 @allure.story("API Setup -> UI Search -> API Teardown")

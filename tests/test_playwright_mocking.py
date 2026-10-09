@@ -1,6 +1,9 @@
 import allure
+import pytest
 import os
 from playwright.sync_api import Page, Route, expect
+
+pytestmark = pytest.mark.regression
 
 UI_BASE_URL = os.getenv("UI_BASE_URL", "https://icarro-v1.netlify.app")
 

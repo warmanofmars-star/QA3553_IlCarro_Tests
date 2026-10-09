@@ -1,14 +1,13 @@
 import allure
 import datetime
-
 import pytest
-
 from api.car_api import IlCarroAPI
 from data.data_generator import CarGenerator
-
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 from schemas.car_schemas import GET_CARS_RESPONSE_SCHEMA
+
+pytestmark = pytest.mark.api
 
 @allure.epic("API Testing")
 @allure.feature("Car Controller")

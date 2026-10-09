@@ -3,7 +3,7 @@ import pytest
 from pages.add_car_page import AddCarPage
 from data.data_generator import CarGenerator
 
-
+@pytest.mark.smoke
 @allure.epic("UI Testing")
 @allure.feature("Add Car Page (Let the car work)")
 @allure.story("Positive Add Car")
@@ -38,7 +38,8 @@ def test_add_car_success(authenticated_driver, fuel_type, car_class, scenario, s
 
         sys_logger.info("--- ТЕСТ УСПЕШНО ЗАВЕРШЕН ---")
 
-
+@pytest.mark.regression
+@pytest.mark.hybrid
 @allure.epic("UI Testing")
 @allure.feature("Add Car Page (Let the car work)")
 @allure.story("Negative Add Car - Duplicate Serial Number")

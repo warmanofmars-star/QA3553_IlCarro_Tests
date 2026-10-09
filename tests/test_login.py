@@ -2,7 +2,7 @@ import allure
 import pytest
 from pages.login_page import LoginPage
 
-
+@pytest.mark.smoke
 @allure.epic("UI Testing")
 @allure.feature("Login Page")
 @allure.story("Positive Login")
@@ -18,7 +18,7 @@ def test_login_success(driver, temp_user):
     login_page.click_ok_button()
     assert login_page.is_logout_button_visible() == True, "Кнопка 'Log out' не найдена"
 
-
+@pytest.mark.regression
 @allure.epic("UI Testing")
 @allure.feature("Login Page")
 @allure.story("Negative Login - Frontend Validation")
@@ -41,7 +41,7 @@ def test_login_negative_frontend(driver, email, pass_condition, expected_error, 
         assert login_page.get_error_message_text() == expected_error, f"Ожидалась ошибка: {expected_error}"
         assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована"
 
-
+@pytest.mark.regression
 @allure.epic("UI Testing")
 @allure.feature("Login Page")
 @allure.story("Negative Login - Backend Validation")

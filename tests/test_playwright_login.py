@@ -3,7 +3,7 @@ import pytest
 from playwright.sync_api import Page
 from pages.pw_login_page import PwLoginPage
 
-
+@pytest.mark.smoke
 @allure.epic("Playwright Testing")
 @allure.feature("Login")
 @allure.story("Positive Login (POM)")
@@ -20,6 +20,7 @@ def test_pw_login_success(page: Page, temp_user):
     pw_login_page.check_logout_button_visible()
 
 
+@pytest.mark.regression
 @allure.epic("Playwright Testing")
 @allure.feature("Login")
 @allure.story("Negative Login - Frontend")
