@@ -5,6 +5,7 @@ import allure
 from selenium import webdriver
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from dotenv import load_dotenv
 from selenium.webdriver.support.events import EventFiringWebDriver
 from utils.listener import IlCarroListener
@@ -15,9 +16,22 @@ from utils.logger import get_logger
 
 load_dotenv()
 
+# 👇 Учим pytest понимать флаг --browser_name
+def pytest_addoption(parser):
+    parser.addoption(
+        "--browser_name",
+        action="store",
+        default="chrome",
+        choices=["chrome", "firefox", "edge"],
+        help="Browser to run tests in: chrome, firefox, or edge"
+    )
+
 
 @pytest.fixture
-def driver():
+def driver(request):  # <--- Добавили request
+    # Читаем флаг
+    browser_name = request.config.getoption("--browser_name")
+
     is_headless = os.getenv('HEADLESS_MODE', 'false').lower() == 'true'
     is_ci = os.environ.get('CI') == 'true'
     use_selenoid = os.getenv('USE_SELENOID', 'false').lower() == 'true'
@@ -26,20 +40,42 @@ def driver():
     driver_instance = None
 
     if is_ci:
-        options = ChromeOptions()
-        options.add_argument('--headless=new')
-        options.add_argument('--window-size=1920,1080')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
-        options.add_argument('--disable-gpu')
-        driver_instance = webdriver.Chrome(options=options)
+        # ЗАПУСК В GITHUB ACTIONS (Локально на машине-раннере, если без Docker)
+        if browser_name == "firefox":
+            options = FirefoxOptions()
+            options.add_argument('--headless')
+            driver_instance = webdriver.Firefox(options=options)
+        elif browser_name == "edge":
+            options = EdgeOptions()
+            options.add_argument('--headless')
+            driver_instance = webdriver.Edge(options=options)
+        else:
+            options = ChromeOptions()
+            options.add_argument('--headless=new')
+            options.add_argument('--window-size=1920,1080')
+            options.add_argument('--no-sandbox')
+            options.add_argument('--disable-dev-shm-usage')
+            options.add_argument('--disable-gpu')
+            driver_instance = webdriver.Chrome(options=options)
 
     else:
         if use_selenoid:
-            print("\n[INFO] Маршрутизация в изолированный Docker-контейнер (Selenoid)...")
-            options = ChromeOptions()
-            options.set_capability("browserName", "chrome")
-            options.set_capability("browserVersion", "128.0")
+            print(f"\n[INFO] Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: {browser_name}...")
+
+            # Подготавливаем опции в зависимости от браузера
+            if browser_name == "firefox":
+                options = FirefoxOptions()
+                selenoid_browser = "firefox"
+            elif browser_name == "edge":
+                options = EdgeOptions()
+                selenoid_browser = "MicrosoftEdge"
+            else:
+                options = ChromeOptions()
+                selenoid_browser = "chrome"
+
+            options.set_capability("browserName", selenoid_browser)
+            # В Selenoid 1.11+ версия задается через browserVersion (или просто берется default из browsers.json)
+            # options.set_capability("browserVersion", "128.0") # <-- Можно закомментировать или убрать жесткую привязку
             options.set_capability("selenoid:options", {
                 "enableVNC": True,
                 "enableVideo": True,
@@ -65,18 +101,26 @@ def driver():
 
         else:
             try:
-                options = ChromeOptions()
-                if is_headless:
-                    options.add_argument('--headless=new')
-                options.add_argument('--window-size=1920,1080')
-                driver_instance = webdriver.Chrome(options=options)
+                if browser_name == "firefox":
+                    options = FirefoxOptions()
+                    if is_headless:
+                        options.add_argument('--headless')
+                    driver_instance = webdriver.Firefox(options=options)
+                elif browser_name == "edge":
+                    options = EdgeOptions()
+                    if is_headless:
+                        options.add_argument('--headless')
+                    options.add_argument('--window-size=1920,1080')
+                    driver_instance = webdriver.Edge(options=options)
+                else:
+                    options = ChromeOptions()
+                    if is_headless:
+                        options.add_argument('--headless=new')
+                    options.add_argument('--window-size=1920,1080')
+                    driver_instance = webdriver.Chrome(options=options)
             except Exception as e:
-                print(f"\n[WARNING] Chrome не запустился. Причина: {e}")
-                options = EdgeOptions()
-                if is_headless:
-                    options.add_argument('--headless')
-                options.add_argument('--window-size=1920,1080')
-                driver_instance = webdriver.Edge(options=options)
+                print(f"\n[WARNING] Браузер {browser_name} не запустился. Причина: {e}")
+                raise e
 
     if not is_headless and not use_selenoid:
         driver_instance.maximize_window()
@@ -105,15 +149,15 @@ def driver():
                     with open(video_path, "rb") as video_file:
                         allure.attach(
                             video_file.read(),
-                            name="Видео прохождения теста",
+                            name=f"Видео прохождения теста ({browser_name})",
+                            # <-- Добавили имя браузера в название видео!
                             attachment_type=allure.attachment_type.MP4
                         )
-                    print("\n[INFO] Видео успешно прикреплено к отчету!")
+                    print(f"\n[INFO] Видео ({browser_name}) успешно прикреплено к отчету!")
                     break
                 except Exception as e:
                     print(f"\n[WARNING] Файл заблокирован, пробуем снова. Ошибка: {e}")
             time.sleep(1)
-
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):

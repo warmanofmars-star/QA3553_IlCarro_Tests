@@ -3,62 +3,140 @@ name: IlCarro UI Tests
 on:
   workflow_dispatch:
 
-# РАЗРЕШАЕМ РОБОТУ ПИСАТЬ В РЕПОЗИТОРИЙ (Для создания ветки gh-pages)
 permissions:
   contents: write
   pages: write
   id-token: write
 
 jobs:
-  test:
-    runs-on: ubuntu-22.04 # Фиксируем стабильную версию Linux для предсказуемости
+  # =========================================
+  # JOB 1: ПАРАЛЛЕЛЬНЫЙ ЗАПУСК ТЕСТОВ (МАТРИЦА)
+  # =========================================
+  test-execution:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 👇 1. Динамически создаем .env файл для Docker
       - name: Setup environment variables for Docker
         run: |
           echo "USER_EMAIL=${{ secrets.USER_EMAIL }}" >> .env
           echo "USER_PASSWORD=${{ secrets.USER_PASSWORD }}" >> .env
 
-      # 👇 2. Предварительно скачиваем тяжелые образы, чтобы тесты не падали по таймауту
-      - name: Pull Selenoid Chrome image
-        run: docker pull selenoid/chrome:128.0
+      - name: Pull Selenoid Browser Images & Video Recorder
+        run: |
+          docker pull selenoid/vnc_chrome:128.0
+          docker pull selenoid/vnc_firefox:125.0
+          docker pull selenoid/video-recorder:latest-release
 
-      - name: Pull Selenoid Video Recorder image
-        run: docker pull selenoid/video-recorder:latest-release
-
-      # 👇 3. Запускаем всю нашу инфраструктуру одной командой
       - name: Run Tests in Docker Compose
+        env:
+          BROWSER: ${{ matrix.browser }}
         run: docker compose up --build --exit-code-from qa-framework
         continue-on-error: true
 
-      # --- БЕЗОТКАЗНАЯ ГЕНЕРАЦИЯ ОТЧЕТА ЧЕРЕЗ NPM (БЕЗ DOCKER) ---
-      - name: Generate Allure Report
+      - name: Исправляем права доступа для артефактов
         if: always()
+        run: sudo chown -R $USER:$USER allure-results
+
+      - name: Сохраняем сырые результаты Allure как артефакт
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-results-${{ matrix.browser }}
+          path: allure-results
+          retention-days: 1
+
+  # =========================================
+  # JOB 2: СБОРКА ЕДИНОГО ОТЧЕТА И ПУБЛИКАЦИЯ
+  # =========================================
+  generate-report:
+    needs: test-execution
+    runs-on: ubuntu-22.04
+    if: always()
+
+    steps:
+      - name: Скачиваем результаты Chrome
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-chrome
+          path: allure-results-chrome
+
+      - name: Скачиваем результаты Firefox
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-firefox
+          path: allure-results-firefox
+
+      - name: Уникализируем результаты для Allure (Python Script)
+        run: |
+          cat << 'EOF' > process_allure.py
+          import json
+          import glob
+
+          def process_folder(folder, browser):
+              files = glob.glob(f"{folder}/*result.json")
+              for file_path in files:
+                  with open(file_path, 'r', encoding='utf-8') as f:
+                      data = json.load(f)
+                  
+                  # 🔥 ГЛАВНЫЙ СЕКРЕТ ЗДЕСЬ: testCaseId отвечает за склейку тестов!
+                  if 'testCaseId' in data:
+                      data['testCaseId'] = f"{data['testCaseId']}-{browser}"
+                  
+                  if 'historyId' in data:
+                      data['historyId'] = f"{data['historyId']}-{browser}"
+                  
+                  if 'fullName' in data:
+                      data['fullName'] = f"{data['fullName']} [{browser.upper()}]"
+                  
+                  if 'name' in data:
+                      data['name'] = f"{data['name']} [{browser.upper()}]"
+                  
+                  if 'labels' in data:
+                      for label in data['labels']:
+                          if label['name'] == 'suite':
+                              label['value'] = f"{label['value']} ({browser.upper()})"
+                      
+                  with open(file_path, 'w', encoding='utf-8') as f:
+                      json.dump(data, f)
+
+          process_folder('allure-results-chrome', 'chrome')
+          process_folder('allure-results-firefox', 'firefox')
+          EOF
+          
+          python3 process_allure.py
+          
+          # Создаем файл окружения прямо в одной из папок (чтобы он попал в итоговый отчет)
+          echo "Browsers=Chrome, Firefox" > allure-results-chrome/environment.properties
+          echo "Environment=Docker Compose (Selenoid)" >> allure-results-chrome/environment.properties
+          echo "CI=GitHub Actions Matrix" >> allure-results-chrome/environment.properties
+
+      - name: Устанавливаем Allure CLI и генерируем ОБЩИЙ отчет
         run: |
           npm install -g allure-commandline --save-dev
-          allure generate allure-results -o allure-report --clean
+          # Передаем обе папки напрямую в генератор
+          allure generate allure-results-chrome allure-results-firefox -o allure-report --clean
 
-      # --- ПУБЛИКАЦИЯ СГЕНЕРИРОВАННОЙ ПАПКИ В GH-PAGES ---
-      - name: Deploy to GitHub Pages
+      - name: Публикуем финальный отчет на GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
-        if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: allure-report
 
-      # --- ОТПРАВКА УВЕДОМЛЕНИЯ В ТЕЛЕГРАМ ---
-      - name: Send Telegram Notification
+      - name: Отправляем сводное уведомление в Telegram
         uses: appleboy/telegram-action@master
-        if: always()
         with:
             to: ${{ secrets.TELEGRAM_TO }}
             token: ${{ secrets.TELEGRAM_TOKEN }}
             message: |
-              🤖 Автотесты IlCarro завершены (Docker Environment)!
-              📊 Посмотреть Allure-отчет можно по ссылке:
+              🤖 Кроссбраузерные автотесты IlCarro завершены!
+              🌐 Проверено в: Chrome и Firefox
+              📊 Посмотреть общий Allure-отчет можно по ссылке:
               👉 https://warmanofmars-star.github.io/QA3553_IlCarro_Tests/
