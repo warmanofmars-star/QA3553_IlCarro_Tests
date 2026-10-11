@@ -1,0 +1,5 @@
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_0129d5ccb8@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     API:car_api.py:145 GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов]
+INFO     TEST:test_playwright_add_car.py:16 Playwright будет создавать машину: Car(city='Ashdod', make='Roberts Inc', model='Bad', year='2021', fuel='Diesel', gear='Automatic', wd='RWD', doors='3', seats='6', car_class='Premium', reg_number='IL-71716009', price='668', about='Doctor join or point individual start.', photo_path=None)
+INFO     TEST:test_playwright_add_car.py:33 Машина с номером IL-71716009 успешно добавлена через Playwright!
