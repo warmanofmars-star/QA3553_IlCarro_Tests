@@ -1,5 +1,0 @@
-INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_1e94f809b6@example.com]
-INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
-INFO     API:car_api.py:145 GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов]
-INFO     TEST:test_playwright_add_car.py:16 Playwright будет создавать машину: Car(city='Kfar Saba', make='Johnson LLC', model='Cold', year='2013', fuel='Electric', gear='Manual', wd='FWD', doors='5', seats='3', car_class='Business', reg_number='IL-4E8E8056', price='704', about='Nor yard result same.', photo_path=None)
-INFO     TEST:test_playwright_add_car.py:33 Машина с номером IL-4E8E8056 успешно добавлена через Playwright!

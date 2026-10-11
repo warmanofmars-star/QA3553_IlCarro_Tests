@@ -1,0 +1,4 @@
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_fa04844f67@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     TEST:test_playwright_add_car.py:16 Playwright будет создавать машину: Car(city='Eilat', make='Frost-Avila', model='Personal', year='2015', fuel='Hybrid', gear='Manual', wd='AWD', doors='4', seats='6', car_class='Premium', reg_number='IL-87E1F5E0', price='878', about='Identify and hold wear.', photo_path=None)
+INFO     TEST:test_playwright_add_car.py:33 Машина с номером IL-87E1F5E0 успешно добавлена через Playwright!
