@@ -12,6 +12,11 @@
 **Запуск Playwright тестов в видимом (Headed) режиме для дебага:**
 `pytest tests/test_playwright_add_car.py -s --headed`[cite: 22]
 
+**Запуск по маркерам (только API, только Security или только Smoke):**
+`pytest -m "api" -v`
+`pytest -m "api and security" -v`
+`pytest -m "smoke" -n 3`
+
 ---
 
 ## 📊 Работа с Allure Report
