@@ -1,0 +1,10 @@
+[32;20m[2026-10-20 15:05:54] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_8a795eb79e@example.com][0m
+[32;20m[2026-10-20 15:05:55] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-20 15:05:55] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-FA952033][0m
+[32;20m[2026-10-20 15:05:55] [INFO] [API] - Машина IL-FA952033 успешно создана в БД[0m
+[32;20m[2026-10-20 15:05:55] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars/search [Поиск: Holon, даты: 2026-10-21 - 2026-10-27][0m
+[32;20m[2026-10-20 15:05:56] [INFO] [API] - Поиск успешен. Найдено машин: 28[0m
+[32;20m[2026-10-20 15:05:56] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars/IL-FA952033/booking [Бронирование: IL-FA952033, даты: 2026-10-21 - 2026-10-27][0m
+[32;20m[2026-10-20 15:05:56] [INFO] [API] - Машина IL-FA952033 успешно забронирована[0m
+[32;20m[2026-10-20 15:05:56] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-FA952033 [Удаление машины: IL-FA952033][0m
+[32;20m[2026-10-20 15:05:56] [INFO] [API] - Машина IL-FA952033 успешно удалена[0m

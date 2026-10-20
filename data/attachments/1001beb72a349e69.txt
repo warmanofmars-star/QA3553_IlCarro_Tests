@@ -1,8 +1,0 @@
-INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_d219150d44@example.com]
-INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
-INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-EDF5433E]
-INFO     API:car_api.py:72 Машина IL-EDF5433E успешно создана в БД
-INFO     API:car_api.py:93 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-EDF5433E [Удаление машины: IL-EDF5433E]
-INFO     API:car_api.py:98 Машина IL-EDF5433E успешно удалена
-INFO     API:car_api.py:93 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-EDF5433E [Удаление машины: IL-EDF5433E]
-ERROR    API:car_api.py:100 Ошибка удаления машины IL-EDF5433E: 400 - {"timestamp":"2026-10-20T13:09:33","status":400,"error":"Bad Request","message":"Car with serial number IL-EDF5433E not found","path":"/v1/cars/IL-EDF5433E"}

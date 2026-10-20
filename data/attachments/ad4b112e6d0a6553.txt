@@ -1,0 +1,10 @@
+[32;20m[2026-10-20 15:04:29] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_61a71c0568@example.com][0m
+[32;20m[2026-10-20 15:04:29] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-20 15:04:29] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-47CA51BE][0m
+[32;20m[2026-10-20 15:04:29] [INFO] [API] - Машина IL-47CA51BE успешно создана в БД[0m
+[32;20m[2026-10-20 15:04:29] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars/search [Поиск: Hadera, даты: 2026-10-21 - 2026-10-27][0m
+[32;20m[2026-10-20 15:04:30] [INFO] [API] - Поиск успешен. Найдено машин: 21[0m
+[32;20m[2026-10-20 15:04:30] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars/IL-47CA51BE/booking [Бронирование: IL-47CA51BE, даты: 2026-10-21 - 2026-10-27][0m
+[32;20m[2026-10-20 15:04:30] [INFO] [API] - Машина IL-47CA51BE успешно забронирована[0m
+[32;20m[2026-10-20 15:04:30] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-47CA51BE [Удаление машины: IL-47CA51BE][0m
+[32;20m[2026-10-20 15:04:30] [INFO] [API] - Машина IL-47CA51BE успешно удалена[0m

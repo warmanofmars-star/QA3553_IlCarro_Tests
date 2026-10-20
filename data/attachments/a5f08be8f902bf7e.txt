@@ -1,4 +1,0 @@
-INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_2960958358@example.com]
-INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
-INFO     TEST:test_playwright_add_car.py:16 Playwright будет создавать машину: Car(city='Dimona', make='Anderson, Winters and Newman', model='Late', year='2010', fuel='Petrol', gear='Manual', wd='RWD', doors='5', seats='3', car_class='Premium', reg_number='IL-2D7DBDF1', price='250', about='Various life environmental up grow fill.', photo_path=None)
-INFO     TEST:test_playwright_add_car.py:33 Машина с номером IL-2D7DBDF1 успешно добавлена через Playwright!

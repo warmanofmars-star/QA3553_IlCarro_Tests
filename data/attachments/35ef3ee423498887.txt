@@ -1,0 +1,10 @@
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_61a71c0568@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-47CA51BE]
+INFO     API:car_api.py:72 Машина IL-47CA51BE успешно создана в БД
+INFO     API:car_api.py:107 POST https://ilcarro-backend.herokuapp.com/v1/cars/search [Поиск: Hadera, даты: 2026-10-21 - 2026-10-27]
+INFO     API:car_api.py:118 Поиск успешен. Найдено машин: 21
+INFO     API:car_api.py:127 POST https://ilcarro-backend.herokuapp.com/v1/cars/IL-47CA51BE/booking [Бронирование: IL-47CA51BE, даты: 2026-10-21 - 2026-10-27]
+INFO     API:car_api.py:136 Машина IL-47CA51BE успешно забронирована
+INFO     API:car_api.py:93 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-47CA51BE [Удаление машины: IL-47CA51BE]
+INFO     API:car_api.py:98 Машина IL-47CA51BE успешно удалена

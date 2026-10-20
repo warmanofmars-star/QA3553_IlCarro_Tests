@@ -1,2 +1,0 @@
-[32;20m[2026-10-20 13:09:30] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-0ADB15E3][0m
-[31;20m[2026-10-20 13:09:30] [ERROR] [API] - Ошибка создания машины IL-0ADB15E3: 403 - [0m

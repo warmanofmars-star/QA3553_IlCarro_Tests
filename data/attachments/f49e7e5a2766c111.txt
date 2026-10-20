@@ -1,4 +1,0 @@
-[32;20m[2026-10-20 13:09:31] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_b53599fae9@example.com][0m
-[32;20m[2026-10-20 13:09:31] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
-[32;20m[2026-10-20 13:09:31] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-69C88019][0m
-[31;20m[2026-10-20 13:09:31] [ERROR] [API] - Ошибка создания машины IL-69C88019: 400 - {"timestamp":"2026-10-20T13:09:31","status":400,"error":"Bad Request","message":{"carClass":"must not be blank"},"path":"/v1/cars"}[0m
