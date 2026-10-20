@@ -1,4 +1,0 @@
-INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_b790a47fcf@example.com]
-INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
-INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-EF466A6F]
-INFO     API:car_api.py:72 Машина IL-EF466A6F успешно создана в БД

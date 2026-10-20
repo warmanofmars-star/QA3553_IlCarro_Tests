@@ -1,0 +1,4 @@
+[32;20m[2026-10-20 13:09:59] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_2960958358@example.com][0m
+[32;20m[2026-10-20 13:09:59] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-20 13:09:59] [INFO] [TEST] - Playwright будет создавать машину: Car(city='Dimona', make='Anderson, Winters and Newman', model='Late', year='2010', fuel='Petrol', gear='Manual', wd='RWD', doors='5', seats='3', car_class='Premium', reg_number='IL-2D7DBDF1', price='250', about='Various life environmental up grow fill.', photo_path=None)[0m
+[32;20m[2026-10-20 13:10:01] [INFO] [TEST] - Машина с номером IL-2D7DBDF1 успешно добавлена через Playwright![0m

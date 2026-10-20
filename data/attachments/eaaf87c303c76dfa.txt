@@ -1,0 +1,4 @@
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_a6a48150a3@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     TEST:test_playwright_add_car.py:16 Playwright будет создавать машину: Car(city='Bat Yam', make='White, Martinez and Ibarra', model='Draw', year='2013', fuel='Electric', gear='Automatic', wd='FWD', doors='2', seats='4', car_class='Premium', reg_number='IL-DCFA45D0', price='827', about='Choose little military director.', photo_path=None)
+INFO     TEST:test_playwright_add_car.py:33 Машина с номером IL-DCFA45D0 успешно добавлена через Playwright!

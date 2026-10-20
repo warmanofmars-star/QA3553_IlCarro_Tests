@@ -1,0 +1,2 @@
+[32;20m[2026-10-20 13:09:31] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-C74C99B4][0m
+[31;20m[2026-10-20 13:09:32] [ERROR] [API] - Ошибка создания машины IL-C74C99B4: 403 - [0m
