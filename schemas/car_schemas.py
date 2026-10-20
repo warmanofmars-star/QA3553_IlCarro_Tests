@@ -1,16 +1,16 @@
-# schemas/car_schemas.py
-
-# Схема для дат бронирования (вложена внутри машины)
+# Схема для дат бронирования
 BOOKED_PERIOD_SCHEMA = {
     "type": "object",
     "properties": {
         "email": {"type": "string"},
         "startDate": {"type": "string"},
         "endDate": {"type": "string"}
-    }
+    },
+    "required": ["email", "startDate", "endDate"],
+    "additionalProperties": False  # 🔥 Запрещаем любые лишние поля от бэкенда!
 }
 
-# Строгий контракт CarDto из Swagger
+# Строгий контракт CarDto
 CAR_OBJECT_SCHEMA = {
     "type": "object",
     "properties": {
@@ -19,12 +19,12 @@ CAR_OBJECT_SCHEMA = {
         "model": {"type": "string"},
         "year": {"type": "string"},
         "fuel": {"type": "string"},
-        "seats": {"type": "integer"},  # Swagger указывает четко: integer (int32)
+        "seats": {"type": "integer"},
         "carClass": {"type": "string"},
-        "pricePerDay": {"type": "number"}, # Swagger: number (double)
+        "pricePerDay": {"type": "number"},
         "about": {"type": "string"},
         "city": {"type": "string"},
-        "lat": {"type": "number"}, # Координаты (могут вернуться, даже если не отправляли)
+        "lat": {"type": "number"},
         "lng": {"type": "number"},
         "image": {"type": ["string", "null"]},
         "owner": {"type": "string"},
@@ -33,14 +33,14 @@ CAR_OBJECT_SCHEMA = {
             "items": BOOKED_PERIOD_SCHEMA
         }
     },
-    # Строго берем массив required из Swagger-документации:
     "required": [
         "carClass", "city", "fuel", "manufacture", "model",
         "pricePerDay", "seats", "serialNumber", "year"
-    ]
+    ],
+    "additionalProperties": False  # 🔥 Строгий контроль контракта
 }
 
-# Схема ответа CarsDto
+# Схема ответа GET /v1/cars/my
 GET_CARS_RESPONSE_SCHEMA = {
     "type": "object",
     "properties": {
@@ -49,6 +49,16 @@ GET_CARS_RESPONSE_SCHEMA = {
             "items": CAR_OBJECT_SCHEMA
         }
     },
-    # Мы не ставим "cars" в required жестко, так как при пустом списке может вернуться {}
-    # в зависимости от реализации, но если массив есть, он должен быть валидным.
+    "required": ["cars"],
+    "additionalProperties": False
+}
+
+# Схема для POST и DELETE (когда возвращается просто {"message": "..."})
+MESSAGE_RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "message": {"type": "string"}
+    },
+    "required": ["message"],
+    "additionalProperties": False
 }

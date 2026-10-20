@@ -17,21 +17,8 @@ def test_hybrid_car_search(driver, auth_api):
         car_obj = CarGenerator.get_random_car(city=target_city)
         serial_number = car_obj.reg_number
 
-        car_payload = {
-            "serialNumber": serial_number,
-            "manufacture": car_obj.make,
-            "model": car_obj.model,
-            "year": str(car_obj.year),
-            "fuel": car_obj.fuel,
-            "seats": int(car_obj.seats),
-            "carClass": car_obj.car_class,
-            "pricePerDay": float(car_obj.price),
-            "about": car_obj.about,
-            "city": car_obj.city
-        }
-
-        # ИСПОЛЬЗУЕМ ФИКСТУРУ ДЛЯ ЗАПРОСА ↓
-        response = auth_api.add_car(car_payload)
+        # ИСПОЛЬЗУЕМ ФИКСТУРУ ДЛЯ ЗАПРОСА И НОВЫЙ МЕТОД DATACLASS'а ↓
+        response = auth_api.add_car(car_obj.to_api_payload())
         assert response.status_code == 200, f"Ошибка пререквизита: {response.text}"
 
     # Оборачиваем UI-логику в try..finally, чтобы машина удалилась даже если Селениум упадет
@@ -56,7 +43,7 @@ def test_hybrid_car_search(driver, auth_api):
         with allure.step("UI: Проверка отображения результатов поиска"):
             results_page.wait_for_search_request_to_complete()
 
-            assert results_page.has_cars() == True, f"Машины в городе {target_city} не найдены, хотя API успешно создал авто!"
+            assert results_page.has_cars(timeout=10) == True, f"Машины в городе {target_city} не найдены, хотя API успешно создал авто!"
 
             # Дополнительно считываем детали первой машины, чтобы убедиться, что рендер карточек не сломан
             first_car = results_page.get_first_car_details()

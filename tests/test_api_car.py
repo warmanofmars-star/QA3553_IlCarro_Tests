@@ -5,35 +5,31 @@ from api.car_api import IlCarroAPI
 from data.data_generator import CarGenerator
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
-from schemas.car_schemas import GET_CARS_RESPONSE_SCHEMA
+from schemas.car_schemas import GET_CARS_RESPONSE_SCHEMA, MESSAGE_RESPONSE_SCHEMA
 
 pytestmark = pytest.mark.api
+
 
 @allure.epic("API Testing")
 @allure.feature("Car Controller")
 @allure.story("Create Car successfully")
 @allure.severity(allure.severity_level.BLOCKER)
-def test_api_add_car_success(auth_api):  # <--- Передали фикстуру!
+def test_api_add_car_success(auth_api):
     with allure.step("1. Подготовка валидного JSON (CarDto)"):
         car_obj = CarGenerator.get_random_car()
-        car_payload = {
-            "serialNumber": car_obj.reg_number,
-            "manufacture": car_obj.make,
-            "model": car_obj.model,
-            "year": str(car_obj.year),
-            "fuel": car_obj.fuel,
-            "seats": int(car_obj.seats),
-            "carClass": car_obj.car_class,
-            "pricePerDay": float(car_obj.price),
-            "about": car_obj.about,
-            "city": car_obj.city
-        }
 
     with allure.step("2. Отправка POST запроса на создание машины"):
-        response = auth_api.add_car(car_payload)  # Используем auth_api вместо api
+        # Магия ООП: датакласс сам знает, как превратить себя в payload!
+        response = auth_api.add_car(car_obj.to_api_payload())
 
-    with allure.step("3. Проверка статус-кода и сообщения"):
+    with allure.step("3. Проверка статус-кода и строгого контракта ответа"):
         assert response.status_code == 200, f"Бэкенд вернул ошибку: {response.status_code} - {response.text}"
+
+        try:
+            validate(instance=response.json(), schema=MESSAGE_RESPONSE_SCHEMA)
+        except ValidationError as e:
+            pytest.fail(f"Бэкенд нарушил контракт (лишние поля или неверный тип)!\nОшибка: {e.message}")
+
         assert "Car added" in response.json().get("message", ""), "Неверное сообщение от сервера"
 
 
@@ -44,21 +40,9 @@ def test_api_add_car_success(auth_api):  # <--- Передали фикстур�
 def test_api_car_lifecycle(auth_api):
     car_obj = CarGenerator.get_random_car()
     serial_number = car_obj.reg_number
-    car_payload = {
-        "serialNumber": serial_number,
-        "manufacture": car_obj.make,
-        "model": car_obj.model,
-        "year": str(car_obj.year),
-        "fuel": car_obj.fuel,
-        "seats": int(car_obj.seats),
-        "carClass": car_obj.car_class,
-        "pricePerDay": float(car_obj.price),
-        "about": car_obj.about,
-        "city": car_obj.city
-    }
 
     with allure.step("1. Создаем машину"):
-        response_add = auth_api.add_car(car_payload)
+        response_add = auth_api.add_car(car_obj.to_api_payload())
         assert response_add.status_code == 200, f"Не удалось создать машину! Ответ сервера: {response_add.text}"
 
     with allure.step("2. Проверяем, что машина появилась в списке 'My Cars'"):
@@ -98,20 +82,9 @@ def test_api_add_car_unauthorized():
     # ЗДЕСЬ ФИКСТУРУ НЕ ПЕРЕДАЕМ! Нам нужен "чистый" клиент без токена
     api = IlCarroAPI()
     car_obj = CarGenerator.get_random_car()
-    car_payload = {
-        "serialNumber": car_obj.reg_number,
-        "manufacture": car_obj.make,
-        "model": car_obj.model,
-        "year": str(car_obj.year),
-        "fuel": car_obj.fuel,
-        "seats": int(car_obj.seats),
-        "carClass": car_obj.car_class,
-        "pricePerDay": float(car_obj.price),
-        "city": car_obj.city
-    }
 
     with allure.step("Попытка создать машину без токена авторизации"):
-        response = api.add_car(car_payload)
+        response = api.add_car(car_obj.to_api_payload())
 
     with allure.step("Проверка статуса 403 Forbidden (или 401)"):
         # Spring Boot часто отдает 403 при полном отсутствии хидера,
@@ -133,21 +106,8 @@ def test_api_car_booking_flow(auth_api):
     serial_number = car_obj.reg_number
     target_city = car_obj.city
 
-    car_payload = {
-        "serialNumber": serial_number,
-        "manufacture": car_obj.make,
-        "model": car_obj.model,
-        "year": str(car_obj.year),
-        "fuel": car_obj.fuel,
-        "seats": int(car_obj.seats),
-        "carClass": car_obj.car_class,
-        "pricePerDay": float(car_obj.price),
-        "about": car_obj.about,
-        "city": target_city
-    }
-
     with allure.step("1. Создаем машину для бронирования"):
-        response_add = auth_api.add_car(car_payload)
+        response_add = auth_api.add_car(car_obj.to_api_payload())
         assert response_add.status_code == 200, f"Не удалось создать машину: {response_add.text}"
 
     with allure.step(f"2. Ищем машины в городе {target_city} на заданные даты"):

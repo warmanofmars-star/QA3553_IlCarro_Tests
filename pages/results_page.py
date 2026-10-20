@@ -25,15 +25,15 @@ class ResultsPage(BasePage):
         )
 
     @allure.step("Проверка, есть ли найденные машины")
-    def has_cars(self):
+    def has_cars(self, timeout=3):  # <-- Обязательно добавляем timeout=3 в скобки!
         try:
-            # Даем фронтенду 3 секунды на отрисовку DOM-дерева
-            WebDriverWait(self.driver, 3).until(
+            # Передаем наш timeout внутрь WebDriverWait
+            WebDriverWait(self.driver, timeout).until(
                 EC.presence_of_element_located(self.CAR_CARD_LINK)
             )
             return True
         except TimeoutException:
-            # Если за 3 секунды карточки не появились — выдача действительно пустая
+            # Если за отведенное время карточки не появились — выдача действительно пустая
             return False
 
     # --- ДЕЙСТВИЯ ---

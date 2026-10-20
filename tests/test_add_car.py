@@ -47,19 +47,8 @@ def test_add_car_success(authenticated_driver, fuel_type, car_class, scenario, s
 def test_add_car_duplicate(authenticated_driver, auth_api, sys_logger):
     with allure.step("API PRECONDITION: Создаем машину через бэкенд"):
         car = CarGenerator.get_random_car()
-        car_payload = {
-            "serialNumber": car.reg_number,
-            "manufacture": car.make,
-            "model": car.model,
-            "year": str(car.year),
-            "fuel": car.fuel,
-            "seats": int(car.seats),
-            "carClass": car.car_class,
-            "pricePerDay": float(car.price),
-            "about": car.about,
-            "city": car.city
-        }
-        response = auth_api.add_car(car_payload)
+
+        response = auth_api.add_car(car.to_api_payload())
         assert response.status_code == 200, "Пререквизит упал: не удалось создать машину через API"
         sys_logger.info(f"API успешно создал машину с номером: {car.reg_number}")
 

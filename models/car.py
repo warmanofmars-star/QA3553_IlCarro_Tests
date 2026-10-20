@@ -15,5 +15,22 @@ class Car:
     reg_number: str
     price: str
     about: str
-    # Важное правило Python: поля со значением по умолчанию всегда идут в самом конце!
     photo_path: str = None
+
+    def to_api_payload(self) -> dict:
+        """
+        Превращает объект Car в словарь формата JSON для отправки на API.
+        Автоматически маппит python-свойства в нужные API-ключи и приводит типы.
+        """
+        return {
+            "serialNumber": self.reg_number,
+            "manufacture": self.make,
+            "model": self.model,
+            "year": str(self.year),
+            "fuel": self.fuel,
+            "seats": int(self.seats),
+            "carClass": self.car_class,
+            "pricePerDay": float(self.price),
+            "about": self.about,
+            "city": self.city
+        }

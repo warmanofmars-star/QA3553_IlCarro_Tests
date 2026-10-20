@@ -45,19 +45,8 @@ def test_pw_add_car_duplicate(page: Page, temp_user): # <-- Заменили aut
     user = temp_user["user"] # <-- Достаем UI-креды песочницы
 
     with allure.step("API PRECONDITION: Создаем машину"):
-        car_payload = {
-            "serialNumber": car.reg_number,
-            "manufacture": car.make,
-            "model": car.model,
-            "year": str(car.year),
-            "fuel": car.fuel,
-            "seats": int(car.seats),
-            "carClass": car.car_class,
-            "pricePerDay": float(car.price),
-            "about": car.about,
-            "city": car.city
-        }
-        api.add_car(car_payload)
+        # МАГИЯ ООП ЗДЕСЬ: используем .to_api_payload()
+        api.add_car(car.to_api_payload())
 
     with allure.step("UI SCENARIO: Пытаемся создать ту же машину через UI"):
         login_page = PwLoginPage(page)

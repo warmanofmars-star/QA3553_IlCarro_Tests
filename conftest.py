@@ -216,6 +216,10 @@ def authenticated_driver(driver, temp_user):
 
 
 def pytest_make_parametrize_id(val):
+    # Если параметр — это функция или lambda, возвращаем статичную строку без адреса памяти (0x...),
+    # чтобы воркеры pytest-xdist получали одинаковые ID тестов
+    if callable(val):
+        return "lambda_mutation"
     return str(val)
 
 
