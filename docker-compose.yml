@@ -37,6 +37,7 @@ services:
       - USE_SELENOID=true
       - SELENOID_HUB_URL=http://selenoid:4444/wd/hub
       - VIDEO_DIR=/app/video
+      - BROWSER=${BROWSER:-chrome}
       - USER_EMAIL=${USER_EMAIL}
       - USER_PASSWORD=${USER_PASSWORD}
       - UI_BASE_URL=https://icarro-v1.netlify.app
