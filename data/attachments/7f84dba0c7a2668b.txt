@@ -1,0 +1,10 @@
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_122e402fbf@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-F7210B46]
+INFO     API:car_api.py:72 Машина IL-F7210B46 успешно создана в БД
+INFO     API:car_api.py:107 POST https://ilcarro-backend.herokuapp.com/v1/cars/search [Поиск: Sderot, даты: 2026-10-22 - 2026-10-28]
+INFO     API:car_api.py:118 Поиск успешен. Найдено машин: 13
+INFO     API:car_api.py:127 POST https://ilcarro-backend.herokuapp.com/v1/cars/IL-F7210B46/booking [Бронирование: IL-F7210B46, даты: 2026-10-22 - 2026-10-28]
+INFO     API:car_api.py:136 Машина IL-F7210B46 успешно забронирована
+INFO     API:car_api.py:93 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-F7210B46 [Удаление машины: IL-F7210B46]
+INFO     API:car_api.py:98 Машина IL-F7210B46 успешно удалена

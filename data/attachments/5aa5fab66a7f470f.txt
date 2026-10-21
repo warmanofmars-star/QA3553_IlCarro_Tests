@@ -1,8 +1,0 @@
-[32;20m[2026-10-20 15:04:30] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_a24c44574e@example.com][0m
-[32;20m[2026-10-20 15:04:30] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
-[32;20m[2026-10-20 15:04:30] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-220DA267][0m
-[32;20m[2026-10-20 15:04:31] [INFO] [API] - Машина IL-220DA267 успешно создана в БД[0m
-[32;20m[2026-10-20 15:04:31] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-220DA267 [Удаление машины: IL-220DA267][0m
-[32;20m[2026-10-20 15:04:31] [INFO] [API] - Машина IL-220DA267 успешно удалена[0m
-[32;20m[2026-10-20 15:04:31] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-220DA267 [Удаление машины: IL-220DA267][0m
-[31;20m[2026-10-20 15:04:31] [ERROR] [API] - Ошибка удаления машины IL-220DA267: 400 - {"timestamp":"2026-10-20T15:04:31","status":400,"error":"Bad Request","message":"Car with serial number IL-220DA267 not found","path":"/v1/cars/IL-220DA267"}[0m

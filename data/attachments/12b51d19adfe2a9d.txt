@@ -1,4 +1,0 @@
-INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_65f67b52da@example.com]
-INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
-INFO     TEST:test_playwright_add_car.py:16 Playwright будет создавать машину: Car(city='Petah Tikva', make='Klein, Simon and Caldwell', model='Significant', year='2016', fuel='Hybrid', gear='Manual', wd='RWD', doors='4', seats='5', car_class='Economy', reg_number='IL-AC60AB4E', price='421', about='Bank be I stay support entire study.', photo_path=None)
-INFO     TEST:test_playwright_add_car.py:33 Машина с номером IL-AC60AB4E успешно добавлена через Playwright!

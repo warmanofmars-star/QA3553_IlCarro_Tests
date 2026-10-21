@@ -1,4 +1,0 @@
-INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_23eda90a88@example.com]
-INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
-INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-A6F7302C]
-ERROR    API:car_api.py:74 Ошибка создания машины IL-A6F7302C: 400 - {"timestamp":"2026-10-20T15:04:30","status":400,"error":"Bad Request","message":{"manufacture":"must not be blank"},"path":"/v1/cars"}

@@ -1,0 +1,10 @@
+[32;20m[2026-10-21 18:08:40] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_73d30f2778@example.com][0m
+[32;20m[2026-10-21 18:08:41] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-21 18:08:41] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-95F85360][0m
+[32;20m[2026-10-21 18:08:41] [INFO] [API] - Машина IL-95F85360 успешно создана в БД[0m
+[32;20m[2026-10-21 18:08:41] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_78084e131a@example.com][0m
+[32;20m[2026-10-21 18:08:41] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-21 18:08:41] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-95F85360 [Удаление машины: IL-95F85360][0m
+[31;20m[2026-10-21 18:08:41] [ERROR] [API] - Ошибка удаления машины IL-95F85360: 400 - {"timestamp":"2026-10-21T18:08:41","status":400,"error":"Bad Request","message":"Car with serial number IL-95F85360 not found","path":"/v1/cars/IL-95F85360"}[0m
+[32;20m[2026-10-21 18:08:41] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-95F85360 [Удаление машины: IL-95F85360][0m
+[32;20m[2026-10-21 18:08:41] [INFO] [API] - Машина IL-95F85360 успешно удалена[0m

@@ -1,4 +1,0 @@
-[32;20m[2026-10-20 15:04:57] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_b12effc856@example.com][0m
-[32;20m[2026-10-20 15:04:57] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
-[32;20m[2026-10-20 15:04:57] [INFO] [TEST] - Playwright будет создавать машину: Car(city='Holon', make='Wright-Harris', model='Begin', year='2021', fuel='Hybrid', gear='Manual', wd='FWD', doors='4', seats='5', car_class='Economy', reg_number='IL-1163C660', price='682', about='Entire operation live know teacher.', photo_path=None)[0m
-[32;20m[2026-10-20 15:04:59] [INFO] [TEST] - Машина с номером IL-1163C660 успешно добавлена через Playwright![0m

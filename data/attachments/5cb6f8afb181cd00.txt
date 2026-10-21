@@ -1,0 +1,6 @@
+[32;20m[2026-10-21 18:08:58] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_20f129d8c4@example.com][0m
+[32;20m[2026-10-21 18:08:59] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-21 18:08:59] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-4BA1B1A6][0m
+[32;20m[2026-10-21 18:08:59] [INFO] [API] - Машина IL-4BA1B1A6 успешно создана в БД[0m
+[32;20m[2026-10-21 18:08:59] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-4BA1B1A6 [Удаление машины: IL-4BA1B1A6][0m
+[32;20m[2026-10-21 18:08:59] [INFO] [API] - Машина IL-4BA1B1A6 успешно удалена[0m

@@ -1,0 +1,8 @@
+INFO     UI:listener.py:10 Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+INFO     UI:listener.py:13 Поиск элемента -> By: id, Value: 'dates'
+INFO     UI:listener.py:30 Клик по элементу <input> с текстом: ''
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: '.daterange-popover'
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: '.rdrDayToday'
+INFO     UI:listener.py:13 Поиск элемента -> By: id, Value: 'city'
+INFO     UI:listener.py:30 Клик по элементу <input> с текстом: ''
+INFO     UI:listener.py:13 Поиск элемента -> By: css selector, Value: '.daterange-popover'
