@@ -2,7 +2,7 @@ import allure
 import pytest
 from api.car_api import IlCarroAPI
 
-pytestmark = pytest.mark.regression
+pytestmark = [pytest.mark.api, pytest.mark.regression]
 
 FRONTEND_CITIES = [
     "Tel Aviv", "Jerusalem", "Haifa", "Rishon LeZion", "Petah Tikva", "Ashdod",

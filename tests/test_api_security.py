@@ -1,7 +1,7 @@
 import pytest
 import allure
 from api.car_api import IlCarroAPI
-from data.data_generator import CarGenerator, UserGenerator
+from data.data_generator import CarGenerator, UserGenerator, SearchDataGenerator
 
 pytestmark = [pytest.mark.api, pytest.mark.security]
 
@@ -164,9 +164,9 @@ def test_api_security_pagination_dos(auth_api):
     Тест на уязвимость отказа в обслуживании (DoS) через параметры пагинации.
     """
     target_city = "Tel Aviv"
-    # Даты берем чуть вперед от сегодняшнего дня
-    start_date = "2026-10-25"
-    end_date = "2026-10-30"
+    start_dt, end_dt = SearchDataGenerator.get_safe_future_dates()
+    start_date = start_dt.strftime("%Y-%m-%d")
+    end_date = end_dt.strftime("%Y-%m-%d")
 
     with allure.step("Запрашиваем поиск машин с гигантским параметром size=1000000"):
         url = f"{auth_api.BASE_URL}/v1/cars/search?page=0&size=1000000"

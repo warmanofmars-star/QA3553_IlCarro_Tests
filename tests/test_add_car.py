@@ -3,6 +3,8 @@ import pytest
 from pages.add_car_page import AddCarPage
 from data.data_generator import CarGenerator
 
+pytestmark = pytest.mark.ui
+
 @pytest.mark.smoke
 @allure.epic("UI Testing")
 @allure.feature("Add Car Page (Let the car work)")

@@ -210,7 +210,7 @@ def authenticated_driver(driver, temp_user):
         user = temp_user["user"]
 
         login_page.login(user.email, user.password)
-        login_page.is_logout_button_visible()
+        assert login_page.is_logout_button_visible(), "Setup Failed: Кнопка Logout не появилась после авторизации!"
 
     return driver
 

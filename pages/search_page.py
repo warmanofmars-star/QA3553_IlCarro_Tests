@@ -56,10 +56,10 @@ class SearchPage(BasePage):
     def select_date_range(self, start_date, end_date):
         self.click_dates_input()
 
-        current_month = datetime.now().month
+        now = datetime.now()
 
-        # --- 1. ПЕРЕХОД К МЕСЯЦУ НАЧАЛА ПОЕЗДКИ ---
-        start_months_diff = start_date.month - current_month
+        # --- 1. ПЕРЕХОД К МЕСЯЦУ НАЧАЛА ПОЕЗДКИ (с учетом смены года Декабрь -> Январь) ---
+        start_months_diff = (start_date.year - now.year) * 12 + (start_date.month - now.month)
         if start_months_diff > 0:
             for _ in range(start_months_diff):
                 self.click_next_month()
@@ -67,16 +67,14 @@ class SearchPage(BasePage):
         # Кликаем дату начала
         self.click(self.get_day_locator(start_date.day))
 
-        # --- 2. ПЕРЕХОД К МЕСЯЦУ КОНЦА ПОЕЗДКИ ---
-        # Проверяем, не выпала ли конечная дата на следующий месяц
-        end_months_diff = end_date.month - start_date.month
+        # --- 2. ПЕРЕХОД К МЕСЯЦУ КОНЦА ПОЕЗДКИ (с учетом смены года) ---
+        end_months_diff = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
         if end_months_diff > 0:
             for _ in range(end_months_diff):
                 self.click_next_month()
 
         # Теперь безопасно кликаем дату конца, так как нужный месяц 100% на экране
         self.click(self.get_day_locator(end_date.day))
-
 
     @allure.step("Ожидание смены месяца (завершение анимации)")
     def wait_for_month_to_change(self, old_month):

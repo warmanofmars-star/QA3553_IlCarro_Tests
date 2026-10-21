@@ -4,6 +4,7 @@ from data.data_generator import CarGenerator, SearchDataGenerator
 from pages.search_page import SearchPage
 from pages.results_page import ResultsPage
 
+pytestmark = pytest.mark.ui
 
 @pytest.mark.hybrid
 @pytest.mark.smoke

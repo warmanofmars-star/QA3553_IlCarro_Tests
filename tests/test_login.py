@@ -2,6 +2,8 @@ import allure
 import pytest
 from pages.login_page import LoginPage
 
+pytestmark = pytest.mark.ui
+
 @pytest.mark.smoke
 @allure.epic("UI Testing")
 @allure.feature("Login Page")

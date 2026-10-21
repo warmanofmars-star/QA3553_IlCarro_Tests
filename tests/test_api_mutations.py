@@ -43,6 +43,7 @@ def test_api_car_mutations(auth_api, mutate_func, expected_status, scenario):
     with allure.step(f"Сценарий мутации: {scenario}"):
         # 1. Генерируем 100% валидный словарь данных
         base_payload = CarGenerator.get_random_car().to_api_payload()
+        serial_number = base_payload["serialNumber"]
 
         # 2. Применяем лямбда-функцию, чтобы сломать словарь "на лету"
         mutate_func(base_payload)
@@ -50,5 +51,11 @@ def test_api_car_mutations(auth_api, mutate_func, expected_status, scenario):
         # 3. Отправляем мутировавший запрос
         response = auth_api.add_car(base_payload)
 
-        # 4. Прогоняем ответ через глобальный сканер безопасности
-        assert_secure_error(response, expected_status)
+        try:
+            # 4. Прогоняем ответ через глобальный сканер безопасности
+            assert_secure_error(response, expected_status)
+        finally:
+            # 5. CLEANUP: Если из-за бага бэкенд все-таки создал невалидную машину (200 OK),
+            # удаляем её из БД, чтобы машина с ценой -100 не сломала UI-тесты поиска!
+            if response.status_code == 200:
+                auth_api.delete_car(serial_number)

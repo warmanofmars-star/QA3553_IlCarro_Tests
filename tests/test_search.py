@@ -4,6 +4,7 @@ from pages.search_page import SearchPage
 from data.data_generator import SearchDataGenerator
 from pages.results_page import ResultsPage
 
+pytestmark = pytest.mark.ui
 
 @pytest.mark.smoke
 @allure.epic("UI Testing")

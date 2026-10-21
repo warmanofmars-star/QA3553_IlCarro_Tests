@@ -5,6 +5,8 @@ import string
 from pages.registration_page import RegistrationPage
 from data.data_generator import UserGenerator
 
+pytestmark = pytest.mark.ui
+
 @pytest.mark.smoke
 @allure.epic("UI Testing")
 @allure.feature("Registration Page")

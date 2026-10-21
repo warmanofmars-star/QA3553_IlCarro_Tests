@@ -3,7 +3,6 @@ import uuid
 from pathlib import Path
 import string
 import json
-import os
 from datetime import datetime, timedelta
 from faker import Faker
 
@@ -137,21 +136,21 @@ class CarGenerator:
 
     MAKE_TYPES = ["Toyota", "Honda", "Ford", "BMW", "Mazda"]
     MODEL_TYPES = ["Camry", "Civic", "Focus", "X5", "Premium"]
-    CLASS_TYPES = ["Economy", "Comfort", "Business", "Premium"]
+    CLASS_TYPES = ["Economy", "Business", "Premium"]
 
-    @staticmethod
-    def get_random_car(**overrides) -> Car:
+    @classmethod
+    def get_random_car(cls, **overrides) -> Car:
         data = {
             "city": SearchDataGenerator.get_random_city(),
             "make": fake.company(),
             "model": fake.word().capitalize(),
             "year": str(random.randint(2010, 2024)),
-            "fuel": random.choice(["Petrol", "Diesel", "Hybrid", "Electric"]),
-            "gear": random.choice(["Manual", "Automatic"]),
-            "wd": random.choice(["AWD", "FWD", "RWD"]),
+            "fuel": random.choice(cls.FUEL_TYPES),
+            "gear": random.choice(cls.GEAR_TYPES),
+            "wd": random.choice(cls.WD_TYPES),
             "doors": str(random.randint(2, 5)),
             "seats": str(random.randint(2, 7)),
-            "car_class": random.choice(["Economy", "Business", "Premium"]),
+            "car_class": random.choice(cls.CLASS_TYPES),
             "reg_number": f"IL-{uuid.uuid4().hex[:8].upper()}",
             "price": str(random.randint(100, 1000)),
             "about": fake.sentence(),

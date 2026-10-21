@@ -5,6 +5,7 @@ from pages.pw_login_page import PwLoginPage
 from pages.pw_add_car_page import PwAddCarPage
 from data.data_generator import CarGenerator
 
+pytestmark = pytest.mark.ui
 
 @pytest.mark.smoke
 @allure.epic("Playwright Testing")
