@@ -1,0 +1,10 @@
+[32;20m[2026-10-23 07:28:23] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_2a702cc7a3@example.com][0m
+[32;20m[2026-10-23 07:28:24] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-23 07:28:24] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-7E0B424D][0m
+[32;20m[2026-10-23 07:28:24] [INFO] [API] - Машина IL-7E0B424D успешно создана в БД[0m
+[32;20m[2026-10-23 07:28:24] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars/search [Поиск: Hadera, даты: 2026-10-24 - 2026-10-30][0m
+[32;20m[2026-10-23 07:28:24] [INFO] [API] - Поиск успешен. Найдено машин: 22[0m
+[32;20m[2026-10-23 07:28:24] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars/IL-7E0B424D/booking [Бронирование: IL-7E0B424D, даты: 2026-10-24 - 2026-10-30][0m
+[32;20m[2026-10-23 07:28:25] [INFO] [API] - Машина IL-7E0B424D успешно забронирована[0m
+[32;20m[2026-10-23 07:28:25] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-7E0B424D [Удаление машины: IL-7E0B424D][0m
+[32;20m[2026-10-23 07:28:25] [INFO] [API] - Машина IL-7E0B424D успешно удалена[0m

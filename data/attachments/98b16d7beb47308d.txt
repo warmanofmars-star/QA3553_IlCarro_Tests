@@ -1,4 +1,0 @@
-INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_d78cb14cf0@example.com]
-INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
-INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-D9026C8E]
-ERROR    API:car_api.py:74 Ошибка создания машины IL-D9026C8E: 400 - {"timestamp":"2026-10-21T18:08:59","status":400,"error":"Bad Request","message":{"manufacture":"must not be blank"},"path":"/v1/cars"}

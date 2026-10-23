@@ -1,0 +1,2 @@
+INFO     UI:listener.py:10 Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+INFO     UI:listener.py:13 Поиск элемента -> By: id, Value: 'dates'

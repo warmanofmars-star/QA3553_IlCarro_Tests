@@ -1,4 +1,0 @@
-INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_ea803aeb7b@example.com]
-INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
-INFO     TEST:test_playwright_add_car.py:17 Playwright будет создавать машину: Car(city='Petah Tikva', make='Garcia, Ellison and Johnson', model='Notice', year='2017', fuel='Hybrid', gear='Automatic', wd='FWD', doors='5', seats='3', car_class='Business', reg_number='IL-44F80171', price='149', about='Right term yes.', photo_path=None)
-INFO     TEST:test_playwright_add_car.py:34 Машина с номером IL-44F80171 успешно добавлена через Playwright!

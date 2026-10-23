@@ -1,4 +1,0 @@
-[32;20m[2026-10-21 18:09:26] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_ea803aeb7b@example.com][0m
-[32;20m[2026-10-21 18:09:27] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
-[32;20m[2026-10-21 18:09:27] [INFO] [TEST] - Playwright будет создавать машину: Car(city='Petah Tikva', make='Garcia, Ellison and Johnson', model='Notice', year='2017', fuel='Hybrid', gear='Automatic', wd='FWD', doors='5', seats='3', car_class='Business', reg_number='IL-44F80171', price='149', about='Right term yes.', photo_path=None)[0m
-[32;20m[2026-10-21 18:09:29] [INFO] [TEST] - Машина с номером IL-44F80171 успешно добавлена через Playwright![0m

@@ -1,0 +1,10 @@
+[32;20m[2026-10-23 07:28:53] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_3316a8723e@example.com][0m
+[32;20m[2026-10-23 07:28:53] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-23 07:28:53] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-2087BF07][0m
+[32;20m[2026-10-23 07:28:53] [INFO] [API] - Машина IL-2087BF07 успешно создана в БД[0m
+[32;20m[2026-10-23 07:28:53] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars/search [Поиск: Hadera, даты: 2026-10-24 - 2026-10-30][0m
+[32;20m[2026-10-23 07:28:54] [INFO] [API] - Поиск успешен. Найдено машин: 22[0m
+[32;20m[2026-10-23 07:28:54] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars/IL-2087BF07/booking [Бронирование: IL-2087BF07, даты: 2026-10-24 - 2026-10-30][0m
+[32;20m[2026-10-23 07:28:54] [INFO] [API] - Машина IL-2087BF07 успешно забронирована[0m
+[32;20m[2026-10-23 07:28:54] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-2087BF07 [Удаление машины: IL-2087BF07][0m
+[32;20m[2026-10-23 07:28:54] [INFO] [API] - Машина IL-2087BF07 успешно удалена[0m

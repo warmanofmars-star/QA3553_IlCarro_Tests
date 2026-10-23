@@ -1,2 +1,0 @@
-INFO     API:car_api.py:81 GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
-ERROR    API:car_api.py:86 Ошибка получения списка машин: 401 - {"timestamp":"2026-10-21T18:08:40","status":401,"error":"Unauthorized","message":"JWT strings must contain exactly 2 period characters. Found: 0","path":"/v1/cars/my"}

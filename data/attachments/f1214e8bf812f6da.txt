@@ -1,0 +1,4 @@
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_46d281f2a8@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     TEST:test_playwright_add_car.py:17 Playwright будет создавать машину: Car(city='Nazareth', make='Holt, Rasmussen and Holland', model='Above', year='2020', fuel='Petrol', gear='Automatic', wd='RWD', doors='4', seats='5', car_class='Premium', reg_number='IL-B2239634', price='598', about='Art half land less.', photo_path=None)
+INFO     TEST:test_playwright_add_car.py:34 Машина с номером IL-B2239634 успешно добавлена через Playwright!

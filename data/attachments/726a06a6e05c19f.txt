@@ -1,0 +1,8 @@
+[32;20m[2026-10-23 07:28:25] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_bb27496d99@example.com][0m
+[32;20m[2026-10-23 07:28:25] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-23 07:28:25] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-CC81C8EA][0m
+[32;20m[2026-10-23 07:28:26] [INFO] [API] - Машина IL-CC81C8EA успешно создана в БД[0m
+[32;20m[2026-10-23 07:28:26] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-CC81C8EA [Удаление машины: IL-CC81C8EA][0m
+[32;20m[2026-10-23 07:28:26] [INFO] [API] - Машина IL-CC81C8EA успешно удалена[0m
+[32;20m[2026-10-23 07:28:26] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-CC81C8EA [Удаление машины: IL-CC81C8EA][0m
+[31;20m[2026-10-23 07:28:26] [ERROR] [API] - Ошибка удаления машины IL-CC81C8EA: 400 - {"timestamp":"2026-10-23T07:28:26","status":400,"error":"Bad Request","message":"Car with serial number IL-CC81C8EA not found","path":"/v1/cars/IL-CC81C8EA"}[0m
