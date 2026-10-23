@@ -80,6 +80,7 @@ def get_short_complex_password():
 
 
 @pytest.mark.regression
+@pytest.mark.security
 @allure.epic("UI Testing")
 @allure.feature("Registration Page")
 @allure.story("Negative Registration - Backend")

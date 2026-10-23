@@ -10,6 +10,8 @@ from schemas.car_schemas import GET_CARS_RESPONSE_SCHEMA, MESSAGE_RESPONSE_SCHEM
 pytestmark = pytest.mark.api
 
 
+@pytest.mark.smoke
+@pytest.mark.contract
 @allure.epic("API Testing")
 @allure.feature("Car Controller")
 @allure.story("Create Car successfully")
@@ -19,7 +21,6 @@ def test_api_add_car_success(auth_api):
         car_obj = CarGenerator.get_random_car()
 
     with allure.step("2. Отправка POST запроса на создание машины"):
-        # Магия ООП: датакласс сам знает, как превратить себя в payload!
         response = auth_api.add_car(car_obj.to_api_payload())
 
     with allure.step("3. Проверка статус-кода и строгого контракта ответа"):
@@ -33,6 +34,8 @@ def test_api_add_car_success(auth_api):
         assert "Car added" in response.json().get("message", ""), "Неверное сообщение от сервера"
 
 
+@pytest.mark.smoke
+@pytest.mark.contract
 @allure.epic("API Testing")
 @allure.feature("Car Controller")
 @allure.story("Full Lifecycle (Create -> Read -> Delete)")
@@ -51,13 +54,11 @@ def test_api_car_lifecycle(auth_api):
 
         response_json = response_get.json()
 
-        # МАГИЯ ЗДЕСЬ: Валидируем всю структуру ответа одной строчкой!
         try:
             validate(instance=response_json, schema=GET_CARS_RESPONSE_SCHEMA)
         except ValidationError as e:
             pytest.fail(f"Бэкенд вернул невалидную структуру JSON!\nОшибка: {e.message}")
 
-        # Старая бизнес-проверка (остается на месте)
         cars_list = response_get.json().get("cars", [])
         serial_numbers_in_db = [car.get("serialNumber") for car in cars_list]
         assert serial_number in serial_numbers_in_db, f"Машина с номером {serial_number} не найдена в базе!"
@@ -74,12 +75,13 @@ def test_api_car_lifecycle(auth_api):
         assert serial_number not in serial_numbers_after, "Машина не удалилась из базы!"
 
 
+@pytest.mark.regression
+@pytest.mark.security
 @allure.epic("API Testing")
 @allure.feature("Car Controller")
 @allure.story("Negative - Unauthorized Access")
 @allure.severity(allure.severity_level.CRITICAL)
 def test_api_add_car_unauthorized():
-    # ЗДЕСЬ ФИКСТУРУ НЕ ПЕРЕДАЕМ! Нам нужен "чистый" клиент без токена
     api = IlCarroAPI()
     car_obj = CarGenerator.get_random_car()
 
@@ -87,12 +89,11 @@ def test_api_add_car_unauthorized():
         response = api.add_car(car_obj.to_api_payload())
 
     with allure.step("Проверка статуса 403 Forbidden (или 401)"):
-        # Spring Boot часто отдает 403 при полном отсутствии хидера,
-        # поэтому для стабильности принимаем оба варианта блокировки
         assert response.status_code in [401, 403], \
             f"Ожидался статус блокировки (401/403), но получен {response.status_code}"
 
 
+@pytest.mark.smoke
 @allure.epic("API Testing")
 @allure.feature("Car Booking Flow")
 @allure.story("Integration: Create -> Search -> Book -> Delete")

@@ -38,10 +38,18 @@ services:
       - SELENOID_HUB_URL=http://selenoid:4444/wd/hub
       - VIDEO_DIR=/app/video
       - BROWSER=${BROWSER:-chrome}
+      - TEST_MARKER=${TEST_MARKER:-}
       - USER_EMAIL=${USER_EMAIL}
       - USER_PASSWORD=${USER_PASSWORD}
       - UI_BASE_URL=https://icarro-v1.netlify.app
       - API_BASE_URL=https://ilcarro-backend.herokuapp.com
     # 👇 Читаем BROWSER снаружи. Если его нет, по умолчанию берем chrome
+    # 👇 Если передан TEST_MARKER — фильтруем по нему, иначе запускаем все тесты
     command: >
-      sh -c "pytest tests/ -n 3 --browser_name=$${BROWSER:-chrome} --video=on --clean-alluredir --alluredir=allure-results"
+      sh -c '
+      if [ -n "$$TEST_MARKER" ]; then
+        pytest tests/ -n 3 -m "$$TEST_MARKER" --browser_name=$${BROWSER:-chrome} --video=on --clean-alluredir --alluredir=allure-results;
+      else
+        pytest tests/ -n 3 --browser_name=$${BROWSER:-chrome} --video=on --clean-alluredir --alluredir=allure-results;
+      fi
+      '

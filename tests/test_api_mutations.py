@@ -3,7 +3,7 @@ import allure
 from data.data_generator import CarGenerator
 from utils.api_validators import assert_secure_error
 
-pytestmark = [pytest.mark.api, pytest.mark.regression]
+pytestmark = [pytest.mark.api, pytest.mark.regression, pytest.mark.mutation]
 
 
 @allure.epic("API Testing")

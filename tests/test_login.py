@@ -43,7 +43,9 @@ def test_login_negative_frontend(driver, email, pass_condition, expected_error, 
         assert login_page.get_error_message_text() == expected_error, f"Ожидалась ошибка: {expected_error}"
         assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована"
 
+
 @pytest.mark.regression
+@pytest.mark.security
 @allure.epic("UI Testing")
 @allure.feature("Login Page")
 @allure.story("Negative Login - Backend Validation")

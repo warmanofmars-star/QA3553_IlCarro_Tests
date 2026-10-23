@@ -2,6 +2,12 @@ name: IlCarro UI Tests
 
 on:
   workflow_dispatch:
+    inputs:
+      test_marker:
+        description: 'Теги для запуска (smoke, regression, api, ui, security, hybrid, playwright). Оставь пустым для всех тестов.'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: write
@@ -37,6 +43,7 @@ jobs:
       - name: Run Tests in Docker Compose
         env:
           BROWSER: ${{ matrix.browser }}
+          TEST_MARKER: ${{ inputs.test_marker }}
         run: docker compose up --build --exit-code-from qa-framework
         continue-on-error: true
 
@@ -85,7 +92,6 @@ jobs:
                   with open(file_path, 'r', encoding='utf-8') as f:
                       data = json.load(f)
                   
-                  # 🔥 ГЛАВНЫЙ СЕКРЕТ ЗДЕСЬ: testCaseId отвечает за склейку тестов!
                   if 'testCaseId' in data:
                       data['testCaseId'] = f"{data['testCaseId']}-{browser}"
                   
@@ -112,15 +118,14 @@ jobs:
           
           python3 process_allure.py
           
-          # Создаем файл окружения прямо в одной из папок (чтобы он попал в итоговый отчет)
           echo "Browsers=Chrome, Firefox" > allure-results-chrome/environment.properties
           echo "Environment=Docker Compose (Selenoid)" >> allure-results-chrome/environment.properties
           echo "CI=GitHub Actions Matrix" >> allure-results-chrome/environment.properties
+          echo "Test_Filter=${{ inputs.test_marker || 'All Tests (Full Suite)' }}" >> allure-results-chrome/environment.properties
 
       - name: Устанавливаем Allure CLI и генерируем ОБЩИЙ отчет
         run: |
           npm install -g allure-commandline --save-dev
-          # Передаем обе папки напрямую в генератор
           allure generate allure-results-chrome allure-results-firefox -o allure-report --clean
 
       - name: Публикуем финальный отчет на GitHub Pages
@@ -138,5 +143,6 @@ jobs:
             message: |
               🤖 Кроссбраузерные автотесты IlCarro завершены!
               🌐 Проверено в: Chrome и Firefox
+              🏷 Фильтр тегов: ${{ inputs.test_marker || 'Все тесты (Full Suite)' }}
               📊 Посмотреть общий Allure-отчет можно по ссылке:
               👉 https://warmanofmars-star.github.io/QA3553_IlCarro_Tests/

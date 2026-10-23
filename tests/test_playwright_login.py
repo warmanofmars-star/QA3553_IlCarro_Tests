@@ -3,7 +3,7 @@ import pytest
 from playwright.sync_api import Page
 from pages.pw_login_page import PwLoginPage
 
-pytestmark = pytest.mark.ui
+pytestmark = [pytest.mark.ui, pytest.mark.playwright]
 
 @pytest.mark.smoke
 @allure.epic("Playwright Testing")

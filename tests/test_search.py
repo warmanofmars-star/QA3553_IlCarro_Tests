@@ -73,6 +73,7 @@ def test_search_empty_city_validation(driver):
 
 
 @pytest.mark.regression
+@pytest.mark.security
 @allure.epic("UI Testing")
 @allure.feature("Search Page")
 @allure.story("Negative Search - Dates Manual Input Blocked")
