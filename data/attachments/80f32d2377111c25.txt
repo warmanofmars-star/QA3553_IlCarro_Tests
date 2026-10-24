@@ -1,0 +1,2 @@
+[32;20m[2026-10-24 19:18:23] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-33A0D7E8][0m
+[31;20m[2026-10-24 19:18:23] [ERROR] [API] - Ошибка создания машины IL-33A0D7E8: 403 - [0m

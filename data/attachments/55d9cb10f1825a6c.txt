@@ -1,2 +1,0 @@
-[32;20m[2026-10-23 07:28:23] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-04CD2AA7][0m
-[31;20m[2026-10-23 07:28:23] [ERROR] [API] - Ошибка создания машины IL-04CD2AA7: 403 - [0m

@@ -1,0 +1,10 @@
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_6003c6213d@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-8DE6C69D]
+INFO     API:car_api.py:72 Машина IL-8DE6C69D успешно создана в БД
+INFO     API:car_api.py:107 POST https://ilcarro-backend.herokuapp.com/v1/cars/search [Поиск: Herzliya, даты: 2026-10-25 - 2026-10-31]
+INFO     API:car_api.py:118 Поиск успешен. Найдено машин: 32
+INFO     API:car_api.py:127 POST https://ilcarro-backend.herokuapp.com/v1/cars/IL-8DE6C69D/booking [Бронирование: IL-8DE6C69D, даты: 2026-10-25 - 2026-10-31]
+INFO     API:car_api.py:136 Машина IL-8DE6C69D успешно забронирована
+INFO     API:car_api.py:93 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-8DE6C69D [Удаление машины: IL-8DE6C69D]
+INFO     API:car_api.py:98 Машина IL-8DE6C69D успешно удалена

@@ -1,0 +1,5 @@
+[32;20m[2026-10-24 19:18:22] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_02277ec41d@example.com][0m
+[32;20m[2026-10-24 19:18:22] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-24 19:18:22] [INFO] [API] - GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов][0m
+[32;20m[2026-10-24 19:18:23] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-6967D375][0m
+[31;20m[2026-10-24 19:18:23] [ERROR] [API] - Ошибка создания машины IL-6967D375: 400 - {"timestamp":"2026-10-24T19:18:23","status":400,"error":"Bad Request","message":{"model":"must not be blank"},"path":"/v1/cars"}[0m

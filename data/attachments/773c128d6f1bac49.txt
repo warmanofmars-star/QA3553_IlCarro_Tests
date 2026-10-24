@@ -1,0 +1,4 @@
+[32;20m[2026-10-24 19:18:52] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_21f6ce219d@example.com][0m
+[32;20m[2026-10-24 19:18:52] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-24 19:18:52] [INFO] [TEST] - Playwright будет создавать машину: Car(city='Holon', make='Davis-Wallace', model='Few', year='2015', fuel='Petrol', gear='Automatic', wd='FWD', doors='3', seats='7', car_class='Premium', reg_number='IL-37007E86', price='906', about='Offer film bank save wait.', photo_path=None)[0m
+[32;20m[2026-10-24 19:18:54] [INFO] [TEST] - Машина с номером IL-37007E86 успешно добавлена через Playwright![0m

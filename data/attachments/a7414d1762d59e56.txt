@@ -1,0 +1,6 @@
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_0b3a8ed9b8@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-B4EE41B3]
+INFO     API:car_api.py:72 Машина IL-B4EE41B3 успешно создана в БД
+INFO     API:car_api.py:93 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-B4EE41B3 [Удаление машины: IL-B4EE41B3]
+INFO     API:car_api.py:98 Машина IL-B4EE41B3 успешно удалена

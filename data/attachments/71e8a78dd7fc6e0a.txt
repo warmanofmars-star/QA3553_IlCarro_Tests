@@ -1,0 +1,10 @@
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_9972542301@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-A9853D67]
+INFO     API:car_api.py:72 Машина IL-A9853D67 успешно создана в БД
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_6cb315f7b5@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     API:car_api.py:93 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-A9853D67 [Удаление машины: IL-A9853D67]
+ERROR    API:car_api.py:100 Ошибка удаления машины IL-A9853D67: 400 - {"timestamp":"2026-10-24T19:18:26","status":400,"error":"Bad Request","message":"Car with serial number IL-A9853D67 not found","path":"/v1/cars/IL-A9853D67"}
+INFO     API:car_api.py:93 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-A9853D67 [Удаление машины: IL-A9853D67]
+INFO     API:car_api.py:98 Машина IL-A9853D67 успешно удалена

@@ -1,0 +1,4 @@
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_b3ae793b4f@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-D6CC58C3]
+INFO     API:car_api.py:72 Машина IL-D6CC58C3 успешно создана в БД

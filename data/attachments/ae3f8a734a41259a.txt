@@ -1,0 +1,2 @@
+[32;20m[2026-10-24 19:18:36] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-AC5F77CC][0m
+[31;20m[2026-10-24 19:18:36] [ERROR] [API] - Ошибка создания машины IL-AC5F77CC: 403 - [0m

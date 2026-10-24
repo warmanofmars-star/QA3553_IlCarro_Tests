@@ -1,0 +1,38 @@
+
+[INFO] Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: chrome...
+[32;20m[2026-10-24 19:18:29] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_f8a3046f34@example.com][0m
+[32;20m[2026-10-24 19:18:30] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-24 19:18:30] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-5D24CF72][0m
+[32;20m[2026-10-24 19:18:30] [INFO] [API] - Машина IL-5D24CF72 успешно создана в БД[0m
+[32;20m[2026-10-24 19:18:30] [INFO] [UI] - Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10[0m
+[32;20m[2026-10-24 19:18:30] [INFO] [UI] - Поиск элемента -> By: id, Value: 'city'[0m
+[32;20m[2026-10-24 19:18:31] [INFO] [UI] - Поиск элемента -> By: id, Value: 'city'[0m
+[32;20m[2026-10-24 19:18:31] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-24 19:18:31] [INFO] [UI] - Ввод данных в поле формы...[0m
+[32;20m[2026-10-24 19:18:31] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '[data-testid='city-option'][data-value='Eilat']'[0m
+[32;20m[2026-10-24 19:18:31] [INFO] [UI] - Клик по элементу <div> с текстом: 'Eilat'[0m
+[32;20m[2026-10-24 19:18:31] [INFO] [UI] - Поиск элемента -> By: id, Value: 'dates'[0m
+[32;20m[2026-10-24 19:18:31] [INFO] [UI] - Клик по элементу <input> с текстом: ''[0m
+[32;20m[2026-10-24 19:18:31] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '.rdrNextButton'[0m
+[32;20m[2026-10-24 19:18:31] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '.rdrNextButton'[0m
+[32;20m[2026-10-24 19:18:31] [INFO] [UI] - Клик по элементу <button> с текстом: ''[0m
+[32;20m[2026-10-24 19:18:31] [INFO] [UI] - Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='3']]'[0m
+[32;20m[2026-10-24 19:18:31] [INFO] [UI] - Клик по элементу <button> с текстом: '3'[0m
+[32;20m[2026-10-24 19:18:31] [INFO] [UI] - Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='5']]'[0m
+[32;20m[2026-10-24 19:18:31] [INFO] [UI] - Клик по элементу <button> с текстом: '5'[0m
+[32;20m[2026-10-24 19:18:32] [INFO] [UI] - Поиск элемента -> By: id, Value: 'city'[0m
+[32;20m[2026-10-24 19:18:32] [INFO] [UI] - Клик по элементу <input> с текстом: ''[0m
+[32;20m[2026-10-24 19:18:32] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'button[type='submit']'[0m
+[32;20m[2026-10-24 19:18:32] [INFO] [UI] - Клик по элементу <button> с текстом: 'Yalla!'[0m
+[32;20m[2026-10-24 19:18:32] [INFO] [IlCarro] - Ждем обновления URL с параметрами поиска...[0m
+[32;20m[2026-10-24 19:18:32] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'a.car-container'[0m
+[32;20m[2026-10-24 19:18:32] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'a.car-container'[0m
+[32;20m[2026-10-24 19:18:33] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'a.car-container'[0m
+[32;20m[2026-10-24 19:18:33] [INFO] [UI] - Поиск элемента -> By: css selector, Value: 'a.car-container'[0m
+[32;20m[2026-10-24 19:18:33] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '.details-card > div > div:first-child'[0m
+[32;20m[2026-10-24 19:18:33] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '.car-price-value'[0m
+[32;20m[2026-10-24 19:18:33] [INFO] [UI] - Поиск элемента -> By: css selector, Value: '.car-img-container'[0m
+[32;20m[2026-10-24 19:18:33] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-5D24CF72 [Удаление машины: IL-5D24CF72][0m
+[32;20m[2026-10-24 19:18:33] [INFO] [API] - Машина IL-5D24CF72 успешно удалена[0m
+
+[INFO] Видео (chrome) успешно прикреплено к отчету!

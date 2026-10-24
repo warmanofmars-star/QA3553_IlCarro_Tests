@@ -1,0 +1,8 @@
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_1b54253144@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-F2509DEE]
+INFO     API:car_api.py:72 Машина IL-F2509DEE успешно создана в БД
+INFO     API:car_api.py:93 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-F2509DEE [Удаление машины: IL-F2509DEE]
+INFO     API:car_api.py:98 Машина IL-F2509DEE успешно удалена
+INFO     API:car_api.py:93 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-F2509DEE [Удаление машины: IL-F2509DEE]
+ERROR    API:car_api.py:100 Ошибка удаления машины IL-F2509DEE: 400 - {"timestamp":"2026-10-24T19:18:38","status":400,"error":"Bad Request","message":"Car with serial number IL-F2509DEE not found","path":"/v1/cars/IL-F2509DEE"}

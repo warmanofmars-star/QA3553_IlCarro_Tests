@@ -1,0 +1,10 @@
+[32;20m[2026-10-24 19:18:25] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_9972542301@example.com][0m
+[32;20m[2026-10-24 19:18:26] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-24 19:18:26] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-A9853D67][0m
+[32;20m[2026-10-24 19:18:26] [INFO] [API] - Машина IL-A9853D67 успешно создана в БД[0m
+[32;20m[2026-10-24 19:18:26] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_6cb315f7b5@example.com][0m
+[32;20m[2026-10-24 19:18:26] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-10-24 19:18:26] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-A9853D67 [Удаление машины: IL-A9853D67][0m
+[31;20m[2026-10-24 19:18:26] [ERROR] [API] - Ошибка удаления машины IL-A9853D67: 400 - {"timestamp":"2026-10-24T19:18:26","status":400,"error":"Bad Request","message":"Car with serial number IL-A9853D67 not found","path":"/v1/cars/IL-A9853D67"}[0m
+[32;20m[2026-10-24 19:18:26] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-A9853D67 [Удаление машины: IL-A9853D67][0m
+[32;20m[2026-10-24 19:18:26] [INFO] [API] - Машина IL-A9853D67 успешно удалена[0m
