@@ -1,0 +1,4 @@
+[32;20m[2026-11-05 19:40:06] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_271f9c3ae2@example.com][0m
+[32;20m[2026-11-05 19:40:07] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-11-05 19:40:07] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-59E7F2A0][0m
+[31;20m[2026-11-05 19:40:07] [ERROR] [API] - Ошибка создания машины IL-59E7F2A0: 400 - {"timestamp":"2026-11-05T19:40:07","status":400,"error":"Bad Request","message":{"carClass":"must not be blank"},"path":"/v1/cars"}[0m

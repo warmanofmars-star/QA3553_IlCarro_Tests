@@ -1,0 +1,10 @@
+INFO     API:car_api.py:42 POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_c0945b295a@example.com]
+INFO     API:car_api.py:56 Регистрация успешна (Token получен и вшит в сессию)
+INFO     API:car_api.py:66 POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-37480EE7]
+INFO     API:car_api.py:72 Машина IL-37480EE7 успешно создана в БД
+INFO     API:car_api.py:107 POST https://ilcarro-backend.herokuapp.com/v1/cars/search [Поиск: Ramat Gan, даты: 2026-11-06 - 2026-11-12]
+INFO     API:car_api.py:118 Поиск успешен. Найдено машин: 33
+INFO     API:car_api.py:127 POST https://ilcarro-backend.herokuapp.com/v1/cars/IL-37480EE7/booking [Бронирование: IL-37480EE7, даты: 2026-11-06 - 2026-11-12]
+INFO     API:car_api.py:136 Машина IL-37480EE7 успешно забронирована
+INFO     API:car_api.py:93 DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-37480EE7 [Удаление машины: IL-37480EE7]
+INFO     API:car_api.py:98 Машина IL-37480EE7 успешно удалена

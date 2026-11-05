@@ -1,0 +1,10 @@
+[32;20m[2026-11-05 19:40:10] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_e2068c96ef@example.com][0m
+[32;20m[2026-11-05 19:40:10] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-11-05 19:40:10] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-ADEAA219][0m
+[32;20m[2026-11-05 19:40:10] [INFO] [API] - Машина IL-ADEAA219 успешно создана в БД[0m
+[32;20m[2026-11-05 19:40:10] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_71e3eb6bd3@example.com][0m
+[32;20m[2026-11-05 19:40:11] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-11-05 19:40:11] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-ADEAA219 [Удаление машины: IL-ADEAA219][0m
+[31;20m[2026-11-05 19:40:11] [ERROR] [API] - Ошибка удаления машины IL-ADEAA219: 400 - {"timestamp":"2026-11-05T19:40:11","status":400,"error":"Bad Request","message":"Car with serial number IL-ADEAA219 not found","path":"/v1/cars/IL-ADEAA219"}[0m
+[32;20m[2026-11-05 19:40:11] [INFO] [API] - DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-ADEAA219 [Удаление машины: IL-ADEAA219][0m
+[32;20m[2026-11-05 19:40:11] [INFO] [API] - Машина IL-ADEAA219 успешно удалена[0m

@@ -1,0 +1,4 @@
+[32;20m[2026-11-05 19:40:42] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_5ee978f212@example.com][0m
+[32;20m[2026-11-05 19:40:42] [INFO] [API] - Регистрация успешна (Token получен и вшит в сессию)[0m
+[32;20m[2026-11-05 19:40:42] [INFO] [TEST] - Playwright будет создавать машину: Car(city='Eilat', make='Brown, Davis and Wagner', model='Model', year='2016', fuel='Diesel', gear='Automatic', wd='AWD', doors='4', seats='2', car_class='Business', reg_number='IL-47E76EF6', price='1000', about='Only place any on green.', photo_path=None)[0m
+[32;20m[2026-11-05 19:40:45] [INFO] [TEST] - Машина с номером IL-47E76EF6 успешно добавлена через Playwright![0m
