@@ -1,11 +1,12 @@
 import allure
 import pytest
-import os
 from playwright.sync_api import Page, Route, expect
+
+from config import settings
 
 pytestmark = [pytest.mark.ui, pytest.mark.playwright, pytest.mark.regression]
 
-UI_BASE_URL = os.getenv("UI_BASE_URL", "https://icarro-v1.netlify.app")
+UI_BASE_URL = settings.ui_url
 
 
 @allure.epic("Playwright Testing")

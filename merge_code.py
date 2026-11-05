@@ -49,7 +49,7 @@ VALID_EXACT_NAMES = {
     ".dockerignore",
 }
 
-# Страховка: строки вида USER_PASSWORD=..., TG_BOT_TOKEN=..., API_SECRET=...
+# Страховка: строки вида DB_PASSWORD=..., TG_BOT_TOKEN=..., API_SECRET=...
 # (ключ БЕЗ пробелов вокруг "=", как в .env-файлах) — значение маскируем.
 SECRET_LINE_PATTERN = re.compile(
     r"^([A-Z0-9_]*(PASSWORD|TOKEN|SECRET)[A-Z0-9_]*=).+$",

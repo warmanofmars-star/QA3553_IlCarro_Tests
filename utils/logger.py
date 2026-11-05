@@ -4,9 +4,8 @@ import sys
 import glob
 from datetime import datetime
 from pathlib import Path
-from dotenv import load_dotenv
 
-load_dotenv()
+from config import settings
 
 class ColoredFormatter(logging.Formatter):
     GREEN = "\x1b[32;20m"
@@ -66,7 +65,7 @@ def get_logger(name="IlCarro"):
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
     # 1. Проверяем воркеров (есть ли переменная окружения)
-    is_worker = "PYTEST_XDIST_WORKER" in os.environ
+    is_worker = settings.is_xdist_worker
 
     # 2. Проверяем Мастер-процесс (читаем команду запуска из терминала на наличие флага -n)
     is_xdist_master = "-n" in sys.argv or any(arg.startswith("-n") for arg in sys.argv)
@@ -77,7 +76,7 @@ def get_logger(name="IlCarro"):
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(ColoredFormatter())
 
-    if os.getenv('ENABLE_CONSOLE_LOGS', 'true').lower() == 'true':
+    if settings.enable_console_logs:
         logger.addHandler(console_handler)
 
     # ЗАПИСЬ В ФАЙЛ ТОЛЬКО ЕСЛИ ЭТО НЕ ПАРАЛЛЕЛЬНЫЙ ЗАПУСК

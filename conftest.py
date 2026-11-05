@@ -2,19 +2,18 @@ import os
 import time
 import pytest
 import allure
+import requests
 from selenium import webdriver
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from dotenv import load_dotenv
 from selenium.webdriver.support.events import EventFiringWebDriver
+from config import settings
 from utils.listener import IlCarroListener
 from api.car_api import IlCarroAPI
 from pages.login_page import LoginPage
 from data.data_generator import UserGenerator
 from utils.logger import get_logger
-
-load_dotenv()
 
 # 👇 Учим pytest понимать флаг --browser_name
 def pytest_addoption(parser):
@@ -27,14 +26,38 @@ def pytest_addoption(parser):
     )
 
 
+@pytest.fixture(scope="session")
+def selenoid_hub():
+    """Проверяет доступность хаба Selenoid один раз на воркер.
+
+    Без проверки каждый Selenium-тест тратит время на повторные попытки подключения и падает
+    одной и той же невнятной ошибкой. Недоступный Selenoid — ошибка окружения, поэтому тест не
+    пропускается (skip), а получает ERROR с понятным сообщением. Результат session-фикстуры
+    кэшируется, так что остальные тесты воркера падают сразу, без новых запросов к хабу.
+    """
+    hub_url = settings.selenoid_hub_url
+    error = None
+    try:
+        # Достаточно любого HTTP-ответа: нам важно, что по адресу кто-то слушает, а не что вернул /status
+        requests.get(f"{hub_url}/status", timeout=3)
+    except requests.RequestException as exc:
+        error = type(exc).__name__
+    if error:
+        # fail() вызывается вне except: иначе pytest печатает длинную цепочку исключений requests/urllib3
+        pytest.fail(
+            f"Selenoid недоступен: {hub_url} ({error}). Запусти Selenoid или USE_SELENOID=false.",
+            pytrace=False,
+        )
+
+
 @pytest.fixture
 def driver(request):  # <--- Добавили request
     # Читаем флаг
     browser_name = request.config.getoption("--browser_name")
 
-    is_headless = os.getenv('HEADLESS_MODE', 'false').lower() == 'true'
-    is_ci = os.environ.get('CI') == 'true'
-    use_selenoid = os.getenv('USE_SELENOID', 'false').lower() == 'true'
+    is_headless = settings.headless
+    is_ci = settings.is_ci
+    use_selenoid = settings.use_selenoid
 
     session_id = None
     driver_instance = None
@@ -60,6 +83,8 @@ def driver(request):  # <--- Добавили request
 
     else:
         if use_selenoid:
+            # Фикстура подключается только здесь: API- и Playwright-тестам хаб не нужен
+            request.getfixturevalue("selenoid_hub")
             print(f"\n[INFO] Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: {browser_name}...")
 
             # Подготавливаем опции в зависимости от браузера
@@ -81,7 +106,7 @@ def driver(request):  # <--- Добавили request
                 "enableVideo": True,
             })
 
-            hub_url = os.getenv("SELENOID_HUB_URL", "http://localhost:4444/wd/hub")
+            hub_url = settings.selenoid_hub_url
 
             # Ожидание готовности Selenoid
             for attempt in range(5):
@@ -139,7 +164,7 @@ def driver(request):  # <--- Добавили request
 
     # === ИНТЕГРАЦИЯ ВИДЕО В ALLURE ===
     if use_selenoid and session_id:
-        video_dir = os.getenv("VIDEO_DIR", r"C:\selenoid\video")
+        video_dir = settings.video_dir
         video_path = os.path.join(video_dir, f"{session_id}.mp4")
 
         for attempt in range(10):
