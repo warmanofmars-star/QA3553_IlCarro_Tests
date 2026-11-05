@@ -58,12 +58,14 @@ class UserGenerator:
 
     @staticmethod
     def save_created_user(user: User):
-        """Сохраняет данные успешно зарегистрированного пользователя в файл."""
+        """Сохраняет данные успешно зарегистрированного пользователя в файл.
+
+        Пароль намеренно не пишется: файл лежит открытым текстом и мог бы попасть в артефакты или архивы.
+        """
         user_data = {
             "name": user.name,
             "last_name": user.last_name,
             "email": user.email,
-            "password": user.password
         }
 
         project_root = Path(__file__).resolve().parent.parent
