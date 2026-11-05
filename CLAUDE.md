@@ -20,13 +20,17 @@ UI: https://icarro-v1.netlify.app, API: https://ilcarro-backend.herokuapp.com.
 
 ## Команды
 
-Локально без Selenoid (переменные окружения перекрывают `.env`, сам `.env` не трогай):
+Локально без Selenoid (переменные окружения перекрывают `.env`, сам `.env` не трогай; полный список
+настроек — `.env.example`, читает их только `config.py`):
 
 ```bash
 USE_SELENOID=false ENABLE_CONSOLE_LOGS=false pytest tests/ -n 2 --browser_name=chrome -rfEsxX
 pytest -m api                                # только API-тесты
 pytest --collect-only -q                     # сколько тестов собирается
 ```
+
+Если `USE_SELENOID=true`, а Selenoid не запущен, Selenium-тесты сразу падают с ERROR и подсказкой
+(проверка хаба — один раз на воркер); API- и Playwright-тесты идут как обычно.
 
 Docker (Selenoid), подробности — в `commands.md`:
 
@@ -41,6 +45,8 @@ TEST_MARKER=smoke docker compose up --build --exit-code-from qa-framework
 
 ## Соглашения проекта
 
+- **Переменные окружения читаются только в `config.py`** (там же `load_dotenv()`); остальной код
+  импортирует `from config import settings`. Новая настройка — поле в `Settings` и строка в `.env.example`.
 - **Комментарии, docstring'и, сообщения в assert'ах и логах — на русском.** Комментарий объясняет,
   ПОЧЕМУ код такой, а не пересказывает его.
 - **Коммиты — Conventional Commits** (`feat`, `fix`, `refactor`, `test`, `ci`, `build`, `chore`, `docs`),
