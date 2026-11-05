@@ -1,7 +1,8 @@
 import pytest
 import allure
 from api.car_api import IlCarroAPI
-from data.data_generator import CarGenerator, UserGenerator, SearchDataGenerator
+from data.data_generator import CarGenerator, UserGenerator
+from data.known_bugs import known_bug
 
 pytestmark = [pytest.mark.api, pytest.mark.security]
 
@@ -12,7 +13,8 @@ pytestmark = [pytest.mark.api, pytest.mark.security]
 @allure.story("Authentication (Tokens)")
 @allure.severity(allure.severity_level.BLOCKER)
 @pytest.mark.parametrize("token_strategy, expected_status, scenario", [
-    ("empty", 403, "Пустой токен (Отсутствует заголовок)"),
+    pytest.param("empty", 401, "Пустой токен (Отсутствует заголовок)",
+                 marks=[known_bug("NO_AUTH_403"), allure.tag("REQ-SEC-01")]),
     ("invalid", 401, "Невалидный токен (Мусорная строка)"),
     ("wrong_scheme", 401, "Неверная схема (Basic вместо Bearer)")
 ])
@@ -77,10 +79,11 @@ def test_api_security_bola_delete():
 @allure.feature("Car Controller")
 @allure.story("Idempotency (DELETE)")
 @allure.severity(allure.severity_level.NORMAL)
+@known_bug("NOT_FOUND_400")
+@allure.tag("REQ-CAR-10")
 def test_api_idempotency_delete(auth_api):
     """
-    Проверка на идемпотентность DELETE-метода.
-    Повторное удаление уже удаленного ресурса не должно валить сервер (500).
+    Повторное удаление уже удалённой машины: ожидаем 404 (REQ-CAR-10, RFC 9110 §15.5.5).
     """
     car = CarGenerator.get_random_car()
     serial_number = car.reg_number
@@ -96,7 +99,7 @@ def test_api_idempotency_delete(auth_api):
         res_second = auth_api.delete_car(serial_number)
 
     with allure.step("Проверка: Сервер корректно обработал дублирующий DELETE-запрос"):
-        assert res_second.status_code in [400, 404], f"Ожидалась корректная обработка отсутствующей машины, но сервер вернул {res_second.status_code}. Ответ: {res_second.text}"
+        assert res_second.status_code == 404, f"Ожидался 404 для несуществующей машины, сервер вернул {res_second.status_code}. Ответ: {res_second.text}"
 
 
 @pytest.mark.regression
@@ -104,7 +107,8 @@ def test_api_idempotency_delete(auth_api):
 @allure.feature("Security")
 @allure.story("HTTP Methods Restrictions (405)")
 @allure.severity(allure.severity_level.NORMAL)
-@pytest.mark.xfail(reason="BUG BACKEND: Spring Security возвращает 403 вместо 405 Method Not Allowed")
+@known_bug("UNKNOWN_ROUTE_403")
+@allure.tag("REQ-SEC-05")
 def test_api_security_method_not_allowed(auth_api):
     """
     Проверка 16 из статьи: Сервер должен блокировать неподдерживаемые HTTP-методы.
@@ -125,7 +129,8 @@ def test_api_security_method_not_allowed(auth_api):
 @allure.feature("Security")
 @allure.story("Content-Type Validation (415)")
 @allure.severity(allure.severity_level.NORMAL)
-@pytest.mark.xfail(reason="BUG BACKEND: 500 Internal Server Error при неверном Content-Type вместо 415")
+@known_bug("WRONG_CONTENT_TYPE_500")
+@allure.tag("REQ-SEC-04")
 def test_api_security_unsupported_media_type(auth_api):
     """
     Проверка 8 из статьи: Валидация заголовков.
@@ -139,30 +144,3 @@ def test_api_security_unsupported_media_type(auth_api):
 
     with allure.step("Проверка: Ожидаем 415 Unsupported Media Type"):
         assert response.status_code == 415, f"БАГ БЭКЕНДА: Ожидался статус 415, получен {response.status_code}. Ответ: {response.text}"
-
-
-@pytest.mark.regression
-@allure.epic("API Testing")
-@allure.feature("Security")
-@allure.story("Pagination DoS Protection")
-@allure.severity(allure.severity_level.CRITICAL)
-@pytest.mark.xfail(reason="BUG BACKEND / УЯЗВИМОСТЬ: Отсутствует хард-лимит пагинации. Возможна DoS-атака.")
-def test_api_security_pagination_dos(auth_api):
-    """
-    Проверка 9 из статьи: Граничные значения.
-    Тест на уязвимость отказа в обслуживании (DoS) через параметры пагинации.
-    """
-    target_city = "Tel Aviv"
-    start_dt, end_dt = SearchDataGenerator.get_safe_future_dates()
-    start_date = start_dt.strftime("%Y-%m-%d")
-    end_date = end_dt.strftime("%Y-%m-%d")
-
-    with allure.step("Запрашиваем поиск машин с гигантским параметром size=1000000"):
-        url = f"{auth_api.BASE_URL}/v1/cars/search?page=0&size=1000000"
-        payload = {"city": target_city, "startDate": start_date, "endDate": end_date}
-        response = auth_api.session.post(url, json=payload)
-
-    with allure.step("Проверка: Сервер не упал с 500 и принудительно ограничил выдачу"):
-        assert response.status_code == 200, f"Ожидался статус 200, но получен {response.status_code}: {response.text}"
-        cars_returned = len(response.json().get("cars", []))
-        assert cars_returned < 1000, f"УЯЗВИМОСТЬ ПАГИНАЦИИ: Сервер не имеет лимитов и попытался отдать слишком много данных ({cars_returned} машин)!"

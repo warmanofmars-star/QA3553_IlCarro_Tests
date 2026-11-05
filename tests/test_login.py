@@ -50,6 +50,7 @@ def test_login_negative_frontend(driver, email, pass_condition, expected_error, 
 @allure.feature("Login Page")
 @allure.story("Negative Login - Backend Validation")
 @allure.severity(allure.severity_level.CRITICAL)
+@allure.tag("REQ-UI-LOGIN-03")
 @pytest.mark.parametrize("email_condition, pass_condition, expected_details, scenario", [
     ("fake_user", "valid_pass", "Login or Password incorrect", "Несуществующий пользователь"),
     ("valid_email", "wrong_pass", "Login or Password incorrect", "Неверный пароль")
@@ -69,8 +70,5 @@ def test_login_negative_backend(driver, temp_user, email_condition, pass_conditi
         assert login_page.get_global_message_text() == "Login failed", "Неверный заголовок ошибки бэкенда"
         actual_details = login_page.get_global_message_details_text()
 
-        if "[object Object]" in actual_details:
-            pytest.xfail("ПЛАВАЮЩИЙ БАГ ФРОНТЕНДА: React не успел распарсить JSON")
-        else:
-            assert expected_details in actual_details, \
-                f"Ожидали текст '{expected_details}', а получили '{actual_details}'"
+        assert expected_details in actual_details, \
+            f"Ожидали текст '{expected_details}', а получили '{actual_details}'"

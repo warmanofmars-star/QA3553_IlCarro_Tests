@@ -4,6 +4,7 @@ import random
 import string
 from pages.registration_page import RegistrationPage
 from data.data_generator import UserGenerator
+from data.known_bugs import known_bug
 
 pytestmark = pytest.mark.ui
 
@@ -85,10 +86,12 @@ def get_short_complex_password():
 @allure.feature("Registration Page")
 @allure.story("Negative Registration - Backend")
 @allure.severity(allure.severity_level.CRITICAL)
+@allure.tag("REQ-UI-REG-03")
 @pytest.mark.parametrize("password_strategy, scenario", [
     ("same_password", "Занятый email + Тот же пароль"),
     ("new_valid_password", "Занятый email + Другой пароль (валидный формат)"),
-    ("short_complex_password", "Занятый email + Короткий сложный пароль")
+    pytest.param("short_complex_password", "Занятый email + Короткий сложный пароль",
+                 marks=[known_bug("PASSWORD_RULES_MISMATCH"), allure.tag("DISC-01")])
 ])
 def test_registration_existing_user(driver, temp_user, password_strategy, scenario, sys_logger):
     with allure.step(f"Сценарий: {scenario}"):
@@ -112,10 +115,6 @@ def test_registration_existing_user(driver, temp_user, password_strategy, scenar
         registration_page.fill_registration_form(user)
         registration_page.set_policy_checkbox(True)
 
-        if registration_page.submit_button_disabled():
-            sys_logger.info("Фронтенд заблокировал отправку формы. До бэкенда дело не дошло.")
-            pytest.skip("Тест прерван: Фронтенд не пропустил пароль к бэкенду")
-
         registration_page.submit_registration()
 
         assert registration_page.confirmation_text() == "Registration failed", "Бэкенд не отбил регистрацию!"
@@ -123,11 +122,8 @@ def test_registration_existing_user(driver, temp_user, password_strategy, scenar
 
         sys_logger.info(f"Фактический текст в модалке: '{actual_error_details}'")
 
-        if "[object Object]" in actual_error_details:
-            pytest.xfail(f"ПЛАВАЮЩИЙ БАГ ФРОНТЕНДА пойман на сценарии: '{scenario}'")
-        else:
-            assert "User already exists" in actual_error_details, \
-                f"Ожидали текст 'User already exists', а получили '{actual_error_details}'"
+        assert "User already exists" in actual_error_details, \
+            f"Ожидали текст 'User already exists', а получили '{actual_error_details}'"
 
 
 @pytest.mark.regression

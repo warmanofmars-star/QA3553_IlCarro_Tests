@@ -1,6 +1,7 @@
 import allure
 import pytest
 from api.car_api import IlCarroAPI
+from data.known_bugs import known_bug
 
 pytestmark = [pytest.mark.api, pytest.mark.regression, pytest.mark.contract]
 
@@ -20,7 +21,8 @@ FRONTEND_CITIES = [
 @allure.epic("Data Integrity")
 @allure.feature("Cross-System Dictionaries")
 @allure.title("Строгое соответствие словаря городов (Frontend vs Backend)")
-@pytest.mark.xfail(reason="Глобальный рассинхрон: Фронтенд использует захардкоженный список городов, отличный от БД")
+@known_bug("CITIES_MISMATCH")
+@allure.tag("DISC-02")
 def test_frontend_backend_cities_mapping():
     api = IlCarroAPI()
 
