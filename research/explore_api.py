@@ -1,5 +1,5 @@
 """
-Исследование фактического поведения API IlCarro (вопросы Q-API-01 … Q-API-11).
+Исследование фактического поведения API IlCarro (вопросы Q-API-01 … Q-API-12).
 
 Скрипт фиксирует факты: что отправили и что получили. Оценок в нём нет.
 Запуск: python research/explore_api.py --run 1
@@ -317,6 +317,29 @@ def q_api_11_text_plain(city):
         REG.car_owner_token.pop(serial, None)
 
 
+def q_api_12_booked_periods_scan():
+    LOG.header("Q-API-12", "Машины с непустым bookedPeriods по всем городам /v1/cars/cities")
+    # Поиск не зависит от дат (Q-API-02), поэтому берём одни и те же будущие даты для всех городов.
+    # Серийные номера в лог не пишем: чужие машины, к тому же маскирование их всё равно заменит.
+    cities = api_cities()
+    LOG.fact(f"городов в /v1/cars/cities: {len(cities)}")
+    total_cars = total_booked = failed = 0
+    for city in cities:
+        resp = search(city, d(10), d(14))
+        data = body_json(resp)
+        if resp.status_code != 200 or not isinstance(data, dict):
+            failed += 1
+            LOG.fact(f"поиск {city}: HTTP {resp.status_code}; ответ не разобран")
+            continue
+        cars = data.get("cars", [])
+        with_booked = [c for c in cars if c.get("bookedPeriods")]
+        total_cars += len(cars)
+        total_booked += len(with_booked)
+        if with_booked:
+            LOG.fact(f"поиск {city}: машин={len(cars)}; с непустым bookedPeriods={len(with_booked)}")
+    LOG.fact(f"итого по {len(cities) - failed} городам: машин={total_cars}; с непустым bookedPeriods={total_booked}; городов с ошибкой поиска={failed}")
+
+
 # ---------------------------------------------------------------- запуск
 
 def main():
@@ -338,6 +361,7 @@ def main():
             lambda: q_api_09_auth_schemes(city),
             lambda: q_api_10_delete(city),
             lambda: q_api_11_text_plain(city),
+            q_api_12_booked_periods_scan,
         ]
         for step in steps:
             try:
