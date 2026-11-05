@@ -52,10 +52,8 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-4. Create a `.env` file in the root directory and add your credentials:
+4. Create a `.env` file in the root directory (all settings are listed in `.env.example`):
 ```env
-USER_EMAIL=your_test_email@gmail.com
-USER_PASSWORD=your_secure_password
 HEADLESS_MODE=false
 USE_SELENOID=false
 ENABLE_CONSOLE_LOGS=true

@@ -29,11 +29,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup environment variables for Docker
-        run: |
-          echo "USER_EMAIL=${{ secrets.USER_EMAIL }}" >> .env
-          echo "USER_PASSWORD=${{ secrets.USER_PASSWORD }}" >> .env
-
       - name: Pull Selenoid Browser Images & Video Recorder
         run: |
           docker pull selenoid/vnc_chrome:128.0
