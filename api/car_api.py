@@ -1,13 +1,13 @@
-import os
 import requests
 import allure
+from config import settings
 from utils.logger import get_logger
 
 logger = get_logger("API")
 
 
 class IlCarroAPI:
-    BASE_URL = os.getenv("API_BASE_URL", "https://ilcarro-backend.herokuapp.com")
+    BASE_URL = settings.api_url
 
     def __init__(self):
         # 1. Открываем единую сессию при создании клиента

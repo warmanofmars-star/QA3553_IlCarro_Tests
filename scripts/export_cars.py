@@ -1,14 +1,15 @@
-import os
 import requests
 import json
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
+import sys
+from pathlib import Path
 
-# Загружаем переменные окружения из файла .env (если он есть)
-load_dotenv()
+# Скрипт запускают как `python scripts/export_cars.py`: корень проекта добавляем сами, чтобы импортировать config
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-# Берем ссылку из окружения, оставляя надежный фоллбэк
-BASE_URL = os.getenv("API_BASE_URL", "https://ilcarro-backend.herokuapp.com")
+from config import settings  # noqa: E402
+
+BASE_URL = settings.api_url
 
 
 def export_all_available_cars():

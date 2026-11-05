@@ -1,5 +1,4 @@
 import allure
-import os
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -7,6 +6,7 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.remote.webelement import WebElement
 
 # Импортируем наш инженерный логгер
+from config import settings
 from utils.logger import get_logger
 
 # Инициализируем логгер один раз для всего базового класса
@@ -14,8 +14,7 @@ logger = get_logger()
 
 
 class BasePage:
-    # Берем ссылку из .env, а если ее там нет — используем дефолтную
-    BASE_URL = os.getenv("UI_BASE_URL", "https://icarro-v1.netlify.app")
+    BASE_URL = settings.ui_url
     DEFAULT_TIMEOUT = 15
 
     def __init__(self, driver):
