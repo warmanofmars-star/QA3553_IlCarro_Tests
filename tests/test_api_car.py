@@ -3,6 +3,7 @@ import datetime
 import pytest
 from api.car_api import IlCarroAPI
 from data.known_bugs import known_bug
+from utils.preconditions import require
 from data.data_generator import CarGenerator
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
@@ -112,7 +113,7 @@ def test_api_car_booking_flow(auth_api):
 
     with allure.step("1. Создаем машину для бронирования"):
         response_add = auth_api.add_car(car_obj.to_api_payload())
-        assert response_add.status_code == 200, f"Не удалось создать машину: {response_add.text}"
+        require(response_add.status_code == 200, f"Не удалось создать машину: {response_add.text}")
 
     with allure.step(f"2. Ищем машины в городе {target_city} на заданные даты"):
         response_search = auth_api.search_cars(target_city, start_date, end_date)

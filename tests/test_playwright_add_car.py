@@ -4,6 +4,7 @@ from playwright.sync_api import Page
 from pages.pw_login_page import PwLoginPage
 from pages.pw_add_car_page import PwAddCarPage
 from data.data_generator import CarGenerator
+from utils.preconditions import require
 
 pytestmark = pytest.mark.ui
 
@@ -47,7 +48,8 @@ def test_pw_add_car_duplicate(page: Page, temp_user): # <-- Заменили aut
 
     with allure.step("API PRECONDITION: Создаем машину"):
         # МАГИЯ ООП ЗДЕСЬ: используем .to_api_payload()
-        api.add_car(car.to_api_payload())
+        response = api.add_car(car.to_api_payload())
+        require(response.status_code == 200, f"Не удалось создать машину через API: {response.text}")
 
     with allure.step("UI SCENARIO: Пытаемся создать ту же машину через UI"):
         login_page = PwLoginPage(page)

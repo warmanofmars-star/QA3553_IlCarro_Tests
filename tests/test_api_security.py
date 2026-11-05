@@ -3,6 +3,7 @@ import allure
 from api.car_api import IlCarroAPI
 from data.data_generator import CarGenerator, UserGenerator
 from data.known_bugs import known_bug
+from utils.preconditions import require
 
 pytestmark = [pytest.mark.api, pytest.mark.security]
 
@@ -32,6 +33,7 @@ def test_api_security_auth_tokens(token_strategy, expected_status, scenario):
     elif token_strategy == "wrong_scheme":
         temp_user = UserGenerator.get_random_user()
         res = api.register(temp_user.email, temp_user.password)
+        require(res.status_code == 200, f"Не удалось зарегистрировать пользователя для сценария: {res.text}")
         valid_token = res.json().get("accessToken")
         api.session.headers.update({"Authorization": f"Basic {valid_token}"})
 
@@ -89,11 +91,13 @@ def test_api_idempotency_delete(auth_api):
     serial_number = car.reg_number
 
     with allure.step("Пререквизит: Создаем машину"):
-        auth_api.add_car(car.to_api_payload())
+        res_add = auth_api.add_car(car.to_api_payload())
+        require(res_add.status_code == 200, f"Не удалось создать машину: {res_add.text}")
 
     with allure.step("Шаг 1: Удаляем машину (Первый запрос)"):
         res_first = auth_api.delete_car(serial_number)
-        assert res_first.status_code == 200, "Первое удаление провалилось"
+        # Первое удаление — предусловие: баг REQ-CAR-10 касается только повторного удаления
+        require(res_first.status_code == 200, f"Первое удаление провалилось: {res_first.text}")
 
     with allure.step("Шаг 2: Удаляем ту же машину (Повторный запрос)"):
         res_second = auth_api.delete_car(serial_number)

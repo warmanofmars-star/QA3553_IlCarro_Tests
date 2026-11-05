@@ -2,6 +2,7 @@ import allure
 import pytest
 from api.car_api import IlCarroAPI
 from data.known_bugs import known_bug
+from utils.preconditions import require
 
 pytestmark = [pytest.mark.api, pytest.mark.regression, pytest.mark.contract]
 
@@ -28,7 +29,7 @@ def test_frontend_backend_cities_mapping():
 
     with allure.step("1. Получаем словарь бэкенда"):
         response = api.get_cities()
-        assert response.status_code == 200, "API недоступно"
+        require(response.status_code == 200, "API недоступно")
         backend_cities = [city["city"] for city in response.json().get("cities", [])]
 
     with allure.step("2. Нормализация и сравнение списков"):

@@ -1,6 +1,7 @@
 import allure
 import pytest
 from data.data_generator import CarGenerator, SearchDataGenerator
+from utils.preconditions import require
 from pages.search_page import SearchPage
 from pages.results_page import ResultsPage
 
@@ -20,7 +21,7 @@ def test_hybrid_car_search(driver, auth_api):
 
         # ИСПОЛЬЗУЕМ ФИКСТУРУ ДЛЯ ЗАПРОСА И НОВЫЙ МЕТОД DATACLASS'а ↓
         response = auth_api.add_car(car_obj.to_api_payload())
-        assert response.status_code == 200, f"Ошибка пререквизита: {response.text}"
+        require(response.status_code == 200, f"Ошибка пререквизита: {response.text}")
 
     # Оборачиваем UI-логику в try..finally, чтобы машина удалилась даже если Селениум упадет
     try:

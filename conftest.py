@@ -14,6 +14,7 @@ from api.car_api import IlCarroAPI
 from pages.login_page import LoginPage
 from data.data_generator import UserGenerator
 from utils.logger import get_logger
+from utils.preconditions import require
 
 # 👇 Учим pytest понимать флаг --browser_name
 def pytest_addoption(parser):
@@ -209,7 +210,7 @@ def temp_user():
 
     with allure.step(f"Setup Fixture: Генерация временного пользователя {user.email}"):
         response = api.register(user.email, user.password)
-        assert response.status_code == 200, f"Не удалось зарегистрировать временного юзера: {response.text}"
+        require(response.status_code == 200, f"Не удалось зарегистрировать временного юзера: {response.text}")
 
     # Возвращаем словарь: и данные юзера, и готовую (авторизованную) API-сессию
     return {"user": user, "api": api}
@@ -235,7 +236,7 @@ def authenticated_driver(driver, temp_user):
         user = temp_user["user"]
 
         login_page.login(user.email, user.password)
-        assert login_page.is_logout_button_visible(), "Setup Failed: Кнопка Logout не появилась после авторизации!"
+        require(login_page.is_logout_button_visible(), "Setup Failed: Кнопка Logout не появилась после авторизации!")
 
     return driver
 

@@ -5,6 +5,7 @@ import string
 from pages.registration_page import RegistrationPage
 from data.data_generator import UserGenerator
 from data.known_bugs import known_bug
+from utils.preconditions import require
 
 pytestmark = pytest.mark.ui
 
@@ -117,7 +118,8 @@ def test_registration_existing_user(driver, temp_user, password_strategy, scenar
 
         registration_page.submit_registration()
 
-        assert registration_page.confirmation_text() == "Registration failed", "Бэкенд не отбил регистрацию!"
+        # Заголовок окна — не предмет известного бага (баг только в тексте): сбой здесь не должен прятаться за xfail
+        require(registration_page.confirmation_text() == "Registration failed", "Бэкенд не отбил регистрацию!")
         actual_error_details = registration_page.confirmation_text_1()
 
         sys_logger.info(f"Фактический текст в модалке: '{actual_error_details}'")
