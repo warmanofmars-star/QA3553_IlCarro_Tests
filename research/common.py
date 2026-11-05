@@ -27,8 +27,7 @@ BODY_LIMIT = 400
 # Пароль, подходящий под шаблон из Swagger. В логи не попадает.
 VALID_PASSWORD = "Probe#2026ab"
 
-_JWT_PREFIX = "ey" + "J"  # начало любого JWT; собрано из частей, чтобы grep по репозиторию не находил даже его
-_JWT_RE = re.compile(_JWT_PREFIX + r"[A-Za-z0-9_\-]*\.[A-Za-z0-9_\-]*\.[A-Za-z0-9_\-]*")
+_JWT_RE = re.compile(r"eyJ[A-Za-z0-9_\-]*\.[A-Za-z0-9_\-]*\.[A-Za-z0-9_\-]*")
 _TS_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?([+-]\d{2}:?\d{2}|Z)?")
 
 

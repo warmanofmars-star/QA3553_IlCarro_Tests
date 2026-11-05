@@ -138,7 +138,7 @@ def ls_dump(page) -> str:
         return "localStorage пуст"
     parts = []
     for key, value in sorted(data.items()):
-        if key.lower() == "token" or str(value).startswith(common._JWT_PREFIX):
+        if key.lower() == "token" or str(value).startswith("eyJ"):
             parts.append(f"{key}=<hidden>(длина {len(str(value))})")
         else:
             parts.append(f"{key}={short(str(value), 80)}")
