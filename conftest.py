@@ -2,6 +2,7 @@ import os
 import time
 import pytest
 import allure
+import requests
 from selenium import webdriver
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -23,6 +24,30 @@ def pytest_addoption(parser):
         choices=["chrome", "firefox", "edge"],
         help="Browser to run tests in: chrome, firefox, or edge"
     )
+
+
+@pytest.fixture(scope="session")
+def selenoid_hub():
+    """Проверяет доступность хаба Selenoid один раз на воркер.
+
+    Без проверки каждый Selenium-тест тратит время на повторные попытки подключения и падает
+    одной и той же невнятной ошибкой. Недоступный Selenoid — ошибка окружения, поэтому тест не
+    пропускается (skip), а получает ERROR с понятным сообщением. Результат session-фикстуры
+    кэшируется, так что остальные тесты воркера падают сразу, без новых запросов к хабу.
+    """
+    hub_url = settings.selenoid_hub_url
+    error = None
+    try:
+        # Достаточно любого HTTP-ответа: нам важно, что по адресу кто-то слушает, а не что вернул /status
+        requests.get(f"{hub_url}/status", timeout=3)
+    except requests.RequestException as exc:
+        error = type(exc).__name__
+    if error:
+        # fail() вызывается вне except: иначе pytest печатает длинную цепочку исключений requests/urllib3
+        pytest.fail(
+            f"Selenoid недоступен: {hub_url} ({error}). Запусти Selenoid или USE_SELENOID=false.",
+            pytrace=False,
+        )
 
 
 @pytest.fixture
@@ -58,6 +83,8 @@ def driver(request):  # <--- Добавили request
 
     else:
         if use_selenoid:
+            # Фикстура подключается только здесь: API- и Playwright-тестам хаб не нужен
+            request.getfixturevalue("selenoid_hub")
             print(f"\n[INFO] Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: {browser_name}...")
 
             # Подготавливаем опции в зависимости от браузера
