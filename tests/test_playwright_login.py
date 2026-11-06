@@ -14,7 +14,7 @@ def test_pw_login_success(page: Page, temp_user):
     pw_login_page = PwLoginPage(page)
     pw_login_page.open()
 
-    user = temp_user["user"]
+    user = temp_user.user
     pw_login_page.login(user.email, user.password)
 
     pw_login_page.check_success_message()

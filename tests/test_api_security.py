@@ -59,10 +59,10 @@ def test_api_security_bola_delete(auth_api, create_car, second_user):
     """
     car = create_car()
     # Если из-за уязвимости машина «переедет» к второму пользователю, её уберёт его очистка
-    second_user["cleanup"].register(car.reg_number)
+    second_user.cleanup.register(car.reg_number)
 
     with allure.step("Уязвимость BOLA: второй пользователь пытается удалить машину владельца"):
-        response = second_user["api"].delete_car(car.reg_number)
+        response = second_user.api.delete_car(car.reg_number)
 
     with allure.step("Проверка: машина осталась в /v1/cars/my владельца"):
         assert car.reg_number in my_cars(auth_api),             f"КРИТИЧЕСКАЯ УЯЗВИМОСТЬ BOLA! Второй пользователь удалил чужую машину. Ответ: {response.status_code} {response.text}"
@@ -81,10 +81,10 @@ def test_api_security_bola_delete_status(auth_api, create_car, second_user):
     (REQ-CAR-10, RFC 9110 §15.5.5).
     """
     car = create_car()
-    second_user["cleanup"].register(car.reg_number)
+    second_user.cleanup.register(car.reg_number)
 
     with allure.step("Второй пользователь пытается удалить машину владельца"):
-        response = second_user["api"].delete_car(car.reg_number)
+        response = second_user.api.delete_car(car.reg_number)
 
     with allure.step("Предусловие: машина осталась у владельца (иначе это BOLA, а не код ответа)"):
         # Сохранность машины — другое требование (REQ-CAR-09): его нарушение не должно уйти в xfail

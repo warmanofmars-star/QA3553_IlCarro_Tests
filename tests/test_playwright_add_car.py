@@ -20,7 +20,7 @@ def test_real_add_car_success(page: Page, temp_user, car_cleanup): # <-- Доб�
     # Машина создаётся через UI — номер регистрируем, чтобы фабрика удалила её после теста
     car_cleanup.register(car.reg_number)
     logger.info(f"Playwright будет создавать машину: {car}")
-    user = temp_user["user"] # <-- Берем чистые креды
+    user = temp_user.user # <-- Берем чистые креды
 
     with allure.step("Авторизация"):
         login_page = PwLoginPage(page)
@@ -46,7 +46,7 @@ def test_real_add_car_success(page: Page, temp_user, car_cleanup): # <-- Доб�
 @allure.story("API Setup -> UI Duplicate Check (Negative)")
 @allure.title("Создание дубликата машины (Playwright + API)")
 def test_pw_add_car_duplicate(page: Page, temp_user, create_car): # <-- Заменили auth_api на temp_user
-    user = temp_user["user"] # <-- Достаем UI-креды песочницы (create_car создаёт машину у него же)
+    user = temp_user.user # <-- Достаем UI-креды песочницы (create_car создаёт машину у него же)
 
     with allure.step("API PRECONDITION: Создаем машину"):
         car = create_car()

@@ -13,7 +13,7 @@ def test_login_success(driver, temp_user):
     login_page = LoginPage(driver)
     login_page.open()
 
-    user = temp_user["user"]  # Берем гарантированно существующего юзера
+    user = temp_user.user  # Берем гарантированно существующего юзера
     login_page.login(user.email, user.password)
 
     assert login_page.get_global_message_text() == "You are logged in success", "Сообщение об успехе не совпадает!"
@@ -60,7 +60,7 @@ def test_login_negative_backend(driver, temp_user, email_condition, pass_conditi
         login_page = LoginPage(driver)
         login_page.open()
 
-        user = temp_user["user"]  # Запрашиваем валидного юзера для микса данных
+        user = temp_user.user  # Запрашиваем валидного юзера для микса данных
 
         actual_email = user.email if email_condition == "valid_email" else "fake_user_12345@gmail.com"
         actual_password = user.password if pass_condition == "valid_pass" else "WrongPassword123!"

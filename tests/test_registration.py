@@ -92,7 +92,7 @@ def test_registration_existing_user(driver, temp_user, password_strategy, scenar
         registration_page = RegistrationPage(driver)
 
         # 1. Забираем уже зарегистрированного юзера из песочницы
-        existing_user = temp_user["user"]
+        existing_user = temp_user.user
 
         # 2. Определяем пароль для попытки повторной регистрации
         if password_strategy == "same_password":

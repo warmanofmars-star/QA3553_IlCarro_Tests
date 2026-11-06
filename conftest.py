@@ -1,6 +1,8 @@
 import logging
 import os
 import time
+from dataclasses import dataclass
+
 import pytest
 import allure
 import requests
@@ -17,6 +19,7 @@ from api.car_api import IlCarroAPI
 from pages.login_page import LoginPage
 from data.data_generator import CarGenerator, UserGenerator
 from models.car import Car
+from models.user import User
 from utils.car_cleanup import CarCleanup, journal_summary, reset_journal
 from utils.preconditions import require
 
@@ -276,7 +279,26 @@ def pytest_runtest_makereport(item, call):
             )
 
 
-def _register_temp_user(role: str) -> dict:
+@dataclass
+class TempUser:
+    """Временный пользователь и API-клиент, уже авторизованный под ним.
+
+    Раньше фикстура возвращала словарь {"user": ..., "api": ...}. С dataclass опечатка в имени
+    поля даёт понятную ошибку сразу, а IDE подсказывает поля.
+    """
+
+    user: User
+    api: IlCarroAPI
+
+
+@dataclass
+class SecondUser(TempUser):
+    """«Чужой» пользователь со своей очисткой машин (см. фикстуру second_user)."""
+
+    cleanup: CarCleanup
+
+
+def _register_temp_user(role: str) -> TempUser:
     """Регистрирует нового пользователя через API и возвращает его данные и авторизованный клиент."""
     user = UserGenerator.get_random_user()
     api = IlCarroAPI()
@@ -285,13 +307,12 @@ def _register_temp_user(role: str) -> dict:
         response = api.register(user.email, user.password)
         require(response.status_code == 200, f"Не удалось зарегистрировать {role}: {response.text}")
 
-    return {"user": user, "api": api}
+    return TempUser(user=user, api=api)
 
 
 @pytest.fixture
-def temp_user():
+def temp_user() -> TempUser:
     """Создает уникального пользователя через API для полной изоляции тестов."""
-    # Возвращаем словарь: и данные юзера, и готовую (авторизованную) API-сессию
     return _register_temp_user("временного пользователя")
 
 
@@ -299,13 +320,17 @@ def temp_user():
 def second_user(request):
     """Второй временный пользователь: «чужой» для проверок доступа (BOLA, подмена владельца).
 
-    У него своя очистка машин в ключе "cleanup": если из-за дефекта машина окажется у него,
+    У него своя очистка машин (поле cleanup): если из-за дефекта машина окажется у него,
     тест регистрирует её номер и здесь, и она не останется на общем бэкенде.
     """
-    data = _register_temp_user("второго пользователя")
-    data["cleanup"] = CarCleanup(data["api"], data["user"].email, request.node.nodeid)
+    registered = _register_temp_user("второго пользователя")
+    data = SecondUser(
+        user=registered.user,
+        api=registered.api,
+        cleanup=CarCleanup(registered.api, registered.user.email, request.node.nodeid),
+    )
     yield data
-    data["cleanup"].run()
+    data.cleanup.run()
 
 
 @pytest.fixture
@@ -315,7 +340,7 @@ def car_cleanup(temp_user, request):
     Тест, который создаёт машину не через create_car (через UI или «сырым» запросом, чтобы
     проверить сам ответ), регистрирует её номер: car_cleanup.register(car.reg_number).
     """
-    cleanup = CarCleanup(temp_user["api"], temp_user["user"].email, request.node.nodeid)
+    cleanup = CarCleanup(temp_user.api, temp_user.user.email, request.node.nodeid)
     yield cleanup
     cleanup.run()
 
@@ -332,7 +357,7 @@ def create_car(temp_user, car_cleanup):
     Все созданные машины удаляются после теста (см. car_cleanup). Ответ, отличный от 200, —
     сбой предусловия (require), а не найденный дефект.
     """
-    api = temp_user["api"]
+    api = temp_user.api
 
     def _create(*, extra_fields: dict | None = None, **overrides) -> Car:
         car = CarGenerator.get_random_car(**overrides)
@@ -357,7 +382,7 @@ def auth_api(temp_user):
     Фикстура-адаптер: берет изолированного API-клиента из песочницы (temp_user)
     и отдает его чистым API-тестам. Никаких изменений в самих тестах не потребуется!
     """
-    return temp_user["api"]
+    return temp_user.api
 
 
 @pytest.fixture
@@ -368,7 +393,7 @@ def authenticated_driver(driver, temp_user):
         login_page.open()
 
         # Берем данные уникального юзера из песочницы
-        user = temp_user["user"]
+        user = temp_user.user
 
         login_page.login(user.email, user.password)
         require(login_page.is_logout_button_visible(), "Setup Failed: Кнопка Logout не появилась после авторизации!")

@@ -119,17 +119,17 @@ def test_api_car_booking_flow(auth_api, create_car, second_user):
 
     # Машина — у temp_user (владелец), бронирует второй пользователь, как в исследовании Q-API-01
     car = create_car()
-    booker = second_user["user"]
+    booker = second_user.user
 
     # Всё, кроме сохранения брони, — предусловия: их сбой не должен прятаться за известным багом
     with allure.step(f"1. Ищем машины в городе {car.city} на заданные даты"):
-        response_search = second_user["api"].search_cars(car.city, start_date, end_date)
+        response_search = second_user.api.search_cars(car.city, start_date, end_date)
         require(response_search.status_code == 200, f"Ошибка поиска: {response_search.text}")
         serial_numbers_found = [found.get("serialNumber") for found in response_search.json().get("cars", [])]
         require(car.reg_number in serial_numbers_found, "Созданная машина не появилась в поиске!")
 
     with allure.step(f"2. Второй пользователь {booker.email} бронирует машину"):
-        response_book = second_user["api"].book_car(car.reg_number, start_date, end_date)
+        response_book = second_user.api.book_car(car.reg_number, start_date, end_date)
         require(response_book.status_code == 200, f"Бронирование не принято: {response_book.status_code} {response_book.text}")
 
     with allure.step("3. Состояние: в bookedPeriods машины владельца есть период бронирующего"):
