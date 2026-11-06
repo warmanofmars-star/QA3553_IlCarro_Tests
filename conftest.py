@@ -8,7 +8,9 @@ from selenium import webdriver
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.events import EventFiringWebDriver
+from selenium.webdriver.support.wait import WebDriverWait
 from config import PROJECT_ROOT, settings
 from utils.listener import IlCarroListener
 from api.car_api import IlCarroAPI
@@ -24,6 +26,11 @@ LOG_DIR = PROJECT_ROOT / "logs"
 
 # Сторонние библиотеки на уровне INFO/DEBUG пишут много служебного шума и топят логи тестов
 NOISY_LOGGERS = ("urllib3", "selenium", "faker", "asyncio", "charset_normalizer", "filelock")
+
+# Ожидания состояний окружения (секунды). WebDriverWait здесь — просто опрос условия с таймаутом,
+# драйвер ему не нужен. Значения сохраняют прежний запас: 5 попыток по 2 с и ~10 опросов видео.
+SELENOID_WAKE_TIMEOUT = 10
+VIDEO_WAIT_TIMEOUT = 20
 
 
 def pytest_configure(config):
@@ -94,10 +101,14 @@ def selenoid_hub():
     hub_url = settings.selenoid_hub_url
     error = None
     try:
+        # В docker compose Selenoid может подниматься чуть дольше контейнера с тестами, поэтому
+        # хаб опрашивается до SELENOID_WAKE_TIMEOUT секунд, а не один раз.
         # Достаточно любого HTTP-ответа: нам важно, что по адресу кто-то слушает, а не что вернул /status
-        requests.get(f"{hub_url}/status", timeout=3)
-    except requests.RequestException as exc:
-        error = type(exc).__name__
+        WebDriverWait(
+            None, SELENOID_WAKE_TIMEOUT, poll_frequency=0.5, ignored_exceptions=(requests.RequestException,)
+        ).until(lambda _: requests.get(f"{hub_url}/status", timeout=3))
+    except TimeoutException:
+        error = f"не ответил за {SELENOID_WAKE_TIMEOUT} с"
     if error:
         # fail() вызывается вне except: иначе pytest печатает длинную цепочку исключений requests/urllib3
         pytest.fail(
@@ -162,22 +173,9 @@ def driver(request):  # <--- Добавили request
                 "enableVideo": True,
             })
 
-            hub_url = settings.selenoid_hub_url
-
-            # Ожидание готовности Selenoid
-            for attempt in range(5):
-                try:
-                    driver_instance = webdriver.Remote(
-                        command_executor=hub_url,
-                        options=options
-                    )
-                    break
-                except Exception as e:
-                    if attempt == 4:
-                        raise e
-                    logger.info(f"Ждем пробуждения Selenoid (попытка {attempt + 1}): {e}")
-                    time.sleep(2)
-
+            # Готовность хаба уже дождалась фикстура selenoid_hub; запуск контейнера браузера
+            # Selenoid ждёт сам, поэтому ошибка здесь — настоящая, а не «хаб ещё спит»
+            driver_instance = webdriver.Remote(command_executor=settings.selenoid_hub_url, options=options)
             session_id = driver_instance.session_id
 
         else:
@@ -214,31 +212,52 @@ def driver(request):  # <--- Добавили request
     yield decorated_driver
 
     if use_selenoid:
+        # Осознанная фиксированная пауза: рекордер Selenoid пишет экран с задержкой, и без неё
+        # в видео не попадают последние кадры теста. Состояния «кадры записаны», которого можно
+        # дождаться, Selenoid наружу не отдаёт.
         time.sleep(1.5)
 
     decorated_driver.quit()
 
     # === ИНТЕГРАЦИЯ ВИДЕО В ALLURE ===
     if use_selenoid and session_id:
-        video_dir = settings.video_dir
-        video_path = os.path.join(video_dir, f"{session_id}.mp4")
+        video_path = os.path.join(settings.video_dir, f"{session_id}.mp4")
+        video = _read_finished_video(video_path)
+        if video is None:
+            logger.warning(f"Видео ({browser_name}) не готово за {VIDEO_WAIT_TIMEOUT} с: {video_path}")
+        else:
+            allure.attach(
+                video,
+                name=f"Видео прохождения теста ({browser_name})",
+                attachment_type=allure.attachment_type.MP4
+            )
+            logger.info(f"Видео ({browser_name}) прикреплено к отчету")
 
-        for attempt in range(10):
-            if os.path.exists(video_path):
-                time.sleep(1)
-                try:
-                    with open(video_path, "rb") as video_file:
-                        allure.attach(
-                            video_file.read(),
-                            name=f"Видео прохождения теста ({browser_name})",
-                            # <-- Добавили имя браузера в название видео!
-                            attachment_type=allure.attachment_type.MP4
-                        )
-                    logger.info(f"Видео ({browser_name}) прикреплено к отчету")
-                    break
-                except Exception as e:
-                    logger.warning(f"Файл видео заблокирован, пробуем снова. Ошибка: {e}")
-            time.sleep(1)
+
+def _read_finished_video(video_path: str) -> bytes | None:
+    """Ждёт, пока Selenoid допишет видео сессии, и возвращает его содержимое (None — не дождались).
+
+    Видео дописывает отдельный контейнер уже после закрытия сессии: файл появляется не сразу и
+    какое-то время растёт. Готовым считается непустой файл, размер которого не изменился между
+    двумя опросами. Нет файла или он ещё занят записью (PermissionError на Windows) — не готов.
+    """
+    last_size = -1
+
+    def finished(_):
+        nonlocal last_size
+        size = os.path.getsize(video_path)
+        if size == 0 or size != last_size:
+            last_size = size
+            return False
+        with open(video_path, "rb") as video_file:
+            return video_file.read()
+
+    try:
+        return WebDriverWait(
+            None, VIDEO_WAIT_TIMEOUT, poll_frequency=1, ignored_exceptions=(OSError,)
+        ).until(finished)
+    except TimeoutException:
+        return None
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
