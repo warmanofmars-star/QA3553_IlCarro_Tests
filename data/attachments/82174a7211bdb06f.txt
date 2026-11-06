@@ -1,7 +1,0 @@
-09:30:59 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_b5d884ecb4@example.com]
-09:31:00 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
-09:31:00 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-8C2FF350]
-09:31:00 [ERROR  ] api.car_api: Ошибка создания машины IL-8C2FF350: 400 - {"timestamp":"2026-11-06T09:31:00","status":400,"error":"Bad Request","message":{"carClass":"must not be blank"},"path":"/v1/cars"}
-09:31:00 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
-09:31:00 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
-09:31:00 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]

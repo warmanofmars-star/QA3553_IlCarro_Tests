@@ -1,8 +1,0 @@
-09:30:58 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_7bc946227e@example.com]
-09:30:59 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
-09:30:59 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/cities [Запрос списка городов]
-09:30:59 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-031D81FD]
-09:30:59 [ERROR  ] api.car_api: Ошибка создания машины IL-031D81FD: 400 - {"timestamp":"2026-11-06T09:30:59","status":400,"error":"Bad Request","message":{"model":"must not be blank"},"path":"/v1/cars"}
-09:30:59 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
-09:30:59 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
-09:30:59 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]

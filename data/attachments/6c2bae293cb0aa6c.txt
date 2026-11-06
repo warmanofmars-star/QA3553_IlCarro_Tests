@@ -1,0 +1,8 @@
+09:52:10 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_4f099186dd@example.com]
+09:52:10 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
+09:52:10 [INFO   ] tests.test_playwright_add_car: Playwright будет создавать машину: Car(city='Haifa', make='Hughes Group', model='Room', year='2016', fuel='Electric', gear='Manual', wd='RWD', doors='4', seats='4', car_class='Economy', reg_number='IL-3BE83C0B', price='887', about='Identify talk skin trial.', photo_path=None)
+09:52:12 [INFO   ] tests.test_playwright_add_car: Машина с номером IL-3BE83C0B успешно добавлена через Playwright!
+09:52:12 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:52:12 [INFO   ] api.car_api: DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-3BE83C0B [Удаление машины: IL-3BE83C0B]
+09:52:12 [INFO   ] api.car_api: Машина IL-3BE83C0B успешно удалена
+09:52:12 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]

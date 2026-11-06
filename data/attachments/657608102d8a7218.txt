@@ -1,5 +1,0 @@
-09:31:35 [INFO   ] conftest: Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: firefox
-09:31:37 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/
-09:31:38 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[href='/register']'
-09:31:38 [INFO   ] utils.listener: Клик по элементу <a> с текстом: 'Sign up'
-09:31:43 [INFO   ] conftest: Видео (firefox) прикреплено к отчету

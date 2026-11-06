@@ -1,0 +1,27 @@
+09:52:07 [INFO   ] conftest: Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: chrome
+09:52:08 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_b7682a9735@example.com]
+09:52:08 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
+09:52:08 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/register
+09:52:08 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='firstName']'
+09:52:09 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='firstName']'
+09:52:09 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:52:09 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:52:09 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='lastName']'
+09:52:09 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:52:09 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:52:09 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='username']'
+09:52:09 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:52:09 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:52:09 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='password']'
+09:52:09 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:52:09 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:52:09 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'terms-of-use'
+09:52:09 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'terms-of-use'
+09:52:09 [INFO   ] utils.listener: Клик по элементу <input> с текстом: ''
+09:52:09 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'button[type='submit']'
+09:52:09 [INFO   ] utils.listener: Клик по элементу <button> с текстом: 'Y’alla!'
+09:52:09 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'h3'
+09:52:10 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'h3'
+09:52:10 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'p'
+09:52:10 [INFO   ] tests.test_registration: Окно: 'Registration failed' / '"User already exists"'
+09:52:15 [INFO   ] conftest: Видео (chrome) прикреплено к отчету

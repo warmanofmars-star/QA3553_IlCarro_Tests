@@ -1,7 +1,0 @@
-09:31:00 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_4288ae99fe@example.com]
-09:31:00 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
-09:31:00 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-8FF40C1A]
-09:31:00 [ERROR  ] api.car_api: Ошибка создания машины IL-8FF40C1A: 500 - {"timestamp":"2026-11-06T09:31:00","status":500,"error":"Internal Server Error","message":"JSON parse error: Cannot deserialize value of type `java.lang.Integer` from String \"пять\": not a valid `java.lang.Integer` value; nested exception is com.fasterxml.jackson.databind.exc.InvalidFormatException: Cannot deserialize value of type `java.lang.Integer` from String \"пять\": not a valid `java.lang.Integer` value\n at [Source: (org.springframework.util.StreamUtils$NonClosingInputStream); line: 1, column: 127] (through reference chain: com.telran.ilcarro.domain.cars.dto.CarDto[\"seats\"])","path":"/v1/cars"}
-09:31:00 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
-09:31:01 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
-09:31:01 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]

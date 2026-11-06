@@ -1,0 +1,19 @@
+09:51:30 [INFO   ] conftest: Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: chrome
+09:51:31 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_f465df75b9@example.com]
+09:51:31 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
+09:51:31 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/login
+09:51:31 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'input[name='username']'
+09:51:32 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'input[name='username']'
+09:51:32 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:51:32 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:51:32 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'input[name='password']'
+09:51:32 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:51:32 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:51:32 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'button[type='submit']'
+09:51:32 [INFO   ] utils.listener: Клик по элементу <button> с текстом: 'Y’alla!'
+09:51:32 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'h3'
+09:51:33 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'h3'
+09:51:33 [INFO   ] utils.listener: Поиск элемента -> By: xpath, Value: '//*[contains(text(), 'OK')]'
+09:51:33 [INFO   ] utils.listener: Клик по элементу <a> с текстом: 'OK'
+09:51:33 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'button.navigation-link'
+09:51:39 [INFO   ] conftest: Видео (chrome) прикреплено к отчету

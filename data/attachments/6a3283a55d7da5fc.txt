@@ -1,0 +1,26 @@
+09:51:52 [INFO   ] conftest: Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: chrome
+09:51:53 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/register
+09:51:53 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='firstName']'
+09:51:53 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='firstName']'
+09:51:53 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:51:53 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:51:53 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='lastName']'
+09:51:53 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:51:53 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:51:53 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='username']'
+09:51:53 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:51:53 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:51:54 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='password']'
+09:51:54 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:51:54 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:51:54 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'terms-of-use'
+09:51:54 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'terms-of-use'
+09:51:54 [INFO   ] utils.listener: Клик по элементу <input> с текстом: ''
+09:51:54 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'button[type='submit']'
+09:51:54 [INFO   ] utils.listener: Клик по элементу <button> с текстом: 'Y’alla!'
+09:51:54 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'h3'
+09:51:54 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'h3'
+09:51:54 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'p'
+09:51:54 [INFO   ] utils.listener: Поиск элемента -> By: xpath, Value: '//*[contains(text(), 'OK')]'
+09:51:54 [INFO   ] utils.listener: Клик по элементу <button> с текстом: 'OK'
+09:51:58 [INFO   ] conftest: Видео (chrome) прикреплено к отчету

@@ -1,0 +1,8 @@
+09:53:18 [INFO   ] conftest: Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: firefox
+09:53:23 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+09:53:24 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'city'
+09:53:24 [INFO   ] utils.listener: Клик по элементу <input> с текстом: ''
+09:53:24 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'body'
+09:53:24 [INFO   ] utils.listener: Клик по фону <body> (снятие фокуса/сабмит)
+09:53:25 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'button[type='submit']'
+09:53:31 [INFO   ] conftest: Видео (firefox) прикреплено к отчету

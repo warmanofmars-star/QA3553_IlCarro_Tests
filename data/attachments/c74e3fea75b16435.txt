@@ -1,8 +1,0 @@
-09:31:33 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_ba793f24a5@example.com]
-09:31:33 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
-09:31:33 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-F1231050]
-09:31:33 [INFO   ] api.car_api: Машина IL-F1231050 успешно создана в БД
-09:31:35 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
-09:31:35 [INFO   ] api.car_api: DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-F1231050 [Удаление машины: IL-F1231050]
-09:31:36 [INFO   ] api.car_api: Машина IL-F1231050 успешно удалена
-09:31:36 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]

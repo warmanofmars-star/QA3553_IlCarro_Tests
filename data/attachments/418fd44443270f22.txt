@@ -1,0 +1,2 @@
+09:51:22 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_58b0f89ae9@example.com]
+09:51:22 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)

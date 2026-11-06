@@ -1,0 +1,15 @@
+09:51:27 [INFO   ] conftest: Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: chrome
+09:51:28 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+09:51:29 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'dates'
+09:51:29 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'dates'
+09:51:29 [INFO   ] utils.listener: Клик по элементу <input> с текстом: ''
+09:51:29 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.daterange-popover'
+09:51:29 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.rdrPprevButton'
+09:51:30 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.rdrPprevButton'
+09:51:30 [INFO   ] utils.listener: Клик по элементу <button> с текстом: ''
+09:51:30 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.rdrMonthPicker option:checked'
+09:51:30 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.rdrYearPicker option:checked'
+09:51:30 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'button.rdrDay:not(.rdrDayPassive)'
+09:51:30 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.rdrMonthPicker option:checked'
+09:51:30 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.rdrYearPicker option:checked'
+09:51:34 [INFO   ] conftest: Видео (chrome) прикреплено к отчету

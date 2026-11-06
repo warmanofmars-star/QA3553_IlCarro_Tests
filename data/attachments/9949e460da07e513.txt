@@ -1,8 +1,0 @@
-09:32:09 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_7d39e807d4@example.com]
-09:32:09 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
-09:32:09 [INFO   ] tests.test_playwright_add_car: Playwright будет создавать машину: Car(city='Rehovot', make='Miller PLC', model='Occur', year='2016', fuel='Hybrid', gear='Automatic', wd='AWD', doors='4', seats='3', car_class='Business', reg_number='IL-C53F331C', price='767', about='Quite its painting discuss in discuss dinner information.', photo_path=None)
-09:32:11 [INFO   ] tests.test_playwright_add_car: Машина с номером IL-C53F331C успешно добавлена через Playwright!
-09:32:11 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
-09:32:11 [INFO   ] api.car_api: DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-C53F331C [Удаление машины: IL-C53F331C]
-09:32:11 [INFO   ] api.car_api: Машина IL-C53F331C успешно удалена
-09:32:11 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]

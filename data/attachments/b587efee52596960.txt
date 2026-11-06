@@ -1,0 +1,16 @@
+09:52:39 [INFO   ] conftest: Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: firefox
+09:52:43 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_89ce670708@example.com]
+09:52:43 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
+09:52:43 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/login
+09:52:44 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'input[name='username']'
+09:52:44 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:52:44 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:52:44 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'input[name='password']'
+09:52:44 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:52:45 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:52:45 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'button[type='submit']'
+09:52:45 [INFO   ] utils.listener: Клик по элементу <button> с текстом: 'Y’alla!'
+09:52:45 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'h3'
+09:52:46 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'h3'
+09:52:46 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'p'
+09:52:51 [INFO   ] conftest: Видео (firefox) прикреплено к отчету

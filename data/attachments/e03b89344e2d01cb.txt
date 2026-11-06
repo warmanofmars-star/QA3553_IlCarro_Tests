@@ -1,0 +1,2 @@
+09:51:28 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:51:29 [ERROR  ] api.car_api: Ошибка получения списка машин: 403 -

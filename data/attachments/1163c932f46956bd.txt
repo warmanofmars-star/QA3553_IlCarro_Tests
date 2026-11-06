@@ -1,0 +1,37 @@
+09:53:17 [INFO   ] conftest: Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: firefox
+09:53:22 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_a9ae18b638@example.com]
+09:53:22 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
+09:53:22 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-0AD919C2]
+09:53:22 [INFO   ] api.car_api: Машина IL-0AD919C2 успешно создана в БД
+09:53:22 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/cars/search [Поиск: Sderot, даты: 2026-11-15 - 2026-11-20]
+09:53:23 [INFO   ] api.car_api: Поиск успешен. Найдено машин: 15
+09:53:23 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+09:53:23 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'city'
+09:53:23 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:53:23 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:53:23 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[data-testid='city-option'][data-value='Sderot']'
+09:53:24 [INFO   ] utils.listener: Клик по элементу <div> с текстом: 'Sderot'
+09:53:24 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'dates'
+09:53:24 [INFO   ] utils.listener: Клик по элементу <input> с текстом: ''
+09:53:24 [INFO   ] utils.listener: Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='15']]'
+09:53:24 [INFO   ] utils.listener: Клик по элементу <button> с текстом: '15'
+09:53:25 [INFO   ] utils.listener: Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='20']]'
+09:53:25 [INFO   ] utils.listener: Клик по элементу <button> с текстом: '20'
+09:53:25 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'city'
+09:53:25 [INFO   ] utils.listener: Клик по элементу <input> с текстом: ''
+09:53:25 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'button[type='submit']'
+09:53:25 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'button[type='submit']'
+09:53:25 [INFO   ] utils.listener: Клик по элементу <button> с текстом: 'Yalla!'
+09:53:25 [INFO   ] pages.results_page: Ждем обновления URL с параметрами поиска...
+09:53:25 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/search?city=Sderot&from=2026-11-15&to=2026-11-20&page=0&size=50
+09:53:26 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'a.car-container[href$='/cars/IL-0AD919C2']'
+09:53:26 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'a.car-container[href$='/cars/IL-0AD919C2']'
+09:53:26 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.car-img-container'
+09:53:26 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.details-card > div > div:first-child'
+09:53:26 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.car-price-value'
+09:53:26 [INFO   ] tests.test_search: Найдена машина: IL-0AD919C2, Weaver and Sons Same (2015) за $275.0/день
+09:53:26 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:53:27 [INFO   ] api.car_api: DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-0AD919C2 [Удаление машины: IL-0AD919C2]
+09:53:27 [INFO   ] api.car_api: Машина IL-0AD919C2 успешно удалена
+09:53:27 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:53:31 [INFO   ] conftest: Видео (firefox) прикреплено к отчету

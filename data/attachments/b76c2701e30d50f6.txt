@@ -1,4 +1,0 @@
-09:31:42 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_9acf106875@example.com]
-09:31:42 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
-09:31:42 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
-09:31:42 [ERROR  ] api.car_api: Ошибка получения списка машин: 401 - {"timestamp":"2026-11-06T09:31:42","status":401,"error":"Unauthorized","message":"Illegal base64url character: ' '","path":"/v1/cars/my"}

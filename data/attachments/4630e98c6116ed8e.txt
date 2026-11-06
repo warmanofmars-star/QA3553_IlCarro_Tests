@@ -1,0 +1,14 @@
+09:51:18 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_8ae991bb6e@example.com]
+09:51:19 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
+09:51:19 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_16977848a9@example.com]
+09:51:19 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
+09:51:19 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-0B4E9CA2]
+09:51:19 [INFO   ] api.car_api: Машина IL-0B4E9CA2 успешно создана в БД
+09:51:19 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:51:19 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:51:19 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:51:19 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:51:19 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:51:19 [INFO   ] api.car_api: DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-0B4E9CA2 [Удаление машины: IL-0B4E9CA2]
+09:51:19 [INFO   ] api.car_api: Машина IL-0B4E9CA2 успешно удалена
+09:51:19 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]

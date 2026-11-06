@@ -1,0 +1,39 @@
+09:52:15 [INFO   ] conftest: Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: chrome
+09:52:16 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_de59cc4eff@example.com]
+09:52:16 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
+09:52:16 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-9336C285]
+09:52:16 [INFO   ] api.car_api: Машина IL-9336C285 успешно создана в БД
+09:52:16 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/cars/search [Поиск: Sderot, даты: 2026-11-16 - 2026-11-21]
+09:52:17 [INFO   ] api.car_api: Поиск успешен. Найдено машин: 15
+09:52:17 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+09:52:17 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'city'
+09:52:17 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'city'
+09:52:17 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:52:17 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:52:17 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[data-testid='city-option'][data-value='Sderot']'
+09:52:18 [INFO   ] utils.listener: Клик по элементу <div> с текстом: 'Sderot'
+09:52:18 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'dates'
+09:52:18 [INFO   ] utils.listener: Клик по элементу <input> с текстом: ''
+09:52:18 [INFO   ] utils.listener: Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='16']]'
+09:52:18 [INFO   ] utils.listener: Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='16']]'
+09:52:18 [INFO   ] utils.listener: Клик по элементу <button> с текстом: '16'
+09:52:18 [INFO   ] utils.listener: Поиск элемента -> By: xpath, Value: '//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='21']]'
+09:52:18 [INFO   ] utils.listener: Клик по элементу <button> с текстом: '21'
+09:52:18 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'city'
+09:52:18 [INFO   ] utils.listener: Клик по элементу <input> с текстом: ''
+09:52:18 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'button[type='submit']'
+09:52:18 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'button[type='submit']'
+09:52:18 [INFO   ] utils.listener: Клик по элементу <button> с текстом: 'Yalla!'
+09:52:18 [INFO   ] pages.results_page: Ждем обновления URL с параметрами поиска...
+09:52:18 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/search?city=Sderot&from=2026-11-16&to=2026-11-21&page=0&size=50
+09:52:18 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'a.car-container[href$='/cars/IL-9336C285']'
+09:52:19 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'a.car-container[href$='/cars/IL-9336C285']'
+09:52:19 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.car-img-container'
+09:52:19 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.details-card > div > div:first-child'
+09:52:19 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.car-price-value'
+09:52:19 [INFO   ] tests.test_search: Найдена машина: IL-9336C285, Harris-Douglas Almost (2016) за $967.0/день
+09:52:19 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:52:19 [INFO   ] api.car_api: DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-9336C285 [Удаление машины: IL-9336C285]
+09:52:19 [INFO   ] api.car_api: Машина IL-9336C285 успешно удалена
+09:52:19 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:52:24 [INFO   ] conftest: Видео (chrome) прикреплено к отчету

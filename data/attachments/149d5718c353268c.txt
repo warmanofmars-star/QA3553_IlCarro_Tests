@@ -1,2 +1,0 @@
-09:31:00 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-C5A51979]
-09:31:00 [ERROR  ] api.car_api: Ошибка создания машины IL-C5A51979: 403 -

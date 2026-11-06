@@ -1,0 +1,15 @@
+09:51:56 [INFO   ] conftest: Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: firefox
+09:52:02 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+09:52:02 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'dates'
+09:52:02 [INFO   ] utils.listener: Клик по элементу <input> с текстом: ''
+09:52:03 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.daterange-popover'
+09:52:03 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.rdrMonthPicker option:checked'
+09:52:03 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.rdrNextButton'
+09:52:03 [INFO   ] utils.listener: Клик по элементу <button> с текстом: ''
+09:52:03 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.rdrMonthPicker option:checked'
+09:52:03 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.rdrMonthPicker option:checked'
+09:52:03 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.rdrPprevButton'
+09:52:03 [INFO   ] utils.listener: Клик по элементу <button> с текстом: ''
+09:52:04 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.rdrMonthPicker option:checked'
+09:52:04 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.rdrMonthPicker option:checked'
+09:52:09 [INFO   ] conftest: Видео (firefox) прикреплено к отчету
