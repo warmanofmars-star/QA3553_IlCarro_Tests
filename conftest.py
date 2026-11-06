@@ -141,7 +141,7 @@ def driver(request):  # <--- Добавили request
         if use_selenoid:
             # Фикстура подключается только здесь: API- и Playwright-тестам хаб не нужен
             request.getfixturevalue("selenoid_hub")
-            print(f"\n[INFO] Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: {browser_name}...")
+            logger.info(f"Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: {browser_name}")
 
             # Подготавливаем опции в зависимости от браузера
             if browser_name == "firefox":
@@ -175,7 +175,7 @@ def driver(request):  # <--- Добавили request
                 except Exception as e:
                     if attempt == 4:
                         raise e
-                    print(f"\n[INFO] Ждем пробуждения Selenoid (попытка {attempt + 1})...")
+                    logger.info(f"Ждем пробуждения Selenoid (попытка {attempt + 1}): {e}")
                     time.sleep(2)
 
             session_id = driver_instance.session_id
@@ -200,7 +200,7 @@ def driver(request):  # <--- Добавили request
                     options.add_argument('--window-size=1920,1080')
                     driver_instance = webdriver.Chrome(options=options)
             except Exception as e:
-                print(f"\n[WARNING] Браузер {browser_name} не запустился. Причина: {e}")
+                logger.warning(f"Браузер {browser_name} не запустился. Причина: {e}")
                 raise e
 
     if not is_headless and not use_selenoid:
@@ -234,10 +234,10 @@ def driver(request):  # <--- Добавили request
                             # <-- Добавили имя браузера в название видео!
                             attachment_type=allure.attachment_type.MP4
                         )
-                    print(f"\n[INFO] Видео ({browser_name}) успешно прикреплено к отчету!")
+                    logger.info(f"Видео ({browser_name}) прикреплено к отчету")
                     break
                 except Exception as e:
-                    print(f"\n[WARNING] Файл заблокирован, пробуем снова. Ошибка: {e}")
+                    logger.warning(f"Файл видео заблокирован, пробуем снова. Ошибка: {e}")
             time.sleep(1)
 
 @pytest.hookimpl(hookwrapper=True)
