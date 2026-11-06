@@ -1,3 +1,4 @@
+import logging
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 import allure
@@ -6,9 +7,8 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from pages.base_page import BasePage
-from utils.logger import get_logger
 
-logger = get_logger()
+logger = logging.getLogger(__name__)
 
 class ResultsPage(BasePage):
     # --- ЛОКАТОРЫ ---
@@ -26,17 +26,6 @@ class ResultsPage(BasePage):
             message="Поисковый запрос не выполнился: URL не обновился!"
         )
 
-    @allure.step("Проверка, есть ли найденные машины")
-    def has_cars(self, timeout=3):  # <-- Обязательно добавляем timeout=3 в скобки!
-        try:
-            # Передаем наш timeout внутрь WebDriverWait
-            WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_element_located(self.CAR_CARD_LINK)
-            )
-            return True
-        except TimeoutException:
-            # Если за отведенное время карточки не появились — выдача действительно пустая
-            return False
 
     # --- ДЕЙСТВИЯ ---
     @allure.step("Показать выдачу по {size} карточек на странице")

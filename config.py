@@ -78,6 +78,7 @@ class Settings:
     # --- Логи ---
     enable_console_logs: bool  # дублировать логи в консоль
     is_xdist_worker: bool  # процесс — воркер pytest-xdist (его задаёт сам xdist, не пользователь)
+    xdist_worker_id: str  # имя воркера xdist (gw0, gw1…) или "main" вне воркера
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -95,6 +96,7 @@ class Settings:
             pw_timeout_ms=_env_int("PW_TIMEOUT", 10000),
             enable_console_logs=_env_bool("ENABLE_CONSOLE_LOGS", True),
             is_xdist_worker=os.environ.get("PYTEST_XDIST_WORKER") is not None,
+            xdist_worker_id=os.environ.get("PYTEST_XDIST_WORKER") or "main",
         )
 
 

@@ -1,7 +1,10 @@
+import logging
 import allure
 import pytest
 from pages.add_car_page import AddCarPage
 from data.data_generator import CarGenerator
+
+logger = logging.getLogger(__name__)
 
 pytestmark = pytest.mark.ui
 
@@ -14,16 +17,16 @@ pytestmark = pytest.mark.ui
     ("Petrol", "Economy", "Добавление бензиновой машины эконом-класса"),
     ("Electric", "Premium", "Добавление премиального электрокара")
 ])
-def test_add_car_success(authenticated_driver, car_cleanup, fuel_type, car_class, scenario, sys_logger):
+def test_add_car_success(authenticated_driver, car_cleanup, fuel_type, car_class, scenario):
     with allure.step(f"Сценарий: {scenario}"):
-        sys_logger.info(f"--- ЗАПУСК ТЕСТА: {scenario} ---")
+        logger.info(f"--- ЗАПУСК ТЕСТА: {scenario} ---")
         add_car_page = AddCarPage(authenticated_driver)
 
         # Генерируем машину, ПРИНУДИТЕЛЬНО задавая ей нужный тип топлива и класс!
         car = CarGenerator.get_random_car(fuel=fuel_type, car_class=car_class)
 
         # МАГИЯ ДАТАКЛАССОВ В ДЕЙСТВИИ:
-        sys_logger.info(f"Сгенерированные данные: {car}")
+        logger.info(f"Сгенерированные данные: {car}")
         # Машина создаётся через UI — номер регистрируем, чтобы фабрика удалила её после теста
         car_cleanup.register(car.reg_number)
 
@@ -40,7 +43,7 @@ def test_add_car_success(authenticated_driver, car_cleanup, fuel_type, car_class
         # Проверка:
         assert add_car_page.is_form_cleared() is True, "Форма не очистилась! Машина не добавлена."
 
-        sys_logger.info("--- ТЕСТ УСПЕШНО ЗАВЕРШЕН ---")
+        logger.info("--- ТЕСТ УСПЕШНО ЗАВЕРШЕН ---")
 
 @pytest.mark.regression
 @pytest.mark.hybrid
@@ -48,10 +51,10 @@ def test_add_car_success(authenticated_driver, car_cleanup, fuel_type, car_class
 @allure.feature("Add Car Page (Let the car work)")
 @allure.story("Negative Add Car - Duplicate Serial Number")
 @allure.severity(allure.severity_level.CRITICAL)
-def test_add_car_duplicate(authenticated_driver, create_car, sys_logger):
+def test_add_car_duplicate(authenticated_driver, create_car):
     with allure.step("API PRECONDITION: Создаем машину через бэкенд"):
         car = create_car()
-        sys_logger.info(f"API успешно создал машину с номером: {car.reg_number}")
+        logger.info(f"API успешно создал машину с номером: {car.reg_number}")
 
     with allure.step("UI SCENARIO: Пытаемся добавить машину с тем же номером"):
         add_car_page = AddCarPage(authenticated_driver)
@@ -67,7 +70,7 @@ def test_add_car_duplicate(authenticated_driver, create_car, sys_logger):
     with allure.step("UI ASSERT: Проверка обработки дубликата фронтендом"):
         # 1. Проверяем появление правильного текста ошибки
         error_text = add_car_page.get_submit_error_text()
-        sys_logger.info(f"Фронтенд выдал ошибку: {error_text}")
+        logger.info(f"Фронтенд выдал ошибку: {error_text}")
 
         assert error_text == "Failed to submit car", f"Ожидалась ошибка 'Failed to submit car', но получили '{error_text}'"
 

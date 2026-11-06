@@ -1,9 +1,12 @@
+import logging
 import allure
 import pytest
 from playwright.sync_api import Page
 from pages.pw_login_page import PwLoginPage
 from pages.pw_add_car_page import PwAddCarPage
 from data.data_generator import CarGenerator
+
+logger = logging.getLogger(__name__)
 
 pytestmark = pytest.mark.ui
 
@@ -12,12 +15,12 @@ pytestmark = pytest.mark.ui
 @allure.feature("Cars Management")
 @allure.story("Real E2E Car Addition")
 @allure.title("Реальное добавление машины (E2E Playwright)")
-def test_real_add_car_success(page: Page, temp_user, car_cleanup, sys_logger): # <-- Добавили temp_user
+def test_real_add_car_success(page: Page, temp_user, car_cleanup): # <-- Добавили temp_user
     car = CarGenerator.get_random_car()
     # Машина создаётся через UI — номер регистрируем, чтобы фабрика удалила её после теста
     car_cleanup.register(car.reg_number)
-    sys_logger.info(f"Playwright будет создавать машину: {car}")
-    user = temp_user["user"] # <-- Берем чистые креды
+    logger.info(f"Playwright будет создавать машину: {car}")
+    user = temp_user.user # <-- Берем чистые креды
 
     with allure.step("Авторизация"):
         login_page = PwLoginPage(page)
@@ -33,7 +36,7 @@ def test_real_add_car_success(page: Page, temp_user, car_cleanup, sys_logger): #
 
     with allure.step("Проверка через ожидание очистки формы"):
         add_car_page.check_form_cleared()
-        sys_logger.info(f"Машина с номером {car.reg_number} успешно добавлена через Playwright!")
+        logger.info(f"Машина с номером {car.reg_number} успешно добавлена через Playwright!")
 
 
 @pytest.mark.hybrid
@@ -43,7 +46,7 @@ def test_real_add_car_success(page: Page, temp_user, car_cleanup, sys_logger): #
 @allure.story("API Setup -> UI Duplicate Check (Negative)")
 @allure.title("Создание дубликата машины (Playwright + API)")
 def test_pw_add_car_duplicate(page: Page, temp_user, create_car): # <-- Заменили auth_api на temp_user
-    user = temp_user["user"] # <-- Достаем UI-креды песочницы (create_car создаёт машину у него же)
+    user = temp_user.user # <-- Достаем UI-креды песочницы (create_car создаёт машину у него же)
 
     with allure.step("API PRECONDITION: Создаем машину"):
         car = create_car()

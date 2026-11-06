@@ -29,8 +29,13 @@ pytest -m api                                # только API-тесты
 pytest --collect-only -q                     # сколько тестов собирается
 ```
 
-Если `USE_SELENOID=true`, а Selenoid не запущен, Selenium-тесты сразу падают с ERROR и подсказкой
-(проверка хаба — один раз на воркер); API- и Playwright-тесты идут как обычно.
+Если `USE_SELENOID=true`, а Selenoid не запущен, Selenium-тесты падают с ERROR и подсказкой
+(хаб ждём до 10 с один раз на воркер, остальные тесты воркера падают сразу); API- и Playwright-тесты
+идут как обычно.
+
+Логи: обычный запуск → `logs/pytest.log`, воркеры xdist → `logs/pytest_gw0.log`, `pytest_gw1.log`…
+(главный процесс xdist файла не пишет; файлы прошлого прогона удаляются при старте). Журнал фабрики
+машин — `logs/car_factory.jsonl`. `ENABLE_CONSOLE_LOGS=true` включает живые логи в консоли (без `-n`).
 
 Docker (Selenoid), подробности — в `commands.md`:
 
@@ -49,6 +54,18 @@ TEST_MARKER=smoke docker compose up --build --exit-code-from qa-framework
   импортирует `from config import settings`. Новая настройка — поле в `Settings` и строка в `.env.example`.
 - **Комментарии, docstring'и, сообщения в assert'ах и логах — на русском.** Комментарий объясняет,
   ПОЧЕМУ код такой, а не пересказывает его.
+- **Логи — только стандартный `logging`, без `print`:** в модуле `logger = logging.getLogger(__name__)`.
+  Обработчики, форматы и уровни настраивают `pytest.ini` и `pytest_configure` в `conftest.py`;
+  свои обработчики и логгеры-фикстуры не заводи. `print` допустим только в консольных скриптах
+  (`merge_code.py`, `make_readme.py`, `research/`, `scripts/`).
+- **Ожидания — по состоянию, без фиксированных пауз:** `WebDriverWait`/`expected_conditions` в Selenium,
+  `expect()` и автоожидания локаторов в Playwright (элемент появился или исчез, поле заполнено, URL
+  сменился, запрос ушёл). `time.sleep` и `page.wait_for_timeout` запрещены; в синхронном Playwright
+  `time.sleep` недопустим вообще. Исключение — пауза, у которой нет наблюдаемого состояния: только
+  с комментарием «почему» рядом (пример — 1,5 с перед закрытием браузера Selenoid в `conftest.py`).
+- **Пользователь теста — `TempUser`** (dataclass из `conftest.py`, поля `user` и `api`); у
+  `second_user` есть ещё `cleanup`. Обращение — атрибутами: `temp_user.user.email`, `second_user.api`,
+  а не `temp_user["user"]`.
 - **Коммиты — Conventional Commits** (`feat`, `fix`, `refactor`, `test`, `ci`, `build`, `chore`, `docs`),
   заголовок на английском, без даты.
 - **Ожидаемый результат теста берётся из источников по убыванию силы:** 1) Swagger

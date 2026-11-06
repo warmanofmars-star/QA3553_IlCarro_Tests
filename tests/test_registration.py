@@ -1,9 +1,12 @@
+import logging
 import pytest
 import allure
 from pages.registration_page import RegistrationPage
 from data.data_generator import UserGenerator
 from data.known_bugs import known_bug
 from utils.preconditions import require
+
+logger = logging.getLogger(__name__)
 
 pytestmark = pytest.mark.ui
 
@@ -36,7 +39,6 @@ def test_registration_success(driver):
     assert registration_page.confirmation_text() == "Registered", "Заголовок об успехе не появился!"
     assert registration_page.confirmation_text_1() == "You are logged in success", "Текст успешного входа не совпадает!"
     registration_page.close_window()
-    UserGenerator.save_created_user(user)
 
 
 @pytest.mark.regression
@@ -79,7 +81,7 @@ def test_registration_negative_fields(driver, field_name, invalid_value, expecte
     ("same_password", "Занятый email + Тот же пароль"),
     ("new_valid_password", "Занятый email + Другой пароль (валидный и для фронта, и для API)"),
 ])
-def test_registration_existing_user(driver, temp_user, password_strategy, scenario, sys_logger):
+def test_registration_existing_user(driver, temp_user, password_strategy, scenario):
     """
     Повторная регистрация занятого email отклоняется (REQ-AUTH-04), окно «Registration failed»
     показывает текст ошибки сервера (REQ-UI-REG-03). Пароль проходит правила и фронта, и API
@@ -89,7 +91,7 @@ def test_registration_existing_user(driver, temp_user, password_strategy, scenar
         registration_page = RegistrationPage(driver)
 
         # 1. Забираем уже зарегистрированного юзера из песочницы
-        existing_user = temp_user["user"]
+        existing_user = temp_user.user
 
         # 2. Определяем пароль для попытки повторной регистрации
         if password_strategy == "same_password":
@@ -109,7 +111,7 @@ def test_registration_existing_user(driver, temp_user, password_strategy, scenar
     with allure.step("Проверка окна ошибки"):
         title = registration_page.confirmation_text()
         actual_error_details = registration_page.confirmation_text_1()
-        sys_logger.info(f"Окно: '{title}' / '{actual_error_details}'")
+        logger.info(f"Окно: '{title}' / '{actual_error_details}'")
 
         assert title == "Registration failed", f"Бэкенд не отбил регистрацию занятого email! Заголовок окна: '{title}'"
         assert "User already exists" in actual_error_details,             f"Ожидали текст 'User already exists', а получили '{actual_error_details}'"
@@ -122,7 +124,7 @@ def test_registration_existing_user(driver, temp_user, password_strategy, scenar
 @allure.severity(allure.severity_level.NORMAL)
 @known_bug("PASSWORD_RULES_MISMATCH")
 @allure.tag("DISC-01", "REQ-UI-REG-03")
-def test_registration_password_rejected_by_api(driver, sys_logger):
+def test_registration_password_rejected_by_api(driver):
     """
     Пароль, который фронт пропускает (не короче 6, буква и цифра), а API отклоняет (нет заглавной
     и спецсимвола, короче 8) — DISC-01. Окно ошибки должно показать читаемый текст ошибки сервера
@@ -144,7 +146,7 @@ def test_registration_password_rejected_by_api(driver, sys_logger):
         title = registration_page.confirmation_text()
         require(title == "Registration failed", f"Ожидали окно 'Registration failed', получили '{title}'")
         details = registration_page.confirmation_text_1()
-        sys_logger.info(f"Текст окна ошибки: '{details}'")
+        logger.info(f"Текст окна ошибки: '{details}'")
 
         assert details.strip() and "[object Object]" not in details,             f"Текст окна ошибки нечитаемый: '{details}'"
 

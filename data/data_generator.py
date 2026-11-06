@@ -1,17 +1,15 @@
+import logging
 import random
 import uuid
-from pathlib import Path
 import string
-import json
 from datetime import datetime, timedelta
 from faker import Faker
 
 from models.user import User
 from api.car_api import IlCarroAPI
 from models.car import Car
-from utils.logger import get_logger
 
-logger = get_logger("DATA")
+logger = logging.getLogger(__name__)
 
 # Инициализируем Faker один раз
 fake = Faker('en_US')
@@ -55,27 +53,6 @@ class UserGenerator:
 
         data.update(overrides)
         return User(**data)
-
-    @staticmethod
-    def save_created_user(user: User):
-        """Сохраняет данные успешно зарегистрированного пользователя в файл.
-
-        Пароль намеренно не пишется: файл лежит открытым текстом и мог бы попасть в артефакты или архивы.
-        """
-        user_data = {
-            "name": user.name,
-            "last_name": user.last_name,
-            "email": user.email,
-        }
-
-        project_root = Path(__file__).resolve().parent.parent
-        log_dir = project_root / "logs"
-        log_dir.mkdir(exist_ok=True)
-
-        filepath = log_dir / "registered_users.jsonl"
-
-        with open(filepath, "a", encoding="utf-8") as f:
-            f.write(json.dumps(user_data) + "\n")
 
 
 class SearchDataGenerator:

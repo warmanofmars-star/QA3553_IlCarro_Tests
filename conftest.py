@@ -1,5 +1,8 @@
+import logging
 import os
 import time
+from dataclasses import dataclass
+
 import pytest
 import allure
 import requests
@@ -7,25 +10,65 @@ from selenium import webdriver
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.events import EventFiringWebDriver
-from config import settings
+from selenium.webdriver.support.wait import WebDriverWait
+from config import PROJECT_ROOT, settings
 from utils.listener import IlCarroListener
 from api.car_api import IlCarroAPI
 from pages.login_page import LoginPage
 from data.data_generator import CarGenerator, UserGenerator
 from models.car import Car
+from models.user import User
 from utils.car_cleanup import CarCleanup, journal_summary, reset_journal
-from utils.logger import get_logger
 from utils.preconditions import require
 
-def pytest_configure(config):
-    """Главный процесс (или обычный запуск) очищает журнал фабрики машин прошлого прогона.
+logger = logging.getLogger(__name__)
 
-    Воркеры xdist тоже вызывают этот хук, но позже главного процесса: им журнал трогать нельзя,
-    иначе стёрлись бы записи соседних воркеров.
+LOG_DIR = PROJECT_ROOT / "logs"
+
+# Сторонние библиотеки на уровне INFO/DEBUG пишут много служебного шума и топят логи тестов
+NOISY_LOGGERS = ("urllib3", "selenium", "faker", "asyncio", "charset_normalizer", "filelock")
+
+# Ожидания состояний окружения (секунды). WebDriverWait здесь — просто опрос условия с таймаутом,
+# драйвер ему не нужен. Значения сохраняют прежний запас: 5 попыток по 2 с и ~10 опросов видео.
+SELENOID_WAKE_TIMEOUT = 10
+VIDEO_WAIT_TIMEOUT = 20
+
+
+def pytest_configure(config):
+    """Настраивает логи и журнал фабрики машин для текущего процесса pytest.
+
+    При запуске с xdist тесты выполняют несколько процессов-воркеров; пиши они в один файл,
+    строки перемешались бы. Поэтому:
+      * обычный запуск             -> logs/pytest.log
+      * воркер xdist (gw0, gw1...) -> logs/pytest_gw0.log, logs/pytest_gw1.log, ...
+      * главный процесс xdist      -> файла нет: сам он тесты не выполняет
+    Явно переданный --log-file имеет приоритет. Формат и уровни — в pytest.ini.
+
+    Главный процесс стартует раньше воркеров, поэтому только он удаляет файлы прошлого прогона
+    (логи и журнал фабрики машин): воркер стёр бы записи соседей.
     """
+    for name in NOISY_LOGGERS:
+        logging.getLogger(name).setLevel(logging.WARNING)
+
+    # Живые логи в консоли включает настройка из config.py; явный --log-cli-level важнее
+    if settings.enable_console_logs and config.getoption("log_cli_level") is None:
+        config.option.log_cli_level = "INFO"
+
+    is_xdist_controller = not settings.is_xdist_worker and bool(config.getoption("numprocesses", default=None))
+
     if not settings.is_xdist_worker:
+        LOG_DIR.mkdir(exist_ok=True)
+        for old_log in LOG_DIR.glob("*.log"):
+            old_log.unlink(missing_ok=True)
         reset_journal()
+
+    if config.option.log_file or is_xdist_controller:
+        return
+    # workerinput есть только у воркера xdist; так id берётся у самого xdist, а не из окружения
+    worker_id = getattr(config, "workerinput", {}).get("workerid")
+    config.option.log_file = str(LOG_DIR / (f"pytest_{worker_id}.log" if worker_id else "pytest.log"))
 
 
 def pytest_terminal_summary(terminalreporter):
@@ -61,10 +104,14 @@ def selenoid_hub():
     hub_url = settings.selenoid_hub_url
     error = None
     try:
+        # В docker compose Selenoid может подниматься чуть дольше контейнера с тестами, поэтому
+        # хаб опрашивается до SELENOID_WAKE_TIMEOUT секунд, а не один раз.
         # Достаточно любого HTTP-ответа: нам важно, что по адресу кто-то слушает, а не что вернул /status
-        requests.get(f"{hub_url}/status", timeout=3)
-    except requests.RequestException as exc:
-        error = type(exc).__name__
+        WebDriverWait(
+            None, SELENOID_WAKE_TIMEOUT, poll_frequency=0.5, ignored_exceptions=(requests.RequestException,)
+        ).until(lambda _: requests.get(f"{hub_url}/status", timeout=3))
+    except TimeoutException:
+        error = f"не ответил за {SELENOID_WAKE_TIMEOUT} с"
     if error:
         # fail() вызывается вне except: иначе pytest печатает длинную цепочку исключений requests/urllib3
         pytest.fail(
@@ -108,7 +155,7 @@ def driver(request):  # <--- Добавили request
         if use_selenoid:
             # Фикстура подключается только здесь: API- и Playwright-тестам хаб не нужен
             request.getfixturevalue("selenoid_hub")
-            print(f"\n[INFO] Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: {browser_name}...")
+            logger.info(f"Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: {browser_name}")
 
             # Подготавливаем опции в зависимости от браузера
             if browser_name == "firefox":
@@ -129,22 +176,9 @@ def driver(request):  # <--- Добавили request
                 "enableVideo": True,
             })
 
-            hub_url = settings.selenoid_hub_url
-
-            # Ожидание готовности Selenoid
-            for attempt in range(5):
-                try:
-                    driver_instance = webdriver.Remote(
-                        command_executor=hub_url,
-                        options=options
-                    )
-                    break
-                except Exception as e:
-                    if attempt == 4:
-                        raise e
-                    print(f"\n[INFO] Ждем пробуждения Selenoid (попытка {attempt + 1})...")
-                    time.sleep(2)
-
+            # Готовность хаба уже дождалась фикстура selenoid_hub; запуск контейнера браузера
+            # Selenoid ждёт сам, поэтому ошибка здесь — настоящая, а не «хаб ещё спит»
+            driver_instance = webdriver.Remote(command_executor=settings.selenoid_hub_url, options=options)
             session_id = driver_instance.session_id
 
         else:
@@ -167,7 +201,7 @@ def driver(request):  # <--- Добавили request
                     options.add_argument('--window-size=1920,1080')
                     driver_instance = webdriver.Chrome(options=options)
             except Exception as e:
-                print(f"\n[WARNING] Браузер {browser_name} не запустился. Причина: {e}")
+                logger.warning(f"Браузер {browser_name} не запустился. Причина: {e}")
                 raise e
 
     if not is_headless and not use_selenoid:
@@ -181,31 +215,52 @@ def driver(request):  # <--- Добавили request
     yield decorated_driver
 
     if use_selenoid:
+        # Осознанная фиксированная пауза: рекордер Selenoid пишет экран с задержкой, и без неё
+        # в видео не попадают последние кадры теста. Состояния «кадры записаны», которого можно
+        # дождаться, Selenoid наружу не отдаёт.
         time.sleep(1.5)
 
     decorated_driver.quit()
 
     # === ИНТЕГРАЦИЯ ВИДЕО В ALLURE ===
     if use_selenoid and session_id:
-        video_dir = settings.video_dir
-        video_path = os.path.join(video_dir, f"{session_id}.mp4")
+        video_path = os.path.join(settings.video_dir, f"{session_id}.mp4")
+        video = _read_finished_video(video_path)
+        if video is None:
+            logger.warning(f"Видео ({browser_name}) не готово за {VIDEO_WAIT_TIMEOUT} с: {video_path}")
+        else:
+            allure.attach(
+                video,
+                name=f"Видео прохождения теста ({browser_name})",
+                attachment_type=allure.attachment_type.MP4
+            )
+            logger.info(f"Видео ({browser_name}) прикреплено к отчету")
 
-        for attempt in range(10):
-            if os.path.exists(video_path):
-                time.sleep(1)
-                try:
-                    with open(video_path, "rb") as video_file:
-                        allure.attach(
-                            video_file.read(),
-                            name=f"Видео прохождения теста ({browser_name})",
-                            # <-- Добавили имя браузера в название видео!
-                            attachment_type=allure.attachment_type.MP4
-                        )
-                    print(f"\n[INFO] Видео ({browser_name}) успешно прикреплено к отчету!")
-                    break
-                except Exception as e:
-                    print(f"\n[WARNING] Файл заблокирован, пробуем снова. Ошибка: {e}")
-            time.sleep(1)
+
+def _read_finished_video(video_path: str) -> bytes | None:
+    """Ждёт, пока Selenoid допишет видео сессии, и возвращает его содержимое (None — не дождались).
+
+    Видео дописывает отдельный контейнер уже после закрытия сессии: файл появляется не сразу и
+    какое-то время растёт. Готовым считается непустой файл, размер которого не изменился между
+    двумя опросами. Нет файла или он ещё занят записью (PermissionError на Windows) — не готов.
+    """
+    last_size = -1
+
+    def finished(_):
+        nonlocal last_size
+        size = os.path.getsize(video_path)
+        if size == 0 or size != last_size:
+            last_size = size
+            return False
+        with open(video_path, "rb") as video_file:
+            return video_file.read()
+
+    try:
+        return WebDriverWait(
+            None, VIDEO_WAIT_TIMEOUT, poll_frequency=1, ignored_exceptions=(OSError,)
+        ).until(finished)
+    except TimeoutException:
+        return None
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
@@ -224,7 +279,26 @@ def pytest_runtest_makereport(item, call):
             )
 
 
-def _register_temp_user(role: str) -> dict:
+@dataclass
+class TempUser:
+    """Временный пользователь и API-клиент, уже авторизованный под ним.
+
+    Раньше фикстура возвращала словарь {"user": ..., "api": ...}. С dataclass опечатка в имени
+    поля даёт понятную ошибку сразу, а IDE подсказывает поля.
+    """
+
+    user: User
+    api: IlCarroAPI
+
+
+@dataclass
+class SecondUser(TempUser):
+    """«Чужой» пользователь со своей очисткой машин (см. фикстуру second_user)."""
+
+    cleanup: CarCleanup
+
+
+def _register_temp_user(role: str) -> TempUser:
     """Регистрирует нового пользователя через API и возвращает его данные и авторизованный клиент."""
     user = UserGenerator.get_random_user()
     api = IlCarroAPI()
@@ -233,13 +307,12 @@ def _register_temp_user(role: str) -> dict:
         response = api.register(user.email, user.password)
         require(response.status_code == 200, f"Не удалось зарегистрировать {role}: {response.text}")
 
-    return {"user": user, "api": api}
+    return TempUser(user=user, api=api)
 
 
 @pytest.fixture
-def temp_user():
+def temp_user() -> TempUser:
     """Создает уникального пользователя через API для полной изоляции тестов."""
-    # Возвращаем словарь: и данные юзера, и готовую (авторизованную) API-сессию
     return _register_temp_user("временного пользователя")
 
 
@@ -247,13 +320,17 @@ def temp_user():
 def second_user(request):
     """Второй временный пользователь: «чужой» для проверок доступа (BOLA, подмена владельца).
 
-    У него своя очистка машин в ключе "cleanup": если из-за дефекта машина окажется у него,
+    У него своя очистка машин (поле cleanup): если из-за дефекта машина окажется у него,
     тест регистрирует её номер и здесь, и она не останется на общем бэкенде.
     """
-    data = _register_temp_user("второго пользователя")
-    data["cleanup"] = CarCleanup(data["api"], data["user"].email, request.node.nodeid)
+    registered = _register_temp_user("второго пользователя")
+    data = SecondUser(
+        user=registered.user,
+        api=registered.api,
+        cleanup=CarCleanup(registered.api, registered.user.email, request.node.nodeid),
+    )
     yield data
-    data["cleanup"].run()
+    data.cleanup.run()
 
 
 @pytest.fixture
@@ -263,7 +340,7 @@ def car_cleanup(temp_user, request):
     Тест, который создаёт машину не через create_car (через UI или «сырым» запросом, чтобы
     проверить сам ответ), регистрирует её номер: car_cleanup.register(car.reg_number).
     """
-    cleanup = CarCleanup(temp_user["api"], temp_user["user"].email, request.node.nodeid)
+    cleanup = CarCleanup(temp_user.api, temp_user.user.email, request.node.nodeid)
     yield cleanup
     cleanup.run()
 
@@ -280,7 +357,7 @@ def create_car(temp_user, car_cleanup):
     Все созданные машины удаляются после теста (см. car_cleanup). Ответ, отличный от 200, —
     сбой предусловия (require), а не найденный дефект.
     """
-    api = temp_user["api"]
+    api = temp_user.api
 
     def _create(*, extra_fields: dict | None = None, **overrides) -> Car:
         car = CarGenerator.get_random_car(**overrides)
@@ -305,7 +382,7 @@ def auth_api(temp_user):
     Фикстура-адаптер: берет изолированного API-клиента из песочницы (temp_user)
     и отдает его чистым API-тестам. Никаких изменений в самих тестах не потребуется!
     """
-    return temp_user["api"]
+    return temp_user.api
 
 
 @pytest.fixture
@@ -316,7 +393,7 @@ def authenticated_driver(driver, temp_user):
         login_page.open()
 
         # Берем данные уникального юзера из песочницы
-        user = temp_user["user"]
+        user = temp_user.user
 
         login_page.login(user.email, user.password)
         require(login_page.is_logout_button_visible(), "Setup Failed: Кнопка Logout не появилась после авторизации!")
@@ -356,8 +433,3 @@ def page(context):
             name="Видео Playwright",
             attachment_type=allure.attachment_type.MP4
         )
-
-@pytest.fixture(scope="session")
-def sys_logger():
-    """Глобальная фикстура логгера для тестов. Избавляет от дублирования импортов."""
-    return get_logger("TEST")

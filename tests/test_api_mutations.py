@@ -80,25 +80,25 @@ def test_api_car_mass_assignment(auth_api, create_car, second_user, temp_user):
     """
     start_date, end_date = SearchDataGenerator.get_safe_future_dates()
     spoofed_period = {
-        "email": second_user["user"].email,
+        "email": second_user.user.email,
         "startDate": start_date.strftime("%Y-%m-%d"),
         "endDate": end_date.strftime("%Y-%m-%d"),
     }
 
     with allure.step("Создаем машину с чужим owner и подложными bookedPeriods"):
-        car = create_car(extra_fields={"owner": second_user["user"].email, "bookedPeriods": [spoofed_period]})
+        car = create_car(extra_fields={"owner": second_user.user.email, "bookedPeriods": [spoofed_period]})
         # Если подмена сработает, машина окажется у второго пользователя — пусть его очистка её уберёт
-        second_user["cleanup"].register(car.reg_number)
+        second_user.cleanup.register(car.reg_number)
 
     with allure.step("Проверка: машина у создателя, owner — его email, bookedPeriods пуст"):
         owner_cars = my_cars(auth_api)
         assert car.reg_number in owner_cars, f"Машины {car.reg_number} нет в /v1/cars/my создателя"
         saved = owner_cars[car.reg_number]
-        assert saved.get("owner") == temp_user["user"].email, \
-            f"owner подменён из тела запроса: ожидали {temp_user['user'].email}, получили {saved.get('owner')}"
+        assert saved.get("owner") == temp_user.user.email, \
+            f"owner подменён из тела запроса: ожидали {temp_user.user.email}, получили {saved.get('owner')}"
         assert not saved.get("bookedPeriods"), \
             f"bookedPeriods взят из тела запроса: {saved.get('bookedPeriods')}"
 
     with allure.step("Проверка: у пользователя из подложного owner этой машины нет"):
-        assert car.reg_number not in my_cars(second_user["api"]), \
+        assert car.reg_number not in my_cars(second_user.api), \
             f"Машина {car.reg_number} появилась в /v1/cars/my пользователя из подложного owner"

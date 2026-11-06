@@ -1,9 +1,9 @@
+import logging
 import requests
 import allure
 from config import settings
-from utils.logger import get_logger
 
-logger = get_logger("API")
+logger = logging.getLogger(__name__)
 
 
 class IlCarroAPI:

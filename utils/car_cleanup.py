@@ -18,16 +18,15 @@
 печатает итог: сколько машин создано и сколько удалено (см. pytest_terminal_summary в conftest.py).
 """
 
+import logging
 import json
-import os
 from dataclasses import asdict, dataclass, field
 
 import allure
 
-from config import PROJECT_ROOT
-from utils.logger import get_logger
+from config import PROJECT_ROOT, settings
 
-logger = get_logger("CARS")
+logger = logging.getLogger(__name__)
 
 JOURNAL_FILE = PROJECT_ROOT / "logs" / "car_factory.jsonl"
 
@@ -129,7 +128,7 @@ class CarCleanup:
         """Одна строка JSON на тест. Короткая запись в режиме append безопасна для воркеров xdist."""
         try:
             JOURNAL_FILE.parent.mkdir(exist_ok=True)
-            record = asdict(report) | {"worker": os.environ.get("PYTEST_XDIST_WORKER", "main")}
+            record = asdict(report) | {"worker": settings.xdist_worker_id}
             with open(JOURNAL_FILE, "a", encoding="utf-8") as journal:
                 journal.write(json.dumps(record, ensure_ascii=False) + "\n")
         except OSError as exc:
