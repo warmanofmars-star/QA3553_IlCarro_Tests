@@ -12,9 +12,31 @@ from config import settings
 from utils.listener import IlCarroListener
 from api.car_api import IlCarroAPI
 from pages.login_page import LoginPage
-from data.data_generator import UserGenerator
+from data.data_generator import CarGenerator, UserGenerator
+from models.car import Car
+from utils.car_cleanup import CarCleanup, journal_summary, reset_journal
 from utils.logger import get_logger
 from utils.preconditions import require
+
+def pytest_configure(config):
+    """Главный процесс (или обычный запуск) очищает журнал фабрики машин прошлого прогона.
+
+    Воркеры xdist тоже вызывают этот хук, но позже главного процесса: им журнал трогать нельзя,
+    иначе стёрлись бы записи соседних воркеров.
+    """
+    if not settings.is_xdist_worker:
+        reset_journal()
+
+
+def pytest_terminal_summary(terminalreporter):
+    """Итог фабрики машин: сколько создано и сколько удалено. Печатает главный процесс после всех воркеров."""
+    if settings.is_xdist_worker:
+        return
+    summary = journal_summary()
+    if summary:
+        terminalreporter.write_sep("-", "очистка машин")
+        terminalreporter.write_line(summary)
+
 
 # 👇 Учим pytest понимать флаг --browser_name
 def pytest_addoption(parser):
@@ -202,18 +224,79 @@ def pytest_runtest_makereport(item, call):
             )
 
 
-@pytest.fixture
-def temp_user():
-    """Создает уникального пользователя через API для полной изоляции тестов."""
+def _register_temp_user(role: str) -> dict:
+    """Регистрирует нового пользователя через API и возвращает его данные и авторизованный клиент."""
     user = UserGenerator.get_random_user()
     api = IlCarroAPI()
 
-    with allure.step(f"Setup Fixture: Генерация временного пользователя {user.email}"):
+    with allure.step(f"Setup Fixture: Генерация {role} {user.email}"):
         response = api.register(user.email, user.password)
-        require(response.status_code == 200, f"Не удалось зарегистрировать временного юзера: {response.text}")
+        require(response.status_code == 200, f"Не удалось зарегистрировать {role}: {response.text}")
 
-    # Возвращаем словарь: и данные юзера, и готовую (авторизованную) API-сессию
     return {"user": user, "api": api}
+
+
+@pytest.fixture
+def temp_user():
+    """Создает уникального пользователя через API для полной изоляции тестов."""
+    # Возвращаем словарь: и данные юзера, и готовую (авторизованную) API-сессию
+    return _register_temp_user("временного пользователя")
+
+
+@pytest.fixture
+def second_user(request):
+    """Второй временный пользователь: «чужой» для проверок доступа (BOLA, подмена владельца).
+
+    У него своя очистка машин в ключе "cleanup": если из-за дефекта машина окажется у него,
+    тест регистрирует её номер и здесь, и она не останется на общем бэкенде.
+    """
+    data = _register_temp_user("второго пользователя")
+    data["cleanup"] = CarCleanup(data["api"], data["user"].email, request.node.nodeid)
+    yield data
+    data["cleanup"].run()
+
+
+@pytest.fixture
+def car_cleanup(temp_user, request):
+    """Очистка машин temp_user после теста.
+
+    Тест, который создаёт машину не через create_car (через UI или «сырым» запросом, чтобы
+    проверить сам ответ), регистрирует её номер: car_cleanup.register(car.reg_number).
+    """
+    cleanup = CarCleanup(temp_user["api"], temp_user["user"].email, request.node.nodeid)
+    yield cleanup
+    cleanup.run()
+
+
+@pytest.fixture
+def create_car(temp_user, car_cleanup):
+    """Фабрика: создаёт машину через API у temp_user и возвращает её данные (Car).
+
+    Фикстура возвращает ФУНКЦИЮ, поэтому тест создаёт сколько угодно машин с нужными полями:
+
+        car = create_car(city="Sderot", price="250")
+        car = create_car(extra_fields={"owner": "x@example.com"})  # поля сверх CarDto генератора
+
+    Все созданные машины удаляются после теста (см. car_cleanup). Ответ, отличный от 200, —
+    сбой предусловия (require), а не найденный дефект.
+    """
+    api = temp_user["api"]
+
+    def _create(*, extra_fields: dict | None = None, **overrides) -> Car:
+        car = CarGenerator.get_random_car(**overrides)
+        payload = car.to_api_payload() | (extra_fields or {})
+        # Регистрируем до запроса: если ответ потеряется, а машина создастся, её всё равно удалят
+        car_cleanup.register(car.reg_number)
+        with allure.step(f"Setup: создание машины {car.reg_number} через API ({car.city})"):
+            response = api.add_car(payload)
+            require(
+                response.status_code == 200,
+                f"Предусловие: машина {car.reg_number} не создана: {response.status_code} {response.text}",
+            )
+        car_cleanup.mark_created(car.reg_number)
+        return car
+
+    return _create
 
 
 @pytest.fixture

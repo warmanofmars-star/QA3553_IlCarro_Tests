@@ -4,7 +4,6 @@ from playwright.sync_api import Page
 from pages.pw_login_page import PwLoginPage
 from pages.pw_add_car_page import PwAddCarPage
 from data.data_generator import CarGenerator
-from utils.preconditions import require
 
 pytestmark = pytest.mark.ui
 
@@ -13,8 +12,10 @@ pytestmark = pytest.mark.ui
 @allure.feature("Cars Management")
 @allure.story("Real E2E Car Addition")
 @allure.title("Реальное добавление машины (E2E Playwright)")
-def test_real_add_car_success(page: Page, temp_user, sys_logger): # <-- Добавили temp_user
+def test_real_add_car_success(page: Page, temp_user, car_cleanup, sys_logger): # <-- Добавили temp_user
     car = CarGenerator.get_random_car()
+    # Машина создаётся через UI — номер регистрируем, чтобы фабрика удалила её после теста
+    car_cleanup.register(car.reg_number)
     sys_logger.info(f"Playwright будет создавать машину: {car}")
     user = temp_user["user"] # <-- Берем чистые креды
 
@@ -41,15 +42,11 @@ def test_real_add_car_success(page: Page, temp_user, sys_logger): # <-- Доба
 @allure.feature("Playwright: Cars Management")
 @allure.story("API Setup -> UI Duplicate Check (Negative)")
 @allure.title("Создание дубликата машины (Playwright + API)")
-def test_pw_add_car_duplicate(page: Page, temp_user): # <-- Заменили auth_api на temp_user
-    car = CarGenerator.get_random_car()
-    api = temp_user["api"] # <-- Достаем API-клиента песочницы
-    user = temp_user["user"] # <-- Достаем UI-креды песочницы
+def test_pw_add_car_duplicate(page: Page, temp_user, create_car): # <-- Заменили auth_api на temp_user
+    user = temp_user["user"] # <-- Достаем UI-креды песочницы (create_car создаёт машину у него же)
 
     with allure.step("API PRECONDITION: Создаем машину"):
-        # МАГИЯ ООП ЗДЕСЬ: используем .to_api_payload()
-        response = api.add_car(car.to_api_payload())
-        require(response.status_code == 200, f"Не удалось создать машину через API: {response.text}")
+        car = create_car()
 
     with allure.step("UI SCENARIO: Пытаемся создать ту же машину через UI"):
         login_page = PwLoginPage(page)

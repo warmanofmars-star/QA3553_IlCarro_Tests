@@ -2,7 +2,6 @@ import allure
 import pytest
 from pages.add_car_page import AddCarPage
 from data.data_generator import CarGenerator
-from utils.preconditions import require
 
 pytestmark = pytest.mark.ui
 
@@ -15,7 +14,7 @@ pytestmark = pytest.mark.ui
     ("Petrol", "Economy", "Добавление бензиновой машины эконом-класса"),
     ("Electric", "Premium", "Добавление премиального электрокара")
 ])
-def test_add_car_success(authenticated_driver, fuel_type, car_class, scenario, sys_logger):
+def test_add_car_success(authenticated_driver, car_cleanup, fuel_type, car_class, scenario, sys_logger):
     with allure.step(f"Сценарий: {scenario}"):
         sys_logger.info(f"--- ЗАПУСК ТЕСТА: {scenario} ---")
         add_car_page = AddCarPage(authenticated_driver)
@@ -25,6 +24,8 @@ def test_add_car_success(authenticated_driver, fuel_type, car_class, scenario, s
 
         # МАГИЯ ДАТАКЛАССОВ В ДЕЙСТВИИ:
         sys_logger.info(f"Сгенерированные данные: {car}")
+        # Машина создаётся через UI — номер регистрируем, чтобы фабрика удалила её после теста
+        car_cleanup.register(car.reg_number)
 
         add_car_page.open()
 
@@ -47,12 +48,9 @@ def test_add_car_success(authenticated_driver, fuel_type, car_class, scenario, s
 @allure.feature("Add Car Page (Let the car work)")
 @allure.story("Negative Add Car - Duplicate Serial Number")
 @allure.severity(allure.severity_level.CRITICAL)
-def test_add_car_duplicate(authenticated_driver, auth_api, sys_logger):
+def test_add_car_duplicate(authenticated_driver, create_car, sys_logger):
     with allure.step("API PRECONDITION: Создаем машину через бэкенд"):
-        car = CarGenerator.get_random_car()
-
-        response = auth_api.add_car(car.to_api_payload())
-        require(response.status_code == 200, "Пререквизит упал: не удалось создать машину через API")
+        car = create_car()
         sys_logger.info(f"API успешно создал машину с номером: {car.reg_number}")
 
     with allure.step("UI SCENARIO: Пытаемся добавить машину с тем же номером"):
