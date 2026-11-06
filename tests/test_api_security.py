@@ -3,6 +3,7 @@ import allure
 from api.car_api import IlCarroAPI
 from data.data_generator import CarGenerator, UserGenerator
 from data.known_bugs import known_bug
+from utils.car_state import my_cars
 from utils.preconditions import require
 
 pytestmark = [pytest.mark.api, pytest.mark.security]
@@ -24,11 +25,10 @@ def test_api_security_auth_tokens(token_strategy, expected_status, scenario):
     Проверка того, как сервер отбивает неавторизованные запросы
     с разными проблемами в заголовке Authorization.
     """
+    # Сценарий "empty": клиент без заголовка Authorization — настраивать нечего
     api = IlCarroAPI()
 
-    if token_strategy == "empty":
-        pass
-    elif token_strategy == "invalid":
+    if token_strategy == "invalid":
         api.session.headers.update({"Authorization": "Bearer fake_invalid_token_123"})
     elif token_strategy == "wrong_scheme":
         temp_user = UserGenerator.get_random_user()
@@ -49,31 +49,49 @@ def test_api_security_auth_tokens(token_strategy, expected_status, scenario):
 @allure.feature("Security")
 @allure.story("BOLA (Broken Object Level Authorization)")
 @allure.severity(allure.severity_level.BLOCKER)
-def test_api_security_bola_delete():
+@allure.tag("REQ-CAR-09")
+def test_api_security_bola_delete(auth_api, create_car, second_user):
     """
-    Проверка на уязвимость BOLA (Insecure Direct Object References).
-    Пользователь 'А' создает машину. Пользователь 'Б' пытается её удалить.
+    Проверка на уязвимость BOLA (OWASP API1:2023).
+    Владелец (temp_user) создает машину, второй пользователь пытается её удалить.
+    Проверяем данные, а не код ответа: машина должна остаться у владельца (REQ-CAR-09).
+    Код ответа проверяет test_api_security_bola_delete_status.
     """
-    user_a = UserGenerator.get_random_user()
-    api_a = IlCarroAPI()
-    api_a.register(user_a.email, user_a.password)
+    car = create_car()
+    # Если из-за уязвимости машина «переедет» к второму пользователю, её уберёт его очистка
+    second_user["cleanup"].register(car.reg_number)
 
-    car_a = CarGenerator.get_random_car()
-    api_a.add_car(car_a.to_api_payload())
-    serial_number_a = car_a.reg_number
+    with allure.step("Уязвимость BOLA: второй пользователь пытается удалить машину владельца"):
+        response = second_user["api"].delete_car(car.reg_number)
 
-    user_b = UserGenerator.get_random_user()
-    api_b = IlCarroAPI()
-    api_b.register(user_b.email, user_b.password)
+    with allure.step("Проверка: машина осталась в /v1/cars/my владельца"):
+        assert car.reg_number in my_cars(auth_api),             f"КРИТИЧЕСКАЯ УЯЗВИМОСТЬ BOLA! Второй пользователь удалил чужую машину. Ответ: {response.status_code} {response.text}"
 
-    with allure.step("Уязвимость BOLA: Пользователь 'Б' пытается удалить машину Пользователя 'А'"):
-        response = api_b.delete_car(serial_number_a)
 
-    with allure.step("Проверка: Сервер должен запретить удаление чужой машины (403/400)"):
-        assert response.status_code != 200, "КРИТИЧЕСКАЯ УЯЗВИМОСТЬ BOLA! Пользователь Б удалил машину Пользователя А!"
-        assert response.status_code in [400, 403, 404], f"Ожидался статус запрета, получен {response.status_code}"
+@pytest.mark.regression
+@allure.epic("API Testing")
+@allure.feature("Security")
+@allure.story("BOLA (Broken Object Level Authorization)")
+@allure.severity(allure.severity_level.NORMAL)
+@known_bug("NOT_FOUND_400")
+@allure.tag("REQ-CAR-10")
+def test_api_security_bola_delete_status(auth_api, create_car, second_user):
+    """
+    Код ответа на удаление чужой машины: 404, чтобы не раскрывать факт её существования
+    (REQ-CAR-10, RFC 9110 §15.5.5).
+    """
+    car = create_car()
+    second_user["cleanup"].register(car.reg_number)
 
-    api_a.delete_car(serial_number_a)
+    with allure.step("Второй пользователь пытается удалить машину владельца"):
+        response = second_user["api"].delete_car(car.reg_number)
+
+    with allure.step("Предусловие: машина осталась у владельца (иначе это BOLA, а не код ответа)"):
+        # Сохранность машины — другое требование (REQ-CAR-09): его нарушение не должно уйти в xfail
+        require(car.reg_number in my_cars(auth_api), "Машина пропала у владельца после удаления вторым пользователем")
+
+    with allure.step("Проверка: сервер ответил 404 Not Found"):
+        assert response.status_code == 404,             f"Ожидался 404 для чужой машины, сервер вернул {response.status_code}. Ответ: {response.text}"
 
 
 @pytest.mark.regression
@@ -83,21 +101,18 @@ def test_api_security_bola_delete():
 @allure.severity(allure.severity_level.NORMAL)
 @known_bug("NOT_FOUND_400")
 @allure.tag("REQ-CAR-10")
-def test_api_idempotency_delete(auth_api):
+def test_api_idempotency_delete(auth_api, create_car):
     """
     Повторное удаление уже удалённой машины: ожидаем 404 (REQ-CAR-10, RFC 9110 §15.5.5).
     """
-    car = CarGenerator.get_random_car()
-    serial_number = car.reg_number
-
-    with allure.step("Пререквизит: Создаем машину"):
-        res_add = auth_api.add_car(car.to_api_payload())
-        require(res_add.status_code == 200, f"Не удалось создать машину: {res_add.text}")
+    serial_number = create_car().reg_number
 
     with allure.step("Шаг 1: Удаляем машину (Первый запрос)"):
         res_first = auth_api.delete_car(serial_number)
         # Первое удаление — предусловие: баг REQ-CAR-10 касается только повторного удаления
         require(res_first.status_code == 200, f"Первое удаление провалилось: {res_first.text}")
+
+        require(serial_number not in my_cars(auth_api), "После первого удаления машина осталась в /v1/cars/my")
 
     with allure.step("Шаг 2: Удаляем ту же машину (Повторный запрос)"):
         res_second = auth_api.delete_car(serial_number)
@@ -113,12 +128,14 @@ def test_api_idempotency_delete(auth_api):
 @allure.severity(allure.severity_level.NORMAL)
 @known_bug("UNKNOWN_ROUTE_403")
 @allure.tag("REQ-SEC-05")
-def test_api_security_method_not_allowed(auth_api):
+def test_api_security_method_not_allowed(auth_api, car_cleanup):
     """
     Проверка 16 из статьи: Сервер должен блокировать неподдерживаемые HTTP-методы.
     Пытаемся обновить машину через неподдерживаемый метод PUT.
     """
     car = CarGenerator.get_random_car()
+    # Машина не должна создаться; если всё же создастся, очистка её уберёт
+    car_cleanup.register(car.reg_number)
 
     with allure.step("Отправляем PUT-запрос вместо POST на эндпоинт создания машины"):
         url = f"{auth_api.BASE_URL}/v1/cars"
