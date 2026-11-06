@@ -1,2 +1,0 @@
-[32;20m[2026-11-05 19:39:56] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-79323B2A][0m
-[31;20m[2026-11-05 19:39:56] [ERROR] [API] - Ошибка создания машины IL-79323B2A: 403 - [0m

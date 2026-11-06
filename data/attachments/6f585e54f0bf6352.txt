@@ -1,0 +1,4 @@
+09:32:19 [INFO   ] conftest: Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: firefox
+09:32:21 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+09:32:22 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'dates'
+09:32:28 [INFO   ] conftest: Видео (firefox) прикреплено к отчету

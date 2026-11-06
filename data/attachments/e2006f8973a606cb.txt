@@ -1,0 +1,11 @@
+09:31:05 [INFO   ] conftest: Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: firefox
+09:31:07 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/search?page=0&size=10
+09:31:08 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'dates'
+09:31:09 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'dates'
+09:31:09 [INFO   ] utils.listener: Клик по элементу <input> с текстом: ''
+09:31:09 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.daterange-popover'
+09:31:09 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.rdrDayToday'
+09:31:09 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'city'
+09:31:09 [INFO   ] utils.listener: Клик по элементу <input> с текстом: ''
+09:31:09 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '.daterange-popover'
+09:31:13 [INFO   ] conftest: Видео (firefox) прикреплено к отчету

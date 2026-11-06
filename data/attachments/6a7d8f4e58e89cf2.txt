@@ -1,0 +1,28 @@
+09:32:46 [INFO   ] conftest: Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: chrome
+09:32:48 [INFO   ] utils.listener: Переход по ссылке: https://icarro-v1.netlify.app/register
+09:32:48 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='firstName']'
+09:32:49 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='firstName']'
+09:32:49 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:32:49 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:32:49 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='lastName']'
+09:32:49 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:32:49 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:32:49 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='username']'
+09:32:49 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:32:49 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:32:49 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: '[name='password']'
+09:32:49 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:32:49 [INFO   ] utils.listener: Ввод данных в поле формы...
+09:32:49 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'terms-of-use'
+09:32:49 [INFO   ] utils.listener: Поиск элемента -> By: id, Value: 'terms-of-use'
+09:32:49 [INFO   ] utils.listener: Клик по элементу <input> с текстом: ''
+09:32:49 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'body'
+09:32:49 [INFO   ] utils.listener: Клик по фону <body> (снятие фокуса/сабмит)
+09:32:49 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'button[type='submit']'
+09:32:49 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'button[type='submit']'
+09:32:49 [INFO   ] utils.listener: Клик по элементу <button> с текстом: 'Y’alla!'
+09:32:49 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'h3'
+09:32:50 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'h3'
+09:32:50 [INFO   ] utils.listener: Поиск элемента -> By: css selector, Value: 'p'
+09:32:50 [INFO   ] tests.test_registration: Текст окна ошибки: '"[object Object]"'
+09:32:56 [INFO   ] conftest: Видео (chrome) прикреплено к отчету

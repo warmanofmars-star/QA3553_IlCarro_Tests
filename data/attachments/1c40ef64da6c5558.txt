@@ -1,0 +1,15 @@
+09:31:03 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_be6a0bf015@example.com]
+09:31:03 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
+09:31:03 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/user/registration/usernamepassword [Регистрация: user_38cf85c01a@example.com]
+09:31:04 [INFO   ] api.car_api: Регистрация успешна (Token получен и вшит в сессию)
+09:31:04 [INFO   ] api.car_api: POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-D6CD7959]
+09:31:04 [INFO   ] api.car_api: Машина IL-D6CD7959 успешно создана в БД
+09:31:04 [INFO   ] api.car_api: DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-D6CD7959 [Удаление машины: IL-D6CD7959]
+09:31:04 [ERROR  ] api.car_api: Ошибка удаления машины IL-D6CD7959: 400 - {"timestamp":"2026-11-06T09:31:04","status":400,"error":"Bad Request","message":"Car with serial number IL-D6CD7959 not found","path":"/v1/cars/IL-D6CD7959"}
+09:31:04 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:31:04 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:31:04 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:31:04 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]
+09:31:04 [INFO   ] api.car_api: DELETE https://ilcarro-backend.herokuapp.com/v1/cars/IL-D6CD7959 [Удаление машины: IL-D6CD7959]
+09:31:04 [INFO   ] api.car_api: Машина IL-D6CD7959 успешно удалена
+09:31:04 [INFO   ] api.car_api: GET https://ilcarro-backend.herokuapp.com/v1/cars/my [Запрос списка своих машин]

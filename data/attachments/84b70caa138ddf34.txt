@@ -1,2 +1,0 @@
-[32;20m[2026-11-05 19:40:06] [INFO] [API] - POST https://ilcarro-backend.herokuapp.com/v1/cars [Создание машины: IL-E4CC81FB][0m
-[31;20m[2026-11-05 19:40:07] [ERROR] [API] - Ошибка создания машины IL-E4CC81FB: 403 - [0m
