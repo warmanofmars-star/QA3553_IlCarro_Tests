@@ -20,12 +20,11 @@
 
 import logging
 import json
-import os
 from dataclasses import asdict, dataclass, field
 
 import allure
 
-from config import PROJECT_ROOT
+from config import PROJECT_ROOT, settings
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +128,7 @@ class CarCleanup:
         """Одна строка JSON на тест. Короткая запись в режиме append безопасна для воркеров xdist."""
         try:
             JOURNAL_FILE.parent.mkdir(exist_ok=True)
-            record = asdict(report) | {"worker": os.environ.get("PYTEST_XDIST_WORKER", "main")}
+            record = asdict(report) | {"worker": settings.xdist_worker_id}
             with open(JOURNAL_FILE, "a", encoding="utf-8") as journal:
                 journal.write(json.dumps(record, ensure_ascii=False) + "\n")
         except OSError as exc:
