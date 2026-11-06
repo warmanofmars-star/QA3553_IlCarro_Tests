@@ -26,17 +26,6 @@ class ResultsPage(BasePage):
             message="Поисковый запрос не выполнился: URL не обновился!"
         )
 
-    @allure.step("Проверка, есть ли найденные машины")
-    def has_cars(self, timeout=3):  # <-- Обязательно добавляем timeout=3 в скобки!
-        try:
-            # Передаем наш timeout внутрь WebDriverWait
-            WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_element_located(self.CAR_CARD_LINK)
-            )
-            return True
-        except TimeoutException:
-            # Если за отведенное время карточки не появились — выдача действительно пустая
-            return False
 
     # --- ДЕЙСТВИЯ ---
     @allure.step("Показать выдачу по {size} карточек на странице")

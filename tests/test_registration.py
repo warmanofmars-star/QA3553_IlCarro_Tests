@@ -39,7 +39,6 @@ def test_registration_success(driver):
     assert registration_page.confirmation_text() == "Registered", "Заголовок об успехе не появился!"
     assert registration_page.confirmation_text_1() == "You are logged in success", "Текст успешного входа не совпадает!"
     registration_page.close_window()
-    UserGenerator.save_created_user(user)
 
 
 @pytest.mark.regression
