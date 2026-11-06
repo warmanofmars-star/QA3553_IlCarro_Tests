@@ -1,6 +1,8 @@
 import allure
 import pytest
 from api.car_api import IlCarroAPI
+from data.known_bugs import known_bug
+from utils.preconditions import require
 
 pytestmark = [pytest.mark.api, pytest.mark.regression, pytest.mark.contract]
 
@@ -20,13 +22,14 @@ FRONTEND_CITIES = [
 @allure.epic("Data Integrity")
 @allure.feature("Cross-System Dictionaries")
 @allure.title("Строгое соответствие словаря городов (Frontend vs Backend)")
-@pytest.mark.xfail(reason="Глобальный рассинхрон: Фронтенд использует захардкоженный список городов, отличный от БД")
+@known_bug("CITIES_MISMATCH")
+@allure.tag("DISC-02")
 def test_frontend_backend_cities_mapping():
     api = IlCarroAPI()
 
     with allure.step("1. Получаем словарь бэкенда"):
         response = api.get_cities()
-        assert response.status_code == 200, "API недоступно"
+        require(response.status_code == 200, "API недоступно")
         backend_cities = [city["city"] for city in response.json().get("cities", [])]
 
     with allure.step("2. Нормализация и сравнение списков"):

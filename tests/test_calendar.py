@@ -1,6 +1,7 @@
 import allure
 from pages.search_page import SearchPage
 import pytest
+from utils.preconditions import require
 
 pytestmark = [pytest.mark.ui, pytest.mark.regression]
 
@@ -31,7 +32,7 @@ def test_calendar_past_navigation_blocked(driver):
     search_page.open()
     search_page.click_dates_input()
 
-    assert search_page.is_calendar_visible() == True, "Календарь не открылся!"
+    require(search_page.is_calendar_visible(), "Календарь не открылся!")
 
     # 1. Запоминаем текущий месяц
     initial_month = search_page.get_current_month()
@@ -53,7 +54,7 @@ def test_calendar_month_navigation(driver):
     search_page.open()
     search_page.click_dates_input()
 
-    assert search_page.is_calendar_visible() == True, "Календарь не открылся!"
+    require(search_page.is_calendar_visible(), "Календарь не открылся!")
 
     initial_month = search_page.get_current_month()
 

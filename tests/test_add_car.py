@@ -2,6 +2,7 @@ import allure
 import pytest
 from pages.add_car_page import AddCarPage
 from data.data_generator import CarGenerator
+from utils.preconditions import require
 
 pytestmark = pytest.mark.ui
 
@@ -51,7 +52,7 @@ def test_add_car_duplicate(authenticated_driver, auth_api, sys_logger):
         car = CarGenerator.get_random_car()
 
         response = auth_api.add_car(car.to_api_payload())
-        assert response.status_code == 200, "Пререквизит упал: не удалось создать машину через API"
+        require(response.status_code == 200, "Пререквизит упал: не удалось создать машину через API")
         sys_logger.info(f"API успешно создал машину с номером: {car.reg_number}")
 
     with allure.step("UI SCENARIO: Пытаемся добавить машину с тем же номером"):

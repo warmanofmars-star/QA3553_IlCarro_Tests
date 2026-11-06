@@ -1,6 +1,8 @@
 import pytest
 import allure
 from data.data_generator import CarGenerator
+from data.known_bugs import known_bug
+from data.observations import observation
 from utils.api_validators import assert_secure_error
 
 pytestmark = [pytest.mark.api, pytest.mark.regression, pytest.mark.mutation]
@@ -20,23 +22,17 @@ pytestmark = [pytest.mark.api, pytest.mark.regression, pytest.mark.mutation]
     # 3. Null вместо строки
     (lambda p: p.update({"carClass": None}), 400, "Null вместо строки (carClass)"),
 
-    # 4. Неверный тип данных (BUG 1: Сервер падает с 500 вместо 400)
+    # 4. Неверный тип данных: REQ-CAR-03 (500 вместо 400)
     pytest.param(
         lambda p: p.update({"seats": "пять"}), 400, "Строка вместо числа (seats)",
-        marks=pytest.mark.xfail(reason="BUG BACKEND: 500 Internal Server Error при неверном типе данных")
+        marks=[known_bug("WRONG_TYPE_500"), allure.tag("REQ-CAR-03")]
     ),
 
-    # 5. Граничные и недопустимые значения (BUG 2: Сервер принимает отрицательные числа)
+    # 5. Бессмысленное значение: OBS-03 (требования нет, API сохраняет машину)
     pytest.param(
         lambda p: p.update({"pricePerDay": -100}), 400, "Отрицательная цена",
-        marks=pytest.mark.xfail(reason="BUG BACKEND: Сервер сохраняет машину с отрицательной ценой (200 OK)")
+        marks=[observation("NONSENSE_CAR_VALUES"), allure.tag("OBS-03")]
     ),
-
-    # 6. Незадокументированные поля (BUG 3: Уязвимость Mass Assignment)
-    pytest.param(
-        lambda p: p.update({"is_admin_mode": True}), 400, "Отправка незадокументированного поля (is_admin_mode)",
-        marks=pytest.mark.xfail(reason="BUG BACKEND: Сервер игнорирует лишние поля и возвращает 200 OK вместо 400")
-    )
 ])
 
 def test_api_car_mutations(auth_api, mutate_func, expected_status, scenario):

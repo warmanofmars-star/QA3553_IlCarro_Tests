@@ -2,6 +2,8 @@ import allure
 import datetime
 import pytest
 from api.car_api import IlCarroAPI
+from data.known_bugs import known_bug
+from utils.preconditions import require
 from data.data_generator import CarGenerator
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
@@ -81,6 +83,8 @@ def test_api_car_lifecycle(auth_api):
 @allure.feature("Car Controller")
 @allure.story("Negative - Unauthorized Access")
 @allure.severity(allure.severity_level.CRITICAL)
+@known_bug("NO_AUTH_403")
+@allure.tag("REQ-SEC-01")
 def test_api_add_car_unauthorized():
     api = IlCarroAPI()
     car_obj = CarGenerator.get_random_car()
@@ -88,9 +92,9 @@ def test_api_add_car_unauthorized():
     with allure.step("Попытка создать машину без токена авторизации"):
         response = api.add_car(car_obj.to_api_payload())
 
-    with allure.step("Проверка статуса 403 Forbidden (или 401)"):
-        assert response.status_code in [401, 403], \
-            f"Ожидался статус блокировки (401/403), но получен {response.status_code}"
+    with allure.step("Проверка: без токена сервер отвечает 401 Unauthorized"):
+        assert response.status_code == 401, \
+            f"Ожидался статус 401, но получен {response.status_code}"
 
 
 @pytest.mark.smoke
@@ -109,7 +113,7 @@ def test_api_car_booking_flow(auth_api):
 
     with allure.step("1. Создаем машину для бронирования"):
         response_add = auth_api.add_car(car_obj.to_api_payload())
-        assert response_add.status_code == 200, f"Не удалось создать машину: {response_add.text}"
+        require(response_add.status_code == 200, f"Не удалось создать машину: {response_add.text}")
 
     with allure.step(f"2. Ищем машины в городе {target_city} на заданные даты"):
         response_search = auth_api.search_cars(target_city, start_date, end_date)
