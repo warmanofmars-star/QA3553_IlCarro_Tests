@@ -1,9 +1,10 @@
 import allure
 import pytest
-from data.data_generator import CarGenerator, SearchDataGenerator
-from utils.preconditions import require
+from data.data_generator import SearchDataGenerator
 from pages.search_page import SearchPage
 from pages.results_page import ResultsPage
+from utils.price_format import UI_PRICE_PATTERN, ui_price
+from utils.search_helpers import RESULTS_PAGE_SIZE, require_city_fits_one_page
 
 pytestmark = pytest.mark.ui
 
@@ -13,46 +14,41 @@ pytestmark = pytest.mark.ui
 @allure.feature("Search functionality")
 @allure.story("API Setup -> UI Search -> API Teardown")
 @allure.severity(allure.severity_level.BLOCKER)
-def test_hybrid_car_search(driver, auth_api):
+@allure.tag("REQ-UI-SEARCH-04", "REQ-UI-SEARCH-05")
+def test_hybrid_car_search(driver, auth_api, create_car):
+    target_city = SearchDataGenerator.SMALL_CITY
+    start_date, end_date = SearchDataGenerator.get_safe_future_dates()
+
     with allure.step("API: Подготовка тестовых данных (создание машины)"):
-        target_city = SearchDataGenerator.get_random_city()
-        car_obj = CarGenerator.get_random_car(city=target_city)
-        serial_number = car_obj.reg_number
+        # Удаление машины после теста — забота фабрики create_car
+        car = create_car(city=target_city)
+        require_city_fits_one_page(auth_api, target_city, start_date, end_date)
 
-        # ИСПОЛЬЗУЕМ ФИКСТУРУ ДЛЯ ЗАПРОСА И НОВЫЙ МЕТОД DATACLASS'а ↓
-        response = auth_api.add_car(car_obj.to_api_payload())
-        require(response.status_code == 200, f"Ошибка пререквизита: {response.text}")
+    # --- ШАГ 2: UI (Поиск через браузер) ---
+    search_page = SearchPage(driver)
+    results_page = ResultsPage(driver)
 
-    # Оборачиваем UI-логику в try..finally, чтобы машина удалилась даже если Селениум упадет
-    try:
-        # --- ШАГ 2: UI (Поиск через браузер) ---
-        search_page = SearchPage(driver)
-        results_page = ResultsPage(driver)
+    with allure.step(f"UI: Поиск машины в городе {target_city}"):
+        search_page.open()
+        search_page.fill_city(target_city)
+        search_page.select_date_range(start_date, end_date)
 
-        with allure.step(f"UI: Поиск машины в городе {target_city}"):
-            search_page.open()
-            search_page.fill_city(target_city)
+        # Снимаем фокус с календаря, как в test_search_form_dynamic
+        search_page.click(search_page.CITY_INPUT)
+        search_page.click_submit_button()
 
-            # Используем генератор для безопасных дат
-            start_date, end_date = SearchDataGenerator.get_safe_future_dates()
-            search_page.select_date_range(start_date, end_date)
+    # --- ШАГ 3: UI (Проверка результатов) ---
+    with allure.step(f"UI: В выдаче есть именно созданная машина {car.reg_number}"):
+        results_page.wait_for_search_request_to_complete()
+        results_page.show_page_size(RESULTS_PAGE_SIZE)
 
-            # Снимаем фокус с календаря, как в test_search_form_dynamic
-            search_page.click(search_page.CITY_INPUT)
-            search_page.click_submit_button()
+        card = results_page.get_car_details(car.reg_number)
+        assert card is not None, \
+            f"Машина {car.reg_number} не найдена в выдаче по городу {target_city}, хотя API успешно её создал!"
 
-        # --- ШАГ 3: UI (Проверка результатов) ---
-        with allure.step("UI: Проверка отображения результатов поиска"):
-            results_page.wait_for_search_request_to_complete()
-
-            assert results_page.has_cars(timeout=10) == True, f"Машины в городе {target_city} не найдены, хотя API успешно создал авто!"
-
-            # Дополнительно считываем детали первой машины, чтобы убедиться, что рендер карточек не сломан
-            first_car = results_page.get_first_car_details()
-            assert "title" in first_car, "Не удалось получить заголовок карточки автомобиля"
-            assert "price" in first_car, "Не удалось получить цену автомобиля"
-
-    finally:
-        # --- ШАГ 4: API (Очистка базы данных) ---
-        with allure.step(f"API (Teardown): Удаление тестовой машины {serial_number}"):
-            auth_api.delete_car(serial_number)
+    with allure.step("UI: Карточка отрисована: заголовок не пустой, цена по правилу отображения"):
+        assert card["title"].strip(), "Заголовок карточки пустой"
+        assert UI_PRICE_PATTERN.match(card["price"]), \
+            f"Цена на карточке не в формате с одним знаком после запятой: {card['price']!r}"
+        assert card["price"] == ui_price(car.price), \
+            f"Цена на карточке {card['price']!r}, ожидали {ui_price(car.price)!r} (pricePerDay {car.price})"

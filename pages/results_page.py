@@ -1,3 +1,5 @@
+from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
+
 import allure
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
@@ -37,25 +39,30 @@ class ResultsPage(BasePage):
             return False
 
     # --- ДЕЙСТВИЯ ---
-    @allure.step("Получение данных первой машины из списка")
-    def get_first_car_details(self):
-        cars = self.driver.find_elements(*self.CAR_CARD_LINK)
-        if not cars:
+    @allure.step("Показать выдачу по {size} карточек на странице")
+    def show_page_size(self, size: int):
+        """Пагинация клиентская, её параметры — в URL (REQ-UI-SEARCH-04): меняем size и открываем первую страницу."""
+        parts = urlsplit(self.driver.current_url)
+        query = {key: values[0] for key, values in parse_qs(parts.query).items()}
+        query.update({"page": "0", "size": str(size)})
+        self.driver.get(urlunsplit(parts._replace(query=urlencode(query))))
+
+    @allure.step("Поиск карточки машины {serial_number} в выдаче")
+    def get_car_details(self, serial_number: str, timeout: int = 15) -> dict | None:
+        """Данные карточки нашей машины или None, если её нет в выдаче.
+
+        Карточка — ссылка на страницу машины /cars/{serialNumber} (FE: Search), по ней и ищем.
+        """
+        card_locator = (By.CSS_SELECTOR, f"a.car-container[href$='/cars/{serial_number}']")
+        try:
+            card = WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located(card_locator))
+        except TimeoutException:
             return None
 
-        first_car = cars[0]
-        title = first_car.find_element(*self.CAR_TITLE).text
-        price = first_car.find_element(*self.CAR_PRICE).text
-
-        href = first_car.get_attribute("href")
-        car_id = href.split("/")[-1] if href else None
-
-        img_element = first_car.find_element(*self.CAR_IMAGE)
-        bg_image_style = img_element.get_attribute("style")
-
+        img_element = card.find_element(*self.CAR_IMAGE)
         return {
-            "id": car_id,
-            "title": title,
-            "price": price,
-            "has_image": "url" in bg_image_style
+            "serial_number": serial_number,
+            "title": card.find_element(*self.CAR_TITLE).text,
+            "price": card.find_element(*self.CAR_PRICE).text,
+            "has_image": "url" in (img_element.get_attribute("style") or ""),
         }

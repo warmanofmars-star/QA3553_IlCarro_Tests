@@ -46,7 +46,7 @@ KNOWN_BUGS: dict[str, KnownBug] = {
     ),
     "NOT_FOUND_400": KnownBug(
         refs=("REQ-CAR-10",),
-        description="Удаление несуществующей (в том числе уже удалённой) машины возвращает 400 вместо 404",
+        description="Удаление несуществующей, уже удалённой или чужой машины возвращает 400 вместо 404",
     ),
     "WRONG_TYPE_500": KnownBug(
         refs=("REQ-CAR-03",),
@@ -59,6 +59,13 @@ KNOWN_BUGS: dict[str, KnownBug] = {
     "UNKNOWN_ROUTE_403": KnownBug(
         refs=("REQ-SEC-05",),
         description="Неподдерживаемый метод или неизвестный путь отвечают 403 с пустым телом вместо 405/404",
+    ),
+    "BOOKING_NOT_PERSISTED": KnownBug(
+        refs=("REQ-BOOK-01",),
+        description=(
+            "Бронирование отвечает 200 «Car booked successfully!», но ничего не сохраняет: "
+            "bookedPeriods машины остаётся пустым"
+        ),
     ),
     "CITIES_MISMATCH": KnownBug(
         refs=("DISC-02",),

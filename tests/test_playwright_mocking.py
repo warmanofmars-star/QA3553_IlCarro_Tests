@@ -3,6 +3,7 @@ import pytest
 from playwright.sync_api import Page, Route, expect
 
 from config import settings
+from utils.price_format import ui_price
 
 pytestmark = [pytest.mark.ui, pytest.mark.playwright, pytest.mark.regression]
 
@@ -13,6 +14,7 @@ UI_BASE_URL = settings.ui_url
 @allure.feature("Network Interception")
 @allure.story("Mocking Search Results")
 @allure.title("Изоляция UI: Подмена выдачи автомобилей (Batmobile)")
+@allure.tag("REQ-UI-SEARCH-05")
 def test_mock_search_results(page: Page):
     # 1. Готовим фейковый ответ (Бэтмобиль)
     fake_response = {
@@ -63,4 +65,7 @@ def test_mock_search_results(page: Page):
         # Фронтенд должен радостно отрендерить Бэтмобиль, думая, что он пришел из БД!
         expect(page.locator("text=Wayne Enterprises")).to_be_visible()
         expect(page.locator("text=Batmobile")).to_be_visible()
-        expect(page.locator("text=10000.0")).to_be_visible()
+        # Цена 9999.99 — граница округления: правило отображения (REQ-UI-SEARCH-05, во фронтенде
+        # toFixed(1) в модуле `default`, подтверждено Q-UI-12) превращает её в «10000.0»
+        mocked_price = fake_response["cars"][0]["pricePerDay"]
+        expect(page.locator(".car-price-value")).to_have_text(ui_price(mocked_price))
