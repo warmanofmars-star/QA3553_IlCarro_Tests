@@ -18,6 +18,7 @@
 печатает итог: сколько машин создано и сколько удалено (см. pytest_terminal_summary в conftest.py).
 """
 
+import logging
 import json
 import os
 from dataclasses import asdict, dataclass, field
@@ -25,9 +26,8 @@ from dataclasses import asdict, dataclass, field
 import allure
 
 from config import PROJECT_ROOT
-from utils.logger import get_logger
 
-logger = get_logger("CARS")
+logger = logging.getLogger(__name__)
 
 JOURNAL_FILE = PROJECT_ROOT / "logs" / "car_factory.jsonl"
 

@@ -1,9 +1,12 @@
+import logging
 import allure
 import pytest
 from playwright.sync_api import Page
 from pages.pw_login_page import PwLoginPage
 from pages.pw_add_car_page import PwAddCarPage
 from data.data_generator import CarGenerator
+
+logger = logging.getLogger(__name__)
 
 pytestmark = pytest.mark.ui
 
@@ -12,11 +15,11 @@ pytestmark = pytest.mark.ui
 @allure.feature("Cars Management")
 @allure.story("Real E2E Car Addition")
 @allure.title("Реальное добавление машины (E2E Playwright)")
-def test_real_add_car_success(page: Page, temp_user, car_cleanup, sys_logger): # <-- Добавили temp_user
+def test_real_add_car_success(page: Page, temp_user, car_cleanup): # <-- Добавили temp_user
     car = CarGenerator.get_random_car()
     # Машина создаётся через UI — номер регистрируем, чтобы фабрика удалила её после теста
     car_cleanup.register(car.reg_number)
-    sys_logger.info(f"Playwright будет создавать машину: {car}")
+    logger.info(f"Playwright будет создавать машину: {car}")
     user = temp_user["user"] # <-- Берем чистые креды
 
     with allure.step("Авторизация"):
@@ -33,7 +36,7 @@ def test_real_add_car_success(page: Page, temp_user, car_cleanup, sys_logger): #
 
     with allure.step("Проверка через ожидание очистки формы"):
         add_car_page.check_form_cleared()
-        sys_logger.info(f"Машина с номером {car.reg_number} успешно добавлена через Playwright!")
+        logger.info(f"Машина с номером {car.reg_number} успешно добавлена через Playwright!")
 
 
 @pytest.mark.hybrid

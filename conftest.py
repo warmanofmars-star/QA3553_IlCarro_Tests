@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 import pytest
@@ -8,24 +9,56 @@ from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.support.events import EventFiringWebDriver
-from config import settings
+from config import PROJECT_ROOT, settings
 from utils.listener import IlCarroListener
 from api.car_api import IlCarroAPI
 from pages.login_page import LoginPage
 from data.data_generator import CarGenerator, UserGenerator
 from models.car import Car
 from utils.car_cleanup import CarCleanup, journal_summary, reset_journal
-from utils.logger import get_logger
 from utils.preconditions import require
 
-def pytest_configure(config):
-    """Главный процесс (или обычный запуск) очищает журнал фабрики машин прошлого прогона.
+logger = logging.getLogger(__name__)
 
-    Воркеры xdist тоже вызывают этот хук, но позже главного процесса: им журнал трогать нельзя,
-    иначе стёрлись бы записи соседних воркеров.
+LOG_DIR = PROJECT_ROOT / "logs"
+
+# Сторонние библиотеки на уровне INFO/DEBUG пишут много служебного шума и топят логи тестов
+NOISY_LOGGERS = ("urllib3", "selenium", "faker", "asyncio", "charset_normalizer", "filelock")
+
+
+def pytest_configure(config):
+    """Настраивает логи и журнал фабрики машин для текущего процесса pytest.
+
+    При запуске с xdist тесты выполняют несколько процессов-воркеров; пиши они в один файл,
+    строки перемешались бы. Поэтому:
+      * обычный запуск             -> logs/pytest.log
+      * воркер xdist (gw0, gw1...) -> logs/pytest_gw0.log, logs/pytest_gw1.log, ...
+      * главный процесс xdist      -> файла нет: сам он тесты не выполняет
+    Явно переданный --log-file имеет приоритет. Формат и уровни — в pytest.ini.
+
+    Главный процесс стартует раньше воркеров, поэтому только он удаляет файлы прошлого прогона
+    (логи и журнал фабрики машин): воркер стёр бы записи соседей.
     """
+    for name in NOISY_LOGGERS:
+        logging.getLogger(name).setLevel(logging.WARNING)
+
+    # Живые логи в консоли включает настройка из config.py; явный --log-cli-level важнее
+    if settings.enable_console_logs and config.getoption("log_cli_level") is None:
+        config.option.log_cli_level = "INFO"
+
+    is_xdist_controller = not settings.is_xdist_worker and bool(config.getoption("numprocesses", default=None))
+
     if not settings.is_xdist_worker:
+        LOG_DIR.mkdir(exist_ok=True)
+        for old_log in LOG_DIR.glob("*.log"):
+            old_log.unlink(missing_ok=True)
         reset_journal()
+
+    if config.option.log_file or is_xdist_controller:
+        return
+    # workerinput есть только у воркера xdist; так id берётся у самого xdist, а не из окружения
+    worker_id = getattr(config, "workerinput", {}).get("workerid")
+    config.option.log_file = str(LOG_DIR / (f"pytest_{worker_id}.log" if worker_id else "pytest.log"))
 
 
 def pytest_terminal_summary(terminalreporter):
@@ -356,8 +389,3 @@ def page(context):
             name="Видео Playwright",
             attachment_type=allure.attachment_type.MP4
         )
-
-@pytest.fixture(scope="session")
-def sys_logger():
-    """Глобальная фикстура логгера для тестов. Избавляет от дублирования импортов."""
-    return get_logger("TEST")

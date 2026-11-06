@@ -1,3 +1,4 @@
+import logging
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 import allure
@@ -6,9 +7,8 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from pages.base_page import BasePage
-from utils.logger import get_logger
 
-logger = get_logger()
+logger = logging.getLogger(__name__)
 
 class ResultsPage(BasePage):
     # --- ЛОКАТОРЫ ---

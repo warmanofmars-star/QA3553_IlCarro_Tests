@@ -1,10 +1,10 @@
+import logging
 from selenium.webdriver.support.abstract_event_listener import AbstractEventListener
 from selenium.common.exceptions import WebDriverException, NoSuchElementException
-from utils.logger import get_logger
 
 class IlCarroListener(AbstractEventListener):
     def __init__(self):
-        self.logger = get_logger("UI")
+        self.logger = logging.getLogger(__name__)
 
     def before_navigate_to(self, url, driver):
         self.logger.info(f"Переход по ссылке: {url}")

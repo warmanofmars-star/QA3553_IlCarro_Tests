@@ -1,3 +1,4 @@
+import logging
 import allure
 import pytest
 from pages.search_page import SearchPage
@@ -5,6 +6,8 @@ from data.data_generator import SearchDataGenerator
 from pages.results_page import ResultsPage
 from utils.price_format import UI_PRICE_PATTERN, ui_price
 from utils.search_helpers import RESULTS_PAGE_SIZE, require_city_fits_one_page
+
+logger = logging.getLogger(__name__)
 
 pytestmark = pytest.mark.ui
 
@@ -14,7 +17,7 @@ pytestmark = pytest.mark.ui
 @allure.story("Search Cars Dynamic Flow")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.tag("REQ-UI-SEARCH-01", "REQ-UI-SEARCH-04", "REQ-UI-SEARCH-05")
-def test_search_form_dynamic(driver, auth_api, create_car, sys_logger):
+def test_search_form_dynamic(driver, auth_api, create_car):
     search_page = SearchPage(driver)
     results_page = ResultsPage(driver)
 
@@ -44,7 +47,7 @@ def test_search_form_dynamic(driver, auth_api, create_car, sys_logger):
     with allure.step(f"Проверка: в выдаче есть наша машина {car.reg_number}"):
         card = results_page.get_car_details(car.reg_number)
         assert card is not None, f"Созданная машина {car.reg_number} не найдена в выдаче по городу {city}"
-        sys_logger.info(f"Найдена машина: {card['serial_number']}, {card['title']} за ${card['price']}/день")
+        logger.info(f"Найдена машина: {card['serial_number']}, {card['title']} за ${card['price']}/день")
 
     with allure.step("Проверка рендера карточки: заголовок и цена (REQ-UI-SEARCH-05)"):
         assert card["title"].strip(), "Заголовок карточки пустой"

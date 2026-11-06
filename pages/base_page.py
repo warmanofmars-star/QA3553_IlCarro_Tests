@@ -1,3 +1,4 @@
+import logging
 import allure
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -5,12 +6,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.remote.webelement import WebElement
 
-# Импортируем наш инженерный логгер
 from config import settings
-from utils.logger import get_logger
 
-# Инициализируем логгер один раз для всего базового класса
-logger = get_logger()
+logger = logging.getLogger(__name__)
 
 
 class BasePage:

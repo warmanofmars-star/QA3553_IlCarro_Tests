@@ -1,3 +1,4 @@
+import logging
 import random
 import uuid
 from pathlib import Path
@@ -9,9 +10,8 @@ from faker import Faker
 from models.user import User
 from api.car_api import IlCarroAPI
 from models.car import Car
-from utils.logger import get_logger
 
-logger = get_logger("DATA")
+logger = logging.getLogger(__name__)
 
 # Инициализируем Faker один раз
 fake = Faker('en_US')
