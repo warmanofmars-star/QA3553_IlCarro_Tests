@@ -81,6 +81,11 @@ class UserGenerator:
 class SearchDataGenerator:
     FALLBACK_CITIES = ["Tel Aviv", "Jerusalem", "Haifa"]
 
+    # Город с малым числом машин для UI-поиска (Q-UI-12: 16 машин). Ответ поиска по крупному
+    # городу весит десятки мегабайт (Tel Aviv — около 18 МБ, Q-API-02), а нашу машину среди тысяч
+    # карточек на экране не найти. Город есть и во фронтенде, и в API (см. get_safe_cities).
+    SMALL_CITY = "Sderot"
+
     # Сюда мы сохраним результат первого успешного запроса к API
     _cached_safe_cities = None
 
@@ -97,10 +102,21 @@ class SearchDataGenerator:
     ]
 
     @classmethod
-    def get_random_city(cls):
-        # 1. Если список уже есть в памяти (кеш), отдаем его мгновенно без сети!
+    def get_safe_cities(cls) -> list[str]:
+        """Города, пригодные для позитивных тестов: те, что есть И в подсказке фронтенда, И в API.
+
+        Почему пересечение, а не один из списков (DISC-02 в docs/requirements/requirements.md):
+        списки городов фронтенда (54) и API (37) расходятся, общих только 22, и написание разное
+        (Beersheba / Beer Sheva, Kiryat … / Qiryat …).
+          * Город только из фронтенда UI-форма предложит, но API машину с ним не создаст
+            («Failed to submit car», Q-UI-03), а поиск по нему молча пуст (Q-UI-12).
+          * Город только из API в подсказке формы не найдётся — UI-тест не сможет его выбрать.
+        Позитивный тест должен проходить по обоим путям, поэтому берём только общие города.
+        Само расхождение проверяет отдельный тест (known_bug CITIES_MISMATCH), здесь его обходим.
+        """
+        # 1. Список уже есть в памяти (кеш) — отдаем его без сети
         if cls._cached_safe_cities:
-            return random.choice(cls._cached_safe_cities)
+            return cls._cached_safe_cities
 
         # 2. Если кеш пуст, делаем один запрос
         try:
@@ -109,17 +125,22 @@ class SearchDataGenerator:
 
             if response.status_code == 200:
                 api_cities = [city_obj.get("city") for city_obj in response.json().get("cities", [])]
-                safe_cities = list(set(api_cities).intersection(set(cls.UI_CITIES)))
+                # sorted: порядок set не детерминирован, а одинаковый список удобнее в отладке
+                safe_cities = sorted(set(api_cities).intersection(cls.UI_CITIES))
 
                 if safe_cities:
                     # Сохраняем в кеш для всех будущих вызовов
                     cls._cached_safe_cities = safe_cities
-                    return random.choice(cls._cached_safe_cities)
+                    return cls._cached_safe_cities
         except Exception as e:
             logger.error(f"Не удалось получить города из API. Ошибка: {e}")
 
         logger.warning(f"Используем fallback-города: {cls.FALLBACK_CITIES}")
-        return random.choice(cls.FALLBACK_CITIES)
+        return cls.FALLBACK_CITIES
+
+    @classmethod
+    def get_random_city(cls):
+        return random.choice(cls.get_safe_cities())
 
     @staticmethod
     def get_safe_future_dates(min_offset=1, max_offset=10, min_duration=2, max_duration=6):

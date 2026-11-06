@@ -1,6 +1,7 @@
 import allure
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.support.wait import WebDriverWait
-from datetime import datetime
+from datetime import date, datetime
 from selenium.webdriver.common.by import By
 from pages.base_page import BasePage
 
@@ -15,6 +16,9 @@ class SearchPage(BasePage):
     CALENDAR_POPOVER = (By.CSS_SELECTOR, ".daterange-popover")
     PREV_MONTH_BTN = (By.CSS_SELECTOR, ".rdrPprevButton")
     ACTIVE_MONTH_LABEL = (By.CSS_SELECTOR, ".rdrMonthPicker option:checked")
+    ACTIVE_YEAR_LABEL = (By.CSS_SELECTOR, ".rdrYearPicker option:checked")
+    # Дни показанного месяца; «пассивные» — хвосты соседних месяцев в сетке, их не берём
+    MONTH_DAY_CELLS = (By.CSS_SELECTOR, "button.rdrDay:not(.rdrDayPassive)")
     TODAY_DAY_MARKER = (By.CSS_SELECTOR, ".rdrDayToday")
 
     # Кнопка переключения месяца вперед в календаре react-date-range
@@ -83,6 +87,35 @@ class SearchPage(BasePage):
             lambda driver: self.get_current_month() != old_month,
             message=f"Месяц так и не изменился после клика! Ожидали, что он перестанет быть '{old_month}'"
         )
+
+    @allure.step("Чтение доступности дней показанного месяца календаря")
+    def get_displayed_days_availability(self) -> dict[date, bool]:
+        """{дата: доступна ли для выбора} для всех дней месяца, который сейчас показан.
+
+        Недоступный день react-date-range помечает классом rdrDayDisabled. Месяц и год читаем
+        до и после дней: снимок принимается, только если за это время календарь не перерисовался.
+        """
+        def read_month(driver):
+            month = driver.find_element(*self.ACTIVE_MONTH_LABEL).text
+            year = driver.find_element(*self.ACTIVE_YEAR_LABEL).text
+            return month, year
+
+        def snapshot(driver):
+            before = read_month(driver)
+            cells = [
+                (int(cell.text), "rdrDayDisabled" not in (cell.get_attribute("class") or ""))
+                for cell in driver.find_elements(*self.MONTH_DAY_CELLS)
+            ]
+            if not cells or read_month(driver) != before:
+                return False
+            return before, cells
+
+        (month_name, year), cells = WebDriverWait(
+            self.driver, 5, ignored_exceptions=(StaleElementReferenceException, NoSuchElementException)
+        ).until(snapshot, message="Не удалось прочитать дни календаря: он не отрисовался или постоянно перерисовывается")
+
+        month = datetime.strptime(month_name, "%B").month
+        return {date(int(year), month, day): available for day, available in cells}
 
     @allure.step("Клик по кнопке Y'alla! (Submit)")
     def click_submit_button(self):

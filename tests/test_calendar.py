@@ -1,4 +1,5 @@
 import allure
+from datetime import date
 from pages.search_page import SearchPage
 import pytest
 from utils.preconditions import require
@@ -27,22 +28,38 @@ def test_calendar_ui_and_close(driver):
 @allure.feature("Calendar Component")
 @allure.story("Negative Calendar UI - Past Dates Blocked")
 @allure.severity(allure.severity_level.CRITICAL)
+@allure.tag("REQ-UI-SEARCH-02")
 def test_calendar_past_navigation_blocked(driver):
+    """
+    Прошедшие дни выбрать нельзя (REQ-UI-SEARCH-02: minDate = сегодня).
+
+    Проверяем состояние календаря, а не то, сменился ли месяц после клика «назад»: какой бы
+    месяц ни был показан после попытки уйти в прошлое, каждый его день раньше сегодняшнего
+    должен быть недоступен, а сегодняшний и последующие — доступны. Последнее делает проверку
+    содержательной и 1-го числа, когда прошедших дней в текущем месяце нет.
+    То, что кнопка «назад» ничего не делает, — отдельное наблюдение OBS-10, здесь не проверяется.
+    """
     search_page = SearchPage(driver)
     search_page.open()
     search_page.click_dates_input()
 
     require(search_page.is_calendar_visible(), "Календарь не открылся!")
 
-    # 1. Запоминаем текущий месяц
-    initial_month = search_page.get_current_month()
+    with allure.step("Пытаемся уйти в прошлое кнопкой «предыдущий месяц»"):
+        search_page.click_prev_month()
 
-    # 2. ПЫТАЕМСЯ кликнуть "Назад" (в прошлое)
-    search_page.click_prev_month()
+    today = date.today()
+    days = search_page.get_displayed_days_availability()
+    month_shown = min(days).strftime("%B %Y")
 
-    # 3. Проверяем, что месяц никуда не переключился и мы остались в настоящем
-    current_month = search_page.get_current_month()
-    assert initial_month == current_month, f"Баг безопасности! Мы смогли уйти в прошлое: из {initial_month} в {current_month}"
+    with allure.step(f"Проверка: в показанном месяце ({month_shown}) дни раньше сегодняшнего недоступны"):
+        past_available = sorted(str(day) for day, available in days.items() if day < today and available)
+        assert not past_available, f"В календаре можно выбрать прошедшие дни: {past_available}"
+
+    with allure.step("Проверка: сегодняшний и последующие дни месяца доступны"):
+        # Верхняя граница (сегодня + 365 дней, REQ-UI-SEARCH-02) в показанном месяце не достижима
+        future_blocked = sorted(str(day) for day, available in days.items() if day >= today and not available)
+        assert not future_blocked, f"Недоступны дни, которые должны быть доступны: {future_blocked}"
 
 
 @allure.epic("UI Testing")

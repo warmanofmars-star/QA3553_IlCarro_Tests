@@ -3,6 +3,8 @@ import pytest
 from pages.search_page import SearchPage
 from data.data_generator import SearchDataGenerator
 from pages.results_page import ResultsPage
+from utils.price_format import UI_PRICE_PATTERN, ui_price
+from utils.search_helpers import RESULTS_PAGE_SIZE, require_city_fits_one_page
 
 pytestmark = pytest.mark.ui
 
@@ -11,17 +13,19 @@ pytestmark = pytest.mark.ui
 @allure.feature("Search Page")
 @allure.story("Search Cars Dynamic Flow")
 @allure.severity(allure.severity_level.CRITICAL)
-def test_search_form_dynamic(driver, sys_logger):
+@allure.tag("REQ-UI-SEARCH-01", "REQ-UI-SEARCH-04", "REQ-UI-SEARCH-05")
+def test_search_form_dynamic(driver, auth_api, create_car, sys_logger):
     search_page = SearchPage(driver)
     results_page = ResultsPage(driver)
 
-    city = SearchDataGenerator.get_random_city()
+    city = SearchDataGenerator.SMALL_CITY
     start_date, end_date = SearchDataGenerator.get_safe_future_dates()
+    allure.dynamic.parameter("Город", city)
+    allure.dynamic.parameter("Даты", f"{start_date:%Y-%m-%d} — {end_date:%Y-%m-%d}")
 
-    expected_dates_str = f"{start_date.month}/{start_date.day}/{start_date.year} - {end_date.month}/{end_date.day}/{end_date.year}"
-
-    with allure.step(f"Параметры: Город - {city}, Даты: {expected_dates_str}"):
-        pass
+    # Своя машина: проверяем, что находится именно она, а не «какая-нибудь» чужая
+    car = create_car(city=city)
+    require_city_fits_one_page(auth_api, city, start_date, end_date)
 
     search_page.open()
     search_page.fill_city(city)
@@ -34,25 +38,20 @@ def test_search_form_dynamic(driver, sys_logger):
 
     # 1. Ждем факта отправки поискового запроса (смена URL)
     results_page.wait_for_search_request_to_complete()
+    # 2. Вся выдача города на одной странице (пагинация клиентская, size в URL)
+    results_page.show_page_size(RESULTS_PAGE_SIZE)
 
-    # 2. Ветвление: машины найдены или пустая выдача
-    if not results_page.has_cars():
-        sys_logger.info(f"В городе '{city}' на выбранные даты нет доступных машин. Отработало пустое состояние.")
-        with allure.step(f"В городе '{city}' машин нет — пустое состояние отработало штатно"):
-            pass
-    else:
-        first_car = results_page.get_first_car_details()
-        sys_logger.info(f"Найдена машина: ID {first_car['id']}, {first_car['title']} за ${first_car['price']}/день")
+    with allure.step(f"Проверка: в выдаче есть наша машина {car.reg_number}"):
+        card = results_page.get_car_details(car.reg_number)
+        assert card is not None, f"Созданная машина {car.reg_number} не найдена в выдаче по городу {city}"
+        sys_logger.info(f"Найдена машина: {card['serial_number']}, {card['title']} за ${card['price']}/день")
 
-        with allure.step("Проверка рендера карточки автомобиля"):
-            assert "title" in first_car, "Не удалось спарсить название!"
-            assert "price" in first_car, "Не удалось спарсить цену!"
-
-            try:
-                parsed_price = float(first_car['price'])
-                assert parsed_price >= 0, f"Цена не может быть отрицательной: {parsed_price}"
-            except ValueError:
-                pytest.fail(f"Фронтенд вывел некорректный формат цены: {first_car['price']}")
+    with allure.step("Проверка рендера карточки: заголовок и цена (REQ-UI-SEARCH-05)"):
+        assert card["title"].strip(), "Заголовок карточки пустой"
+        assert UI_PRICE_PATTERN.match(card["price"]), \
+            f"Цена на карточке не в формате с одним знаком после запятой: {card['price']!r}"
+        assert card["price"] == ui_price(car.price), \
+            f"Цена на карточке {card['price']!r}, ожидали {ui_price(car.price)!r} (pricePerDay {car.price})"
 
 
 @pytest.mark.regression
