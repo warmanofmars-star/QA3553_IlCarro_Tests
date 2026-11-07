@@ -1,0 +1,32 @@
+# Что НЕ попадает в образ с тестами (COPY . . в Dockerfile).
+# Главное — секреты: реальные учётные данные лежат в .env, а образ можно выгрузить или опубликовать.
+# Настройки контейнеру отдаёт docker-compose.yml через environment, остальные берутся
+# из значений по умолчанию в config.py.
+
+# --- Секреты и локальные настройки ---
+.env
+.claude/settings.local.json
+
+# --- Окружение и инструменты разработчика ---
+.venv/
+.git/
+.idea/
+.pytest_cache/
+
+# --- Результаты прогонов (в контейнере создаются заново, allure-results монтируется томом) ---
+logs/
+allure-results/
+allure-report/
+test-results/
+research/evidence/
+
+# --- Кэш Python (в любой вложенной папке) ---
+**/__pycache__/
+**/*.pyc
+
+# --- Выгрузки для ИИ и экспорт сессий ---
+full_project_for_ai*.txt
+baseline*.txt
+*-pastedcontent-*.txt
+# Экспорт сессии командой /export Claude Code
+20??-??-??-*.txt
