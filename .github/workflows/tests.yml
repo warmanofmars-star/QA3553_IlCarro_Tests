@@ -29,14 +29,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Pull Selenoid Browser Images & Video Recorder
-        run: |
-          docker pull selenoid/vnc_chrome:128.0
-          docker pull selenoid/vnc_firefox:125.0
-          docker pull selenoid/video-recorder:latest-release
-
-      - name: Run Tests in Docker Compose
+      # Образы хаба и узлов Selenium Grid docker compose скачивает сам при первом запуске
+      - name: Run Tests in Docker Compose (Selenium Grid)
         env:
+          # Узлы браузеров живут в профилях compose: профиль = браузер матрицы
+          COMPOSE_PROFILES: ${{ matrix.browser }}
           BROWSER: ${{ matrix.browser }}
           TEST_MARKER: ${{ inputs.test_marker }}
         run: docker compose up --build --exit-code-from qa-framework
@@ -114,7 +111,7 @@ jobs:
           python3 process_allure.py
           
           echo "Browsers=Chrome, Firefox" > allure-results-chrome/environment.properties
-          echo "Environment=Docker Compose (Selenoid)" >> allure-results-chrome/environment.properties
+          echo "Environment=Docker Compose (Selenium Grid)" >> allure-results-chrome/environment.properties
           echo "CI=GitHub Actions Matrix" >> allure-results-chrome/environment.properties
           echo "Test_Filter=${{ inputs.test_marker || 'All Tests (Full Suite)' }}" >> allure-results-chrome/environment.properties
 
