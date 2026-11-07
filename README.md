@@ -5,13 +5,13 @@
 
 Robust, production-ready hybrid test automation framework for the "IlCarro" (Car Rental) web application, featuring a fully containerized **Infrastructure as Code (IaC)** approach, cross-browser CI/CD matrix execution, and enterprise-grade API security & contract testing.
 
-This project demonstrates a senior-level approach to QA automation, combining classic UI testing, deep API validation, remote browser execution via Selenoid, advanced network mocking, and modern container orchestration.
+This project demonstrates a senior-level approach to QA automation, combining classic UI testing, deep API validation, remote browser execution via Selenium Grid 4, advanced network mocking, and modern container orchestration.
 
 ## 🛠️ Tech Stack
 * **Language:** Python 3.12+
 * **UI Frameworks:** Selenium WebDriver (Chrome, Firefox, Edge), Playwright (Sync API)
 * **API & Contract Testing:** Requests, `jsonschema`
-* **Containerization & Orchestration:** Docker, Docker Compose, Selenoid (with video-recorder)
+* **Containerization & Orchestration:** Docker, Docker Compose, Selenium Grid 4 (hub + browser nodes with built-in video recording)
 * **Test Runner:** Pytest (with `pytest-xdist` for parallel execution)
 * **Data Modeling & Generation:** Python `dataclasses`, Faker & UUID
 * **Reporting:** Allure Report (with embedded test session videos)
@@ -21,7 +21,7 @@ This project demonstrates a senior-level approach to QA automation, combining cl
 ## 🚀 Key Architectural Features
 
 * **Cross-Browser CI/CD Matrix:** Configured GitHub Actions matrix strategy to dynamically spawn parallel test suites in Google Chrome and Mozilla Firefox inside isolated Docker containers.
-* **Dockerized Infrastructure (IaC):** The entire test environment (framework, Selenoid hub, Chrome/Firefox instances, video recording) is orchestrated via Docker Compose, guaranteeing absolute consistency across local machines and CI/CD.
+* **Dockerized Infrastructure (IaC):** The entire test environment (framework, Selenium Grid hub, Chrome/Firefox/Edge nodes, video recording) is orchestrated via Docker Compose, guaranteeing absolute consistency across local machines and CI/CD.
 * **Allure Report Deduplication:** Custom Python data-processing injection inside the CI/CD pipeline ensures accurate merging of parallel matrix test execution results without data collisions.
 * **Strict Contract Validation (JSON Schema):** All positive API responses are validated against strict JSON Schemas enforcing `additionalProperties: False` to catch undocumented fields, type mismatches, and silent data leaks.
 * **OOP Payload Serialization (Dataclasses):** Test data models (`Car`, `User`) encapsulate their own API mapping logic via `.to_api_payload()`, eliminating hardcoded dictionaries across test suites and enforcing DRY principles.
@@ -30,7 +30,7 @@ This project demonstrates a senior-level approach to QA automation, combining cl
 * **Global Data Leak Scanner:** Custom `assert_secure_error()` validator automatically scans all negative API responses for sensitive backend exposures (`stack trace`, `sqlexception`, `password_hash`, internal paths).
 * **Defect Documentation via XFAIL:** Known backend contract violations and security flaws are strictly documented in code using `@pytest.mark.xfail(reason=...)` without polluting CI/CD stability.
 * **Strict Data Isolation (Sandbox Users):** Employs a robust `temp_user` fixture that dynamically registers a unique user via API before each test, eliminating race conditions during parallel execution (`pytest-xdist`).
-* **Universal Video Attachment:** Every Selenium test is recorded via FFmpeg/Selenoid, while Playwright tests utilize the native recording engine. All resulting `.mp4` files are automatically attached to the Allure report upon teardown.
+* **Universal Video Attachment:** Every Selenium test is recorded by the Selenium Grid node's built-in recorder, while Playwright tests utilize the native recording engine. All resulting `.mp4` files are automatically attached to the Allure report upon teardown.
 * **Hybrid Testing Approach:** Tests use API calls to set up preconditions and teardown data, drastically reducing UI test execution time.
 * **Network Interception & Mocking:** Utilizes Playwright's `page.route()` to intercept backend requests and inject mock responses, isolating frontend UI rendering logic.
 * **Security & Log Masking:** Sensitive data (passwords, tokens) are strictly masked (`********`) in all console outputs, test logs, and Allure reports.
@@ -55,7 +55,7 @@ playwright install chromium
 4. Create a `.env` file in the root directory (all settings are listed in `.env.example`):
 ```env
 HEADLESS_MODE=false
-USE_SELENOID=false
+USE_GRID=false
 ENABLE_CONSOLE_LOGS=true
 ```
 
@@ -63,7 +63,7 @@ ENABLE_CONSOLE_LOGS=true
 
 **Run all tests in the isolated Docker cluster (Recommended):**
 ```bash
-docker compose up --build --exit-code-from qa-framework
+COMPOSE_PROFILES=chrome docker compose up --build --exit-code-from qa-framework
 ```
 
 **Run locally via Pytest (parallel execution & specific browser):**
@@ -106,14 +106,14 @@ QA3553_IlCarro_Tests/
 ├── models/               # Data classes with API payload serialization (Car, User)
 ├── pages/                # Page Object Model classes (Selenium & Playwright)
 ├── schemas/              # Strict JSON Schemas for API contract validation
-├── selenoid/             # Selenoid configuration (browsers.json)
+├── drivers/              # WebDriver factory: local browsers, Selenium Grid, session video
 ├── tests/                # UI, API, Hybrid, Mutation, and Security test suites
 ├── utils/                # Custom logger, WebDriver listener, API security validators
 ├── logs/                 # Auto-rotating local log files
-├── conftest.py           # Pytest fixtures, Selenoid connection, video attachment hooks
+├── conftest.py           # Pytest fixtures, Grid readiness check, video attachment hooks
 ├── pytest.ini            # Custom Pytest markers registration
 ├── Dockerfile            # Container definition for the test framework
-├── docker-compose.yml    # Infrastructure orchestration (Selenoid + Framework + Network + Volumes)
+├── docker-compose.yml    # Infrastructure orchestration (Selenium Grid + Framework + Volumes)
 └── requirements.txt      # Project dependencies
 ```
 

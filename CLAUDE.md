@@ -1,9 +1,9 @@
 # CLAUDE.md — правила проекта для Claude Code
 
 Учебный фреймворк автотестов (UI + API) для веб-приложения IlCarro (аренда машин): Python 3.14
-локально, 3.12 в Docker; pytest, Selenium, Playwright, Allure, Docker, Selenoid, GitHub Actions.
+локально, 3.12 в Docker; pytest, Selenium, Playwright, Allure, Docker, Selenium Grid 4, GitHub Actions.
 UI: https://icarro-v1.netlify.app, API: https://ilcarro-backend.herokuapp.com.
-Сейчас используется Selenoid, Jenkins нет. Подробности — в README.md.
+Браузеры в Docker — через Selenium Grid 4, Jenkins нет. Подробности — в README.md.
 
 ## Безопасность (обязательно)
 
@@ -20,29 +20,32 @@ UI: https://icarro-v1.netlify.app, API: https://ilcarro-backend.herokuapp.com.
 
 ## Команды
 
-Локально без Selenoid (переменные окружения перекрывают `.env`, сам `.env` не трогай; полный список
+Локально без Grid (переменные окружения перекрывают `.env`, сам `.env` не трогай; полный список
 настроек — `.env.example`, читает их только `config.py`):
 
 ```bash
-USE_SELENOID=false ENABLE_CONSOLE_LOGS=false pytest tests/ -n 2 --browser_name=chrome -rfEsxX
+USE_GRID=false ENABLE_CONSOLE_LOGS=false pytest tests/ -n 2 --browser_name=chrome -rfEsxX
 pytest -m api                                # только API-тесты
 pytest --collect-only -q                     # сколько тестов собирается
 ```
 
-Если `USE_SELENOID=true`, а Selenoid не запущен, Selenium-тесты падают с ERROR и подсказкой
-(хаб ждём до 10 с один раз на воркер, остальные тесты воркера падают сразу); API- и Playwright-тесты
-идут как обычно.
+Если `USE_GRID=true`, а Grid не запущен, Selenium-тесты падают с ERROR и подсказкой
+(хаб ждём до 10 с, узел нужного браузера — до 60 с, один раз на воркер; остальные тесты воркера
+падают сразу); API- и Playwright-тесты идут как обычно. Создание браузера и проверка Grid —
+`drivers/factory.py`.
 
 Логи: обычный запуск → `logs/pytest.log`, воркеры xdist → `logs/pytest_gw0.log`, `pytest_gw1.log`…
 (главный процесс xdist файла не пишет; файлы прошлого прогона удаляются при старте). Журнал фабрики
 машин — `logs/car_factory.jsonl`. `ENABLE_CONSOLE_LOGS=true` включает живые логи в консоли (без `-n`).
 
-Docker (Selenoid), подробности — в `commands.md`:
+Docker (Selenium Grid), подробности — в `commands.md`. Браузер задают две переменные с одинаковым
+значением: `COMPOSE_PROFILES` (какие узлы запустить) и `BROWSER` (в чём гонять тесты). Порт Grid
+на хосте — `GRID_HOST_PORT` (по умолчанию 4444), Grid UI — http://localhost:4444/ui/.
 
 ```bash
-docker compose up --build --exit-code-from qa-framework
-BROWSER=firefox docker compose up --build --exit-code-from qa-framework
-TEST_MARKER=smoke docker compose up --build --exit-code-from qa-framework
+COMPOSE_PROFILES=chrome docker compose up --build --exit-code-from qa-framework
+COMPOSE_PROFILES=firefox BROWSER=firefox docker compose up --build --exit-code-from qa-framework
+COMPOSE_PROFILES=chrome TEST_MARKER=smoke docker compose up --build --exit-code-from qa-framework
 ```
 
 Маркеры (из `pytest.ini`): `smoke`, `regression`, `ui`, `api`, `hybrid`, `playwright`, `security`,
@@ -62,7 +65,7 @@ TEST_MARKER=smoke docker compose up --build --exit-code-from qa-framework
   `expect()` и автоожидания локаторов в Playwright (элемент появился или исчез, поле заполнено, URL
   сменился, запрос ушёл). `time.sleep` и `page.wait_for_timeout` запрещены; в синхронном Playwright
   `time.sleep` недопустим вообще. Исключение — пауза, у которой нет наблюдаемого состояния: только
-  с комментарием «почему» рядом (пример — 1,5 с перед закрытием браузера Selenoid в `conftest.py`).
+  с комментарием «почему» рядом (пример — 1,5 с перед закрытием браузера Grid в `conftest.py`).
 - **Пользователь теста — `TempUser`** (dataclass из `conftest.py`, поля `user` и `api`); у
   `second_user` есть ещё `cleanup`. Обращение — атрибутами: `temp_user.user.email`, `second_user.api`,
   а не `temp_user["user"]`.
@@ -100,7 +103,7 @@ TEST_MARKER=smoke docker compose up --build --exit-code-from qa-framework
 - Работай в той ветке, на которой ты запущен; если это `main` и задача не велит создать ветку — остановись и спроси.
 - **Упавшие тесты и XPASS не «чини» навешиванием xfail и не ослабляй проверки.** Собери данные
   (тест, браузер, текст ошибки, воспроизводится ли повторно) и сообщи — решение принимает пользователь.
-- Инфраструктурные проблемы (Docker, Selenoid, зависимости) можно чинить самостоятельно, но каждое
+- Инфраструктурные проблемы (Docker, Selenium Grid, зависимости) можно чинить самостоятельно, но каждое
   изменение объясни в отчёте.
 - В конце задачи — короткий отчёт: что сделано, результаты прогонов (passed / xfailed / failed /
   XPASS), все изменения сверх задачи, открытые вопросы.

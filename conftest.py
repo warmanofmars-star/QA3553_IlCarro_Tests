@@ -5,15 +5,9 @@ from dataclasses import dataclass
 
 import pytest
 import allure
-import requests
-from selenium import webdriver
-from selenium.webdriver.edge.options import Options as EdgeOptions
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.events import EventFiringWebDriver
-from selenium.webdriver.support.wait import WebDriverWait
 from config import PROJECT_ROOT, settings
+from drivers.factory import SUPPORTED_BROWSERS, GridUnavailableError, attach_session_video, create_driver, wait_for_grid
 from utils.listener import IlCarroListener
 from api.car_api import IlCarroAPI
 from pages.login_page import LoginPage
@@ -29,11 +23,6 @@ LOG_DIR = PROJECT_ROOT / "logs"
 
 # Сторонние библиотеки на уровне INFO/DEBUG пишут много служебного шума и топят логи тестов
 NOISY_LOGGERS = ("urllib3", "selenium", "faker", "asyncio", "charset_normalizer", "filelock")
-
-# Ожидания состояний окружения (секунды). WebDriverWait здесь — просто опрос условия с таймаутом,
-# драйвер ему не нужен. Значения сохраняют прежний запас: 5 попыток по 2 с и ~10 опросов видео.
-SELENOID_WAKE_TIMEOUT = 10
-VIDEO_WAIT_TIMEOUT = 20
 
 
 def pytest_configure(config):
@@ -81,186 +70,58 @@ def pytest_terminal_summary(terminalreporter):
         terminalreporter.write_line(summary)
 
 
-# 👇 Учим pytest понимать флаг --browser_name
 def pytest_addoption(parser):
     parser.addoption(
         "--browser_name",
         action="store",
         default="chrome",
-        choices=["chrome", "firefox", "edge"],
-        help="Browser to run tests in: chrome, firefox, or edge"
+        choices=SUPPORTED_BROWSERS,
+        help=f"Браузер для Selenium-тестов: {', '.join(SUPPORTED_BROWSERS)}",
     )
 
 
 @pytest.fixture(scope="session")
-def selenoid_hub():
-    """Проверяет доступность хаба Selenoid один раз на воркер.
+def grid_ready(request):
+    """Проверяет готовность Selenium Grid один раз на воркер.
 
-    Без проверки каждый Selenium-тест тратит время на повторные попытки подключения и падает
-    одной и той же невнятной ошибкой. Недоступный Selenoid — ошибка окружения, поэтому тест не
-    пропускается (skip), а получает ERROR с понятным сообщением. Результат session-фикстуры
-    кэшируется, так что остальные тесты воркера падают сразу, без новых запросов к хабу.
+    Без проверки каждый Selenium-тест тратит время на подключение и падает одной и той же
+    невнятной ошибкой. Недоступный Grid — ошибка окружения, поэтому тест не пропускается (skip),
+    а получает ERROR с понятным сообщением. Ошибку session-фикстуры pytest кэширует, так что
+    остальные тесты воркера падают сразу, без новых запросов к хабу.
     """
-    hub_url = settings.selenoid_hub_url
     error = None
     try:
-        # В docker compose Selenoid может подниматься чуть дольше контейнера с тестами, поэтому
-        # хаб опрашивается до SELENOID_WAKE_TIMEOUT секунд, а не один раз.
-        # Достаточно любого HTTP-ответа: нам важно, что по адресу кто-то слушает, а не что вернул /status
-        WebDriverWait(
-            None, SELENOID_WAKE_TIMEOUT, poll_frequency=0.5, ignored_exceptions=(requests.RequestException,)
-        ).until(lambda _: requests.get(f"{hub_url}/status", timeout=3))
-    except TimeoutException:
-        error = f"не ответил за {SELENOID_WAKE_TIMEOUT} с"
+        wait_for_grid(request.config.getoption("--browser_name"))
+    except GridUnavailableError as unavailable:
+        error = str(unavailable)
     if error:
-        # fail() вызывается вне except: иначе pytest печатает длинную цепочку исключений requests/urllib3
-        pytest.fail(
-            f"Selenoid недоступен: {hub_url} ({error}). Запусти Selenoid или USE_SELENOID=false.",
-            pytrace=False,
-        )
+        # fail() вызывается вне except: иначе pytest печатает цепочку исключений
+        pytest.fail(error, pytrace=False)
 
 
 @pytest.fixture
-def driver(request):  # <--- Добавили request
-    # Читаем флаг
-    browser_name = request.config.getoption("--browser_name")
-
-    is_headless = settings.headless
-    is_ci = settings.is_ci
-    use_selenoid = settings.use_selenoid
-
-    session_id = None
-    driver_instance = None
-
-    if is_ci:
-        # ЗАПУСК В GITHUB ACTIONS (Локально на машине-раннере, если без Docker)
-        if browser_name == "firefox":
-            options = FirefoxOptions()
-            options.add_argument('--headless')
-            driver_instance = webdriver.Firefox(options=options)
-        elif browser_name == "edge":
-            options = EdgeOptions()
-            options.add_argument('--headless')
-            driver_instance = webdriver.Edge(options=options)
-        else:
-            options = ChromeOptions()
-            options.add_argument('--headless=new')
-            options.add_argument('--window-size=1920,1080')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-dev-shm-usage')
-            options.add_argument('--disable-gpu')
-            driver_instance = webdriver.Chrome(options=options)
-
-    else:
-        if use_selenoid:
-            # Фикстура подключается только здесь: API- и Playwright-тестам хаб не нужен
-            request.getfixturevalue("selenoid_hub")
-            logger.info(f"Маршрутизация в изолированный Docker-контейнер (Selenoid). Браузер: {browser_name}")
-
-            # Подготавливаем опции в зависимости от браузера
-            if browser_name == "firefox":
-                options = FirefoxOptions()
-                selenoid_browser = "firefox"
-            elif browser_name == "edge":
-                options = EdgeOptions()
-                selenoid_browser = "MicrosoftEdge"
-            else:
-                options = ChromeOptions()
-                selenoid_browser = "chrome"
-
-            options.set_capability("browserName", selenoid_browser)
-            # В Selenoid 1.11+ версия задается через browserVersion (или просто берется default из browsers.json)
-            # options.set_capability("browserVersion", "128.0") # <-- Можно закомментировать или убрать жесткую привязку
-            options.set_capability("selenoid:options", {
-                "enableVNC": True,
-                "enableVideo": True,
-            })
-
-            # Готовность хаба уже дождалась фикстура selenoid_hub; запуск контейнера браузера
-            # Selenoid ждёт сам, поэтому ошибка здесь — настоящая, а не «хаб ещё спит»
-            driver_instance = webdriver.Remote(command_executor=settings.selenoid_hub_url, options=options)
-            session_id = driver_instance.session_id
-
-        else:
-            try:
-                if browser_name == "firefox":
-                    options = FirefoxOptions()
-                    if is_headless:
-                        options.add_argument('--headless')
-                    driver_instance = webdriver.Firefox(options=options)
-                elif browser_name == "edge":
-                    options = EdgeOptions()
-                    if is_headless:
-                        options.add_argument('--headless')
-                    options.add_argument('--window-size=1920,1080')
-                    driver_instance = webdriver.Edge(options=options)
-                else:
-                    options = ChromeOptions()
-                    if is_headless:
-                        options.add_argument('--headless=new')
-                    options.add_argument('--window-size=1920,1080')
-                    driver_instance = webdriver.Chrome(options=options)
-            except Exception as e:
-                logger.warning(f"Браузер {browser_name} не запустился. Причина: {e}")
-                raise e
-
-    if not is_headless and not use_selenoid:
-        driver_instance.maximize_window()
-    elif use_selenoid:
-        driver_instance.maximize_window()
-
-    driver_instance.set_page_load_timeout(30)
-    decorated_driver = EventFiringWebDriver(driver_instance, IlCarroListener())
+def driver(request):
+    """Браузер для Selenium-теста. Как именно он создаётся — решает drivers/factory.py."""
+    browser = request.config.getoption("--browser_name")
+    if settings.use_grid:
+        # Фикстура подключается только здесь: API- и Playwright-тестам Grid не нужен
+        request.getfixturevalue("grid_ready")
+    raw_driver = create_driver(browser)
+    session_id = raw_driver.session_id  # по нему после теста находим видео сессии
+    decorated_driver = EventFiringWebDriver(raw_driver, IlCarroListener())
 
     yield decorated_driver
 
-    if use_selenoid:
-        # Осознанная фиксированная пауза: рекордер Selenoid пишет экран с задержкой, и без неё
-        # в видео не попадают последние кадры теста. Состояния «кадры записаны», которого можно
-        # дождаться, Selenoid наружу не отдаёт.
+    if settings.use_grid:
+        # Осознанная фиксированная пауза: рекордер узла пишет экран с задержкой и останавливается
+        # вместе с сессией, поэтому без паузы в видео не попадают последние кадры теста.
+        # Состояния «кадры записаны», которого можно дождаться, Grid наружу не отдаёт.
         time.sleep(1.5)
-
     decorated_driver.quit()
 
-    # === ИНТЕГРАЦИЯ ВИДЕО В ALLURE ===
-    if use_selenoid and session_id:
-        video_path = os.path.join(settings.video_dir, f"{session_id}.mp4")
-        video = _read_finished_video(video_path)
-        if video is None:
-            logger.warning(f"Видео ({browser_name}) не готово за {VIDEO_WAIT_TIMEOUT} с: {video_path}")
-        else:
-            allure.attach(
-                video,
-                name=f"Видео прохождения теста ({browser_name})",
-                attachment_type=allure.attachment_type.MP4
-            )
-            logger.info(f"Видео ({browser_name}) прикреплено к отчету")
+    if settings.use_grid:
+        attach_session_video(session_id, browser)
 
-
-def _read_finished_video(video_path: str) -> bytes | None:
-    """Ждёт, пока Selenoid допишет видео сессии, и возвращает его содержимое (None — не дождались).
-
-    Видео дописывает отдельный контейнер уже после закрытия сессии: файл появляется не сразу и
-    какое-то время растёт. Готовым считается непустой файл, размер которого не изменился между
-    двумя опросами. Нет файла или он ещё занят записью (PermissionError на Windows) — не готов.
-    """
-    last_size = -1
-
-    def finished(_):
-        nonlocal last_size
-        size = os.path.getsize(video_path)
-        if size == 0 or size != last_size:
-            last_size = size
-            return False
-        with open(video_path, "rb") as video_file:
-            return video_file.read()
-
-    try:
-        return WebDriverWait(
-            None, VIDEO_WAIT_TIMEOUT, poll_frequency=1, ignored_exceptions=(OSError,)
-        ).until(finished)
-    except TimeoutException:
-        return None
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):

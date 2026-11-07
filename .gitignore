@@ -231,3 +231,6 @@ allure-results/
 
 # Скриншоты и логи прогонов research/: пересоздаются скриптами
 research/evidence/
+
+# Экспорт сессий Claude Code (/export): имя начинается с даты
+20??-??-??-*.txt

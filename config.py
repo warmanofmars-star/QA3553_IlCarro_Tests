@@ -32,8 +32,8 @@ load_dotenv(PROJECT_ROOT / ".env")
 # Переменные окружения всегда строки. Функции ниже приводят их к нужному типу и одинаково
 # обрабатывают случай «не задана или пустая».
 
-def _env_str(name: str, default: str) -> str:
-    """Строка; пустое значение считается незаданным."""
+def _env_str(name: str, default: str | None = None) -> str | None:
+    """Строка; пустое значение считается незаданным. Без default незаданная переменная даёт None."""
     value = os.getenv(name)
     if value is None or value.strip() == "":
         return default
@@ -67,10 +67,10 @@ class Settings:
 
     # --- Запуск браузеров ---
     headless: bool  # запуск без окна браузера (локально)
-    is_ci: bool  # запуск на «голом» раннере GitHub Actions: браузер локально, без Selenoid
-    use_selenoid: bool  # браузеры в Docker через Selenoid
-    selenoid_hub_url: str  # адрес хаба Selenoid
-    video_dir: str  # где лежат видео сессий Selenoid
+    is_ci: bool  # запуск на «голом» раннере GitHub Actions: браузер локально, без Grid
+    use_grid: bool  # браузеры в Docker через Selenium Grid
+    grid_url: str  # адрес хаба Selenium Grid
+    video_dir: str | None  # где лежат видео сессий Grid (None — видео к отчёту не прикладываем)
 
     # --- Таймауты ---
     pw_timeout_ms: int  # ожидания Playwright, миллисекунды
@@ -89,10 +89,12 @@ class Settings:
             api_url=_env_str("API_BASE_URL", "https://ilcarro-backend.herokuapp.com").rstrip("/"),
             headless=_env_bool("HEADLESS_MODE", False),
             is_ci=_env_bool("CI", False),
-            use_selenoid=_env_bool("USE_SELENOID", False),
-            selenoid_hub_url=_env_str("SELENOID_HUB_URL", "http://localhost:4444/wd/hub"),
-            # Значение по умолчанию — путь Selenoid на Windows-машине автора; в Docker его задаёт compose
-            video_dir=_env_str("VIDEO_DIR", r"C:\selenoid\video"),
+            use_grid=_env_bool("USE_GRID", False),
+            # rstrip("/"): к адресу дописывается /status, двойной слэш не нужен
+            grid_url=_env_str("GRID_URL", "http://localhost:4444").rstrip("/"),
+            # По умолчанию видео нет: узлы Grid пишут его в Docker-том, доступный только контейнеру
+            # с тестами (там VIDEO_DIR=/app/video задаёт docker-compose.yml)
+            video_dir=_env_str("VIDEO_DIR"),
             pw_timeout_ms=_env_int("PW_TIMEOUT", 10000),
             enable_console_logs=_env_bool("ENABLE_CONSOLE_LOGS", True),
             is_xdist_worker=os.environ.get("PYTEST_XDIST_WORKER") is not None,
