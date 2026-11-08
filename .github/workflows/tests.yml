@@ -268,15 +268,70 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      # Временный шаг до отдельных job'ов уведомлений: ссылка — из результата deploy
-      - name: Отправляем сводное уведомление в Telegram
+  # ==========================================
+  # JOB 5: УВЕДОМЛЕНИЕ ОБ ОПУБЛИКОВАННОМ ОТЧЁТЕ
+  # ==========================================
+  notify-report:
+    name: Notify report
+    needs: [api-and-playwright, selenium, report, deploy]
+    # Только после успешной выкладки: ссылка в сообщении берётся из результата deploy
+    if: ${{ !cancelled() && needs.deploy.result == 'success' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    env:
+      TELEGRAM_CONFIGURED: ${{ secrets.TELEGRAM_TOKEN != '' && secrets.TELEGRAM_TO != '' }}
+    steps:
+      - name: Секреты Telegram не заданы
+        if: env.TELEGRAM_CONFIGURED != 'true'
+        run: echo "::warning::Секреты TELEGRAM_TOKEN и TELEGRAM_TO не заданы — уведомление не отправлено"
+
+      - name: Отправляем отчёт в Telegram
+        if: env.TELEGRAM_CONFIGURED == 'true'
         uses: appleboy/telegram-action@master
         with:
-            to: ${{ secrets.TELEGRAM_TO }}
-            token: ${{ secrets.TELEGRAM_TOKEN }}
-            message: |
-              🤖 Автотесты IlCarro завершены!
-              🌐 Selenium: chrome, firefox, edge; API и Playwright — один раз
-              🏷 Фильтр тегов: ${{ inputs.test_marker || 'Все тесты (Full Suite)' }}
-              📊 Посмотреть общий Allure-отчет можно по ссылке:
-              👉 ${{ steps.deployment.outputs.page_url }}
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          disable_web_page_preview: true
+          message: |
+            ${{ (needs.report.outputs.failed == '0' && needs.report.outputs.broken == '0' && needs.api-and-playwright.result == 'success' && needs.selenium.result == 'success') && '✅' || '⚠️' }} IlCarro — отчёт Allure опубликован
+            Ветка: ${{ github.ref_name }}, событие: ${{ github.event_name }}
+            Фильтр: ${{ inputs.test_marker || 'все тесты' }}
+            Selenium: chrome, firefox, edge; API и Playwright — один раз
+            passed: ${{ needs.report.outputs.passed }}, xfailed: ${{ needs.report.outputs.xfailed }}, failed: ${{ needs.report.outputs.failed }}, broken: ${{ needs.report.outputs.broken }}
+            Отчёт: ${{ needs.deploy.outputs.page_url }}
+            Запуск: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+  # ==========================================
+  # JOB 6: УВЕДОМЛЕНИЕ О ПРОВАЛЕ
+  # ==========================================
+  notify-failure:
+    name: Notify failure
+    needs: [split-check, api-and-playwright, selenium, report, deploy]
+    # failure() — упал любой из job'ов выше (тесты, разбиение, отчёт или выкладка).
+    # Отменённый запуск сюда не попадает
+    if: ${{ failure() }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    env:
+      TELEGRAM_CONFIGURED: ${{ secrets.TELEGRAM_TOKEN != '' && secrets.TELEGRAM_TO != '' }}
+    steps:
+      - name: Секреты Telegram не заданы
+        if: env.TELEGRAM_CONFIGURED != 'true'
+        run: echo "::warning::Секреты TELEGRAM_TOKEN и TELEGRAM_TO не заданы — уведомление не отправлено"
+
+      - name: Отправляем сообщение о провале в Telegram
+        if: env.TELEGRAM_CONFIGURED == 'true'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          disable_web_page_preview: true
+          message: |
+            🔴 IlCarro — запуск CI упал
+            Ветка: ${{ github.ref_name }}, событие: ${{ github.event_name }}
+            Фильтр: ${{ inputs.test_marker || 'все тесты' }}
+            Разбиение: ${{ needs.split-check.result }}
+            API и Playwright: ${{ needs.api-and-playwright.result }}
+            Selenium (chrome, firefox, edge): ${{ needs.selenium.result }}
+            Отчёт: ${{ needs.report.result }}, выкладка: ${{ needs.deploy.result }}
+            Запуск: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
