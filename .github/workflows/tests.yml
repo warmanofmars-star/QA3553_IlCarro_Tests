@@ -40,6 +40,9 @@ concurrency:
 # не пуста, пересечения нет, сумма — весь набор.
 # Маркер ручного запуска добавляется через and, и он берётся в скобки: без скобок
 # "smoke or api and selenium" читается как "smoke or (api and selenium)" и отбирает лишнее.
+# Пустой отбор (код выхода pytest 5) — ошибка: сломанное выражение иначе дало бы зелёный job,
+# который ничего не проверил. Исключение — ручной запуск с test_marker: маркер вправе не оставить
+# тестов одному из job'ов (например, test_marker=api для матрицы Selenium).
 env:
   SELENIUM_EXPR: selenium
   OTHER_EXPR: not selenium
@@ -86,12 +89,19 @@ jobs:
           # pytest сам дочитывает аргументы из PYTEST_ADDOPTS (docker-compose.yml передаёт её
           # в контейнер). Маркер передаётся как данные, а не вклеивается в текст shell-команды
           PYTEST_ADDOPTS: ${{ inputs.test_marker && format('-m "({0}) and {1}"', inputs.test_marker, env.OTHER_EXPR) || format('-m "{0}"', env.OTHER_EXPR) }}
+          # Пустой отбор допустим только при ручном запуске с маркером (см. разбиение выше)
+          ALLOW_EMPTY: ${{ github.event_name == 'workflow_dispatch' && inputs.test_marker != '' }}
         # run --no-deps: стартует только контейнер с тестами, хаб и узлы Grid не нужны.
-        # -T: без псевдотерминала (в CI его нет)
+        # -T: без псевдотерминала (в CI его нет). Код выхода — код pytest
         run: |
           echo "Отбор: $PYTEST_ADDOPTS"
-          docker compose run --rm --no-deps --build -T qa-framework
-        continue-on-error: true
+          code=0
+          docker compose run --rm --no-deps --build -T qa-framework || code=$?
+          if [ "$code" -eq 5 ]; then
+            if [ "$ALLOW_EMPTY" = "true" ]; then echo "::notice::Маркер не отобрал API- и Playwright-тестов — job пропускает прогон"; exit 0; fi
+            echo "::error::Job не отобрал ни одного теста — проверь выражение ($PYTEST_ADDOPTS)"
+          fi
+          exit "$code"
 
       - name: Возвращаем себе права на результаты
         # Контейнер пишет файлы от root; без этого upload-artifact не сможет их прочитать
@@ -131,12 +141,20 @@ jobs:
           COMPOSE_PROFILES: ${{ matrix.browser }}
           BROWSER: ${{ matrix.browser }}
           PYTEST_ADDOPTS: ${{ inputs.test_marker && format('-m "({0}) and {1}"', inputs.test_marker, env.SELENIUM_EXPR) || format('-m "{0}"', env.SELENIUM_EXPR) }}
-        # Именно up, а не run: узлы браузеров не входят в depends_on qa-framework, их запускает
-        # профиль. --exit-code-from останавливает стенд после тестов и возвращает код выхода pytest
+          ALLOW_EMPTY: ${{ github.event_name == 'workflow_dispatch' && inputs.test_marker != '' }}
+        # Упавший тест делает job красным; отчёт всё равно соберётся (следующие шаги — if: always(),
+        # job отчёта — !cancelled()). Именно up, а не run: узлы браузеров не входят в depends_on
+        # qa-framework, их запускает профиль. --exit-code-from останавливает стенд после тестов
+        # и возвращает код выхода pytest
         run: |
           echo "Отбор: $PYTEST_ADDOPTS"
-          docker compose up --build --exit-code-from qa-framework
-        continue-on-error: true
+          code=0
+          docker compose up --build --exit-code-from qa-framework || code=$?
+          if [ "$code" -eq 5 ]; then
+            if [ "$ALLOW_EMPTY" = "true" ]; then echo "::notice::Маркер не отобрал Selenium-тестов — job пропускает прогон"; exit 0; fi
+            echo "::error::Job не отобрал ни одного теста — проверь выражение ($PYTEST_ADDOPTS)"
+          fi
+          exit "$code"
 
       - name: Возвращаем себе права на результаты
         if: always()
@@ -157,7 +175,9 @@ jobs:
   report:
     name: Allure report
     needs: [split-check, api-and-playwright, selenium]
-    if: always()
+    # Отчёт нужен именно тогда, когда тесты упали. !cancelled() вместо always(): запуск,
+    # отменённый более новым (concurrency), не должен собирать и публиковать отчёт
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
