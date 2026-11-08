@@ -6,6 +6,8 @@
 # --- Секреты и локальные настройки ---
 .env
 .claude/settings.local.json
+# Рабочие копии Claude Code (git worktree) — полные копии проекта, возможно, со своим .env
+.claude/worktrees/
 
 # --- Окружение и инструменты разработчика ---
 .venv/
