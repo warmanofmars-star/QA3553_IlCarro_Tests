@@ -55,7 +55,7 @@ COMPOSE_PROFILES=chrome TEST_MARKER=smoke docker compose up --build --exit-code-
 ## CI (GitHub Actions, `.github/workflows/tests.yml`)
 
 Запуск: PR в `main`, push в `main`, ручной (`workflow_dispatch`, поле `test_marker`). Новый запуск
-той же ветки или PR отменяет предыдущий. Jobs:
+PR отменяет предыдущий запуск того же PR; запуски на `main` не отменяются, а ждут в очереди. Jobs:
 
 - `split-check` — `scripts/check_ci_split.py`: отборы `selenium` и `not selenium` не пусты,
   не пересекаются, в сумме дают весь набор;
