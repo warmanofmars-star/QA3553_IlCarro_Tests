@@ -1,0 +1,24 @@
+# Дополнение к docker-compose.yml для сборок Jenkins (подключает Jenkinsfile через COMPOSE_FILE).
+# Вручную его запускать не нужно.
+#
+# Jenkins живёт в контейнере и управляет Docker хоста через docker.sock. Отсюда две правки:
+#
+# 1. Хаб Grid не публикует порт на хост. Тесты ходят к нему внутри compose-сети
+#    (selenium-hub:4444), смотреть в Grid UI во время сборки некому. Опубликованный порт только
+#    мешал бы: в Phonebook сборка Jenkins и локальный Grid роняли друг друга на 4444, а сборки
+#    IlCarro и Phonebook могут идти одновременно (у Jenkins 2 исполнителя).
+#
+# 2. У qa-framework нет bind-монтирования ./allure-results. Путь «./» docker.sock раскрыл бы
+#    на машине Docker, а не в workspace Jenkins: папка создалась бы мимо workspace, и Jenkins
+#    результатов не увидел бы. Результаты забирает docker cp из остановленного контейнера
+#    (см. Jenkinsfile), а папка внутри контейнера своя у каждой сборки.
+#
+# !reset и !override — теги Docker Compose 2.24.4+; версию пишет в лог стадия Prepare.
+
+services:
+  selenium-hub:
+    ports: !reset []
+
+  qa-framework:
+    volumes: !override
+      - "video-data:/app/video"      # общий с узлами том с видео остаётся: по нему тесты находят ролики
