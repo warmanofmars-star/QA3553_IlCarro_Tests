@@ -70,6 +70,25 @@ def pytest_terminal_summary(terminalreporter):
         terminalreporter.write_line(summary)
 
 
+# Фикстуры, через которые тест получает браузер Selenium. authenticated_driver зависит от driver,
+# но указан явно: если зависимость когда-нибудь поменяется, отбор для CI не развалится молча
+SELENIUM_FIXTURES = frozenset({"driver", "authenticated_driver"})
+
+
+def pytest_collection_modifyitems(items):
+    """Ставит маркер selenium каждому тесту, которому нужен браузер Selenium.
+
+    Решение принимается по фикстурам, а не по ручным маркерам: ручные ui/hybrid уже расходились
+    с тем, что тест на самом деле запускает. fixturenames — полное замыкание зависимостей, поэтому
+    тест, получивший браузер через свою фикстуру-обёртку, тоже будет помечен.
+    CI делит прогон по этому маркеру: "selenium" идёт в матрицу браузеров через Grid,
+    "not selenium" (API и Playwright) — один раз.
+    """
+    for item in items:
+        if SELENIUM_FIXTURES.intersection(getattr(item, "fixturenames", ())):
+            item.add_marker(pytest.mark.selenium)
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--browser_name",
