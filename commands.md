@@ -121,7 +121,9 @@ selenium [chrome,        │      │
 - `deploy` — публикует отчёт на GitHub Pages; только из `main` (push или ручной запуск).
 - `notify-report` — Telegram со ссылкой на отчёт и цифрами passed / xfailed / failed / broken,
   только после успешной выкладки. `notify-failure` — отдельное сообщение со ссылкой на запуск,
-  если упал любой job. Без секретов `TELEGRAM_TOKEN`/`TELEGRAM_TO` — только предупреждение.
+  если упал любой job. Оба — только для запусков на `main`, по PR сообщений нет. Отправка —
+  `scripts/send_telegram.sh` (curl к Bot API, токен не попадает ни в командную строку, ни в лог).
+  Без секретов `TELEGRAM_TOKEN`/`TELEGRAM_TO` — только предупреждение.
 
 **Маркер selenium** ставится автоматически (хук в `conftest.py`) каждому тесту с фикстурой
 `driver` или `authenticated_driver`. Проверить разбиение локально:

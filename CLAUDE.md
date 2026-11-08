@@ -65,6 +65,7 @@ PR отменяет предыдущий запуск того же PR; запу
   отчёта, генерация, артефакт `allure-report`;
 - `deploy` — только `main` (push или ручной запуск): `actions/deploy-pages`;
 - `notify-report` — Telegram после успешной выкладки; `notify-failure` — Telegram, если что-то упало.
+  Оба — только для `main`; отправка — `scripts/send_telegram.sh` (curl к Bot API).
 
 Отбор передаётся в контейнер через `PYTEST_ADDOPTS`; маркер ручного запуска добавляется как
 `(маркер) and selenium` — скобки обязательны. Пустой отбор (код pytest 5) валит job, кроме ручного

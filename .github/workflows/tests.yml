@@ -272,31 +272,39 @@ jobs:
         uses: actions/deploy-pages@v5
 
   # ==========================================
+  # УВЕДОМЛЕНИЯ В TELEGRAM (только main)
+  # ==========================================
+  # Отправка — curl к Bot API из scripts/send_telegram.sh, без сторонних action'ов: секрет
+  # не уходит в чужой код. Секреты попадают в шаг только через env; скрипт передаёт их curl,
+  # не раскрывая в командной строке и в выводе (подробности — в самом скрипте).
+  # Сообщения шлются только для запусков на main (push или ручной): по PR — тишина, его
+  # результат виден в самом PR. Если секреты не заданы, скрипт пишет предупреждение и выходит.
+
+  # ==========================================
   # JOB 5: УВЕДОМЛЕНИЕ ОБ ОПУБЛИКОВАННОМ ОТЧЁТЕ
   # ==========================================
   notify-report:
     name: Notify report
     needs: [api-and-playwright, selenium, report, deploy]
-    # Только после успешной выкладки: ссылка в сообщении берётся из результата deploy
-    if: ${{ !cancelled() && needs.deploy.result == 'success' }}
+    # Только после успешной выкладки: ссылка в сообщении берётся из результата deploy.
+    # Условие на main продублировано явно, чтобы не зависеть от условия deploy
+    if: ${{ !cancelled() && needs.deploy.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    env:
-      TELEGRAM_CONFIGURED: ${{ secrets.TELEGRAM_TOKEN != '' && secrets.TELEGRAM_TO != '' }}
     steps:
-      - name: Секреты Telegram не заданы
-        if: env.TELEGRAM_CONFIGURED != 'true'
-        run: echo "::warning::Секреты TELEGRAM_TOKEN и TELEGRAM_TO не заданы — уведомление не отправлено"
+      - name: Скачиваем скрипт отправки
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: scripts/send_telegram.sh
+          sparse-checkout-cone-mode: false
 
       - name: Отправляем отчёт в Telegram
-        if: env.TELEGRAM_CONFIGURED == 'true'
-        # Сторонний action получает секрет, поэтому закреплён на коммите, а не на теге
-        uses: appleboy/telegram-action@214f06cfa3d3a588c1472116889437e7c6fd29b1 # v1.1.1
-        with:
-          to: ${{ secrets.TELEGRAM_TO }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          disable_web_page_preview: true
-          message: |
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_TO: ${{ secrets.TELEGRAM_TO }}
+          # Текст собирается здесь, в env, а не в run: значения выражений (в том числе
+          # введённый вручную маркер) не становятся частью shell-команды
+          TELEGRAM_TEXT: |
             ${{ (needs.report.outputs.failed == '0' && needs.report.outputs.broken == '0' && needs.api-and-playwright.result == 'success' && needs.selenium.result == 'success') && '✅' || '⚠️' }} IlCarro — отчёт Allure опубликован
             Ветка: ${{ github.ref_name }}, событие: ${{ github.event_name }}
             Фильтр: ${{ inputs.test_marker || 'все тесты' }}
@@ -304,6 +312,7 @@ jobs:
             passed: ${{ needs.report.outputs.passed }}, xfailed: ${{ needs.report.outputs.xfailed }}, failed: ${{ needs.report.outputs.failed }}, broken: ${{ needs.report.outputs.broken }}
             Отчёт: ${{ needs.deploy.outputs.page_url }}
             Запуск: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash scripts/send_telegram.sh
 
   # ==========================================
   # JOB 6: УВЕДОМЛЕНИЕ О ПРОВАЛЕ
@@ -312,25 +321,22 @@ jobs:
     name: Notify failure
     needs: [split-check, api-and-playwright, selenium, report, deploy]
     # failure() — упал любой из job'ов выше (тесты, разбиение, отчёт или выкладка).
-    # Отменённый запуск сюда не попадает
-    if: ${{ failure() }}
+    # Отменённый запуск сюда не попадает; запуск по PR — тоже (только main)
+    if: ${{ failure() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    env:
-      TELEGRAM_CONFIGURED: ${{ secrets.TELEGRAM_TOKEN != '' && secrets.TELEGRAM_TO != '' }}
     steps:
-      - name: Секреты Telegram не заданы
-        if: env.TELEGRAM_CONFIGURED != 'true'
-        run: echo "::warning::Секреты TELEGRAM_TOKEN и TELEGRAM_TO не заданы — уведомление не отправлено"
+      - name: Скачиваем скрипт отправки
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: scripts/send_telegram.sh
+          sparse-checkout-cone-mode: false
 
       - name: Отправляем сообщение о провале в Telegram
-        if: env.TELEGRAM_CONFIGURED == 'true'
-        uses: appleboy/telegram-action@214f06cfa3d3a588c1472116889437e7c6fd29b1 # v1.1.1
-        with:
-          to: ${{ secrets.TELEGRAM_TO }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          disable_web_page_preview: true
-          message: |
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_TO: ${{ secrets.TELEGRAM_TO }}
+          TELEGRAM_TEXT: |
             🔴 IlCarro — запуск CI упал
             Ветка: ${{ github.ref_name }}, событие: ${{ github.event_name }}
             Фильтр: ${{ inputs.test_marker || 'все тесты' }}
@@ -339,3 +345,4 @@ jobs:
             Selenium (chrome, firefox, edge): ${{ needs.selenium.result }}
             Отчёт: ${{ needs.report.result }}, выкладка: ${{ needs.deploy.result }}
             Запуск: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash scripts/send_telegram.sh
