@@ -5,7 +5,7 @@ from playwright.sync_api import Page, Route, expect
 from config import settings
 from utils.price_format import ui_price
 
-pytestmark = [pytest.mark.ui, pytest.mark.playwright, pytest.mark.regression]
+pytestmark = [pytest.mark.ui, pytest.mark.regression]
 
 UI_BASE_URL = settings.ui_url
 

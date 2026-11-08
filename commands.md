@@ -14,7 +14,7 @@
 - `pytest -m "regression" -n 3` — полный регресс (39 тестов: 24 UI + 15 API)
 - `pytest -m "api" -v` — все API-тесты без запуска браузеров (19 тестов)
 - `pytest -m "ui" -n 3` — все браузерные тесты Selenium и Playwright (33 теста)
-- `pytest -m "playwright" -v` — только быстрые UI-тесты на Playwright (5 тестов)
+- `pytest -m "playwright" -v` — только тесты на Playwright (6 тестов; маркер ставится автоматически по фикстуре `page`)
 - `pytest -m "hybrid" -v` — гибридные тесты API + UI (3 теста)
 - `pytest -m "security" -v` — проверки безопасности, BOLA и защит форм (15 тестов)
 - `pytest -m "contract" -v` — валидация JSON Schema и словарей (3 теста)

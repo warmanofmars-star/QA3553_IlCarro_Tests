@@ -48,9 +48,10 @@ COMPOSE_PROFILES=firefox BROWSER=firefox docker compose up --build --exit-code-f
 COMPOSE_PROFILES=chrome TEST_MARKER=smoke docker compose up --build --exit-code-from qa-framework
 ```
 
-Маркеры (из `pytest.ini`): `smoke`, `regression`, `ui`, `api`, `hybrid`, `playwright`, `security`,
-`contract`, `mutation`. Плюс `selenium` — его ставит хук `pytest_collection_modifyitems` в `conftest.py`
-всем тестам с фикстурой `driver`/`authenticated_driver`; вручную его не расставляй.
+Маркеры (из `pytest.ini`): `smoke`, `regression`, `ui`, `api`, `hybrid`, `security`, `contract`,
+`mutation`. Плюс `selenium` и `playwright` — их ставит хук `pytest_collection_modifyitems` в `conftest.py`
+по фикстурам: `selenium` — тестам с `driver`/`authenticated_driver`, `playwright` — тестам с `page`;
+вручную их не расставляй.
 
 ## CI (GitHub Actions, `.github/workflows/tests.yml`)
 

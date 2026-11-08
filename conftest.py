@@ -75,20 +75,26 @@ def pytest_terminal_summary(terminalreporter):
 # Фикстуры, через которые тест получает браузер Selenium. authenticated_driver зависит от driver,
 # но указан явно: если зависимость когда-нибудь поменяется, отбор для CI не развалится молча
 SELENIUM_FIXTURES = frozenset({"driver", "authenticated_driver"})
+# Фикстура pytest-playwright, через которую тест получает страницу Playwright. context и browser
+# сами по себе тест не размечают: страницу тесты проекта берут только через page
+PLAYWRIGHT_FIXTURES = frozenset({"page"})
 
 
 def pytest_collection_modifyitems(items):
-    """Ставит маркер selenium каждому тесту, которому нужен браузер Selenium.
+    """Ставит маркеры selenium и playwright по тому, какой браузер тест на самом деле получает.
 
-    Решение принимается по фикстурам, а не по ручным маркерам: ручные ui/hybrid уже расходились
-    с тем, что тест на самом деле запускает. fixturenames — полное замыкание зависимостей, поэтому
-    тест, получивший браузер через свою фикстуру-обёртку, тоже будет помечен.
-    CI делит прогон по этому маркеру: "selenium" идёт в матрицу браузеров через Grid,
-    "not selenium" (API и Playwright) — один раз.
+    Решение принимается по фикстурам, а не по ручным маркерам: ручные ui/hybrid/playwright уже
+    расходились с тем, что тест на самом деле запускает. fixturenames — полное замыкание
+    зависимостей, поэтому тест, получивший браузер через свою фикстуру-обёртку, тоже будет помечен.
+    CI делит прогон по маркеру selenium: "selenium" идёт в матрицу браузеров через Grid,
+    "not selenium" (API и Playwright) — один раз. Маркер playwright нужен для ручного отбора.
     """
     for item in items:
-        if SELENIUM_FIXTURES.intersection(getattr(item, "fixturenames", ())):
+        fixtures = getattr(item, "fixturenames", ())
+        if SELENIUM_FIXTURES.intersection(fixtures):
             item.add_marker(pytest.mark.selenium)
+        if PLAYWRIGHT_FIXTURES.intersection(fixtures):
+            item.add_marker(pytest.mark.playwright)
 
 
 def pytest_sessionfinish(session):
