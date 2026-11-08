@@ -228,6 +228,8 @@ allure-results/
 
 # Личные настройки Claude Code
 .claude/settings.local.json
+# Рабочие копии (git worktree), которые создаёт Claude Code: полные копии проекта
+.claude/worktrees/
 
 # Скриншоты и логи прогонов research/: пересоздаются скриптами
 research/evidence/

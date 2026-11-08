@@ -48,8 +48,33 @@ COMPOSE_PROFILES=firefox BROWSER=firefox docker compose up --build --exit-code-f
 COMPOSE_PROFILES=chrome TEST_MARKER=smoke docker compose up --build --exit-code-from qa-framework
 ```
 
-Маркеры (из `pytest.ini`): `smoke`, `regression`, `ui`, `api`, `hybrid`, `playwright`, `security`,
-`contract`, `mutation`.
+Маркеры (из `pytest.ini`): `smoke`, `regression`, `ui`, `api`, `hybrid`, `security`, `contract`,
+`mutation`. Плюс `selenium` и `playwright` — их ставит хук `pytest_collection_modifyitems` в `conftest.py`
+по фикстурам: `selenium` — тестам с `driver`/`authenticated_driver`, `playwright` — тестам с `page`;
+вручную их не расставляй.
+
+## CI (GitHub Actions, `.github/workflows/tests.yml`)
+
+Запуск: PR в `main`, push в `main`, ручной (`workflow_dispatch`, поле `test_marker`). Новый запуск
+PR отменяет предыдущий запуск того же PR; запуски на `main` не отменяются, а ждут в очереди. Jobs:
+
+- `split-check` — `scripts/check_ci_split.py`: отборы `selenium` и `not selenium` не пусты,
+  не пересекаются, в сумме дают весь набор;
+- `api-and-playwright` — `-m "not selenium"`, один раз, Docker без Grid;
+- `selenium` — `-m "selenium"`, матрица chrome / firefox / edge через Grid;
+- `report` (`!cancelled()`) — склейка `scripts/merge_allure_results.py`, история с опубликованного
+  отчёта, генерация, артефакт `allure-report`;
+- `deploy` — только `main` (push или ручной запуск): `actions/deploy-pages`;
+- `notify-report` — Telegram после успешной выкладки; `notify-failure` — Telegram, если что-то упало.
+  Оба — только для `main`; отправка — `scripts/send_telegram.sh` (curl к Bot API).
+
+Отбор передаётся в контейнер через `PYTEST_ADDOPTS`; маркер ручного запуска добавляется как
+`(маркер) and selenium` — скобки обязательны. Пустой отбор (код pytest 5) валит job, кроме ручного
+запуска с маркером. Упавший тест — красный job, `continue-on-error` не используется.
+Environment для Allure пишет `pytest_sessionfinish` в `conftest.py`, а не workflow.
+Отдельный job вручную: `test_marker=selenium` (только матрица) или `test_marker=not selenium`
+(только API и Playwright); подробности и локальные аналоги — в `commands.md`.
+После изменения маркеров или фикстур браузера проверь разбиение: `python scripts/check_ci_split.py`.
 
 ## Соглашения проекта
 

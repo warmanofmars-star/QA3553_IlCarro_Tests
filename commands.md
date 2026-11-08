@@ -14,7 +14,7 @@
 - `pytest -m "regression" -n 3` — полный регресс (39 тестов: 24 UI + 15 API)
 - `pytest -m "api" -v` — все API-тесты без запуска браузеров (19 тестов)
 - `pytest -m "ui" -n 3` — все браузерные тесты Selenium и Playwright (33 теста)
-- `pytest -m "playwright" -v` — только быстрые UI-тесты на Playwright (5 тестов)
+- `pytest -m "playwright" -v` — только тесты на Playwright (6 тестов; маркер ставится автоматически по фикстуре `page`)
 - `pytest -m "hybrid" -v` — гибридные тесты API + UI (3 теста)
 - `pytest -m "security" -v` — проверки безопасности, BOLA и защит форм (15 тестов)
 - `pytest -m "contract" -v` — валидация JSON Schema и словарей (3 теста)
@@ -93,6 +93,60 @@
 
 **Остановка и удаление контейнеров (после завершения работы):**
 `docker compose down`
+
+**Передать pytest любые аргументы (так делает CI):** переменная `PYTEST_ADDOPTS` доходит до контейнера.
+Если задан ещё и `TEST_MARKER`, его `-m` стоит в команде позже и побеждает.
+`PYTEST_ADDOPTS='-m "selenium"' COMPOSE_PROFILES=chrome docker compose up --build --exit-code-from qa-framework`
+
+---
+
+## 🚦 CI: GitHub Actions (`.github/workflows/tests.yml`)
+**Когда запускается:** PR в `main`, push в `main`, вручную (Actions → IlCarro Tests → Run workflow).
+Новый запуск PR отменяет предыдущий запуск того же PR; запуски на `main` не отменяются, а ждут
+в очереди (иначе быстрый второй пуш сорвал бы выкладку отчёта).
+
+**Схема jobs:**
+```
+split-check ─────────────┐
+api-and-playwright ──────┼─► report ─► deploy (только main) ─► notify-report
+selenium [chrome,        │      │
+          firefox, edge] ┘      └──────────────(что-то упало)──► notify-failure
+```
+- `split-check` — собирает тесты без запуска и проверяет, что разбиение дополняющее.
+- `api-and-playwright` — `-m "not selenium"`, один раз, в Docker без Grid.
+- `selenium` — `-m "selenium"`, матрица из трёх браузеров через Selenium Grid.
+- `report` — склеивает результаты, подтягивает историю с опубликованного отчёта, генерирует отчёт
+  и сохраняет его артефактом `allure-report` (для PR — единственный способ его посмотреть:
+  скачать, распаковать, `allure open allure-report`). Собирается и при упавших тестах.
+- `deploy` — публикует отчёт на GitHub Pages; только из `main` (push или ручной запуск).
+- `notify-report` — Telegram со ссылкой на отчёт и цифрами passed / xfailed / failed / broken,
+  только после успешной выкладки. `notify-failure` — отдельное сообщение со ссылкой на запуск,
+  если упал любой job. Оба — только для запусков на `main`, по PR сообщений нет. Отправка —
+  `scripts/send_telegram.sh` (curl к Bot API, токен не попадает ни в командную строку, ни в лог).
+  Без секретов `TELEGRAM_TOKEN`/`TELEGRAM_TO` — только предупреждение.
+
+**Маркер selenium** ставится автоматически (хук в `conftest.py`) каждому тесту с фикстурой
+`driver` или `authenticated_driver`. Проверить разбиение локально:
+`python scripts/check_ci_split.py` → `27 + 25 = 52`
+
+**Пустой отбор валит job** (pytest возвращает 5). Исключение — ручной запуск с маркером:
+например, `test_marker=api` законно не оставляет тестов матрице Selenium.
+
+**Запустить отдельный job вручную** (Run workflow, поле `test_marker`; ветка — любая):
+- только матрица Selenium: `selenium` (job API и Playwright завершится зелёным без тестов);
+- только API и Playwright: `not selenium`;
+- срез внутри обоих: `smoke`, `api and security` и т. п. — к каждому job добавится `(маркер) and …`.
+
+Из консоли то же самое (нужен GitHub CLI):
+`gh workflow run tests.yml --ref main -f test_marker=selenium`
+
+Ручной запуск из `main` публикует отчёт на Pages — с фильтром он будет неполным, и точка попадёт
+в график трендов. Для экспериментов запускай из другой ветки: отчёт будет только артефактом.
+Повторить один упавший браузер: в запуске нажать **Re-run failed jobs**.
+
+**Те же jobs локально в Docker:**
+- API и Playwright: `PYTEST_ADDOPTS='-m "not selenium"' docker compose run --rm --no-deps --build qa-framework`
+- Selenium в Firefox: `PYTEST_ADDOPTS='-m "selenium"' COMPOSE_PROFILES=firefox BROWSER=firefox docker compose up --build --exit-code-from qa-framework`
 
 ---
 

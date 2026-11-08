@@ -1,7 +1,9 @@
 import logging
 import os
+import platform
 import time
 from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 import allure
@@ -68,6 +70,72 @@ def pytest_terminal_summary(terminalreporter):
     if summary:
         terminalreporter.write_sep("-", "очистка машин")
         terminalreporter.write_line(summary)
+
+
+# Фикстуры, через которые тест получает браузер Selenium. authenticated_driver зависит от driver,
+# но указан явно: если зависимость когда-нибудь поменяется, отбор для CI не развалится молча
+SELENIUM_FIXTURES = frozenset({"driver", "authenticated_driver"})
+# Фикстура pytest-playwright, через которую тест получает страницу Playwright. context и browser
+# сами по себе тест не размечают: страницу тесты проекта берут только через page
+PLAYWRIGHT_FIXTURES = frozenset({"page"})
+
+
+def pytest_collection_modifyitems(items):
+    """Ставит маркеры selenium и playwright по тому, какой браузер тест на самом деле получает.
+
+    Решение принимается по фикстурам, а не по ручным маркерам: ручные ui/hybrid/playwright уже
+    расходились с тем, что тест на самом деле запускает. fixturenames — полное замыкание
+    зависимостей, поэтому тест, получивший браузер через свою фикстуру-обёртку, тоже будет помечен.
+    CI делит прогон по маркеру selenium: "selenium" идёт в матрицу браузеров через Grid,
+    "not selenium" (API и Playwright) — один раз. Маркер playwright нужен для ручного отбора.
+    """
+    for item in items:
+        fixtures = getattr(item, "fixturenames", ())
+        if SELENIUM_FIXTURES.intersection(fixtures):
+            item.add_marker(pytest.mark.selenium)
+        if PLAYWRIGHT_FIXTURES.intersection(fixtures):
+            item.add_marker(pytest.mark.playwright)
+
+
+def pytest_sessionfinish(session):
+    """Пишет блок Environment для Allure: где и как шёл прогон.
+
+    Раньше его собирал workflow через echo, и в локальном или Docker-отчёте блока не было.
+    Теперь файл пишет сам фреймворк — в любом запуске с --alluredir. В CI результаты нескольких
+    jobs склеивает scripts/merge_allure_results.py: разные значения одного ключа — через «; ».
+    """
+    if settings.is_xdist_worker:
+        return  # пишет только главный процесс, иначе воркеры перезапишут файл друг за другом
+
+    results_dir = session.config.getoption("allure_report_dir", default=None)
+    if not results_dir:
+        return  # запуск без --alluredir: отчёта не будет, писать некуда
+
+    if settings.use_grid:
+        run_mode = "Selenium Grid"
+    elif settings.headless or settings.is_ci:
+        run_mode = "Local (headless)"
+    else:
+        run_mode = "Local"
+
+    environment = {
+        # Браузер относится только к Selenium-тестам: Playwright всегда берёт свой chromium.
+        # Есть ли в прогоне Selenium-тесты, здесь не узнать: с xdist хук выполняет главный процесс,
+        # а тесты собирают воркеры
+        "SeleniumBrowser": session.config.getoption("--browser_name"),
+        "RunMode": run_mode,
+        "MarkerFilter": session.config.getoption("markexpr") or "(все тесты)",
+        "UiUrl": settings.ui_url,
+        "ApiUrl": settings.api_url,
+        "Python": platform.python_version(),
+        "OS": f"{platform.system()} {platform.release()}",
+    }
+    results_path = Path(results_dir)
+    results_path.mkdir(parents=True, exist_ok=True)
+    (results_path / "environment.properties").write_text(
+        "".join(f"{key}={value}\n" for key, value in environment.items()),
+        encoding="utf-8",
+    )
 
 
 def pytest_addoption(parser):

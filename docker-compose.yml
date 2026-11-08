@@ -22,6 +22,10 @@ name: ilcarro-tests
 # Общие настройки узлов браузеров (YAML-якорь: подставляется в каждый узел через <<: *node)
 x-node: &node
   shm_size: 2gb                      # браузерам нужна большая разделяемая память, иначе вкладки падают
+  # По SIGTERM узел закрывает сессии и дописывает видео (ffmpeg финализирует mp4). По умолчанию
+  # compose ждёт 10 с и добивает SIGKILL — узлы выходили с кодом 137, последнее видео могло
+  # остаться битым. Это верхняя граница: узел, закончивший раньше, останавливается сразу
+  stop_grace_period: 60s
   depends_on:
     - selenium-hub
   volumes:
@@ -83,6 +87,9 @@ services:
       # Если BROWSER не задан — chrome; если задан TEST_MARKER — фильтруем по нему, иначе все тесты
       - BROWSER=${BROWSER:-chrome}
       - TEST_MARKER=${TEST_MARKER:-}
+      # Дополнительные аргументы pytest (pytest читает переменную сам). Через неё CI передаёт
+      # выражение отбора -m как данные, а не вклеивает его в текст shell-команды
+      - PYTEST_ADDOPTS=${PYTEST_ADDOPTS:-}
     command: >
       sh -c '
       if [ -n "$$TEST_MARKER" ]; then

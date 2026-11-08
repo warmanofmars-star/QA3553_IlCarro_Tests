@@ -1,140 +1,348 @@
-name: IlCarro UI Tests
+name: IlCarro Tests
 
+# ==========================================
+# КОГДА ЗАПУСКАЕТСЯ
+# ==========================================
 on:
-  workflow_dispatch:
+  pull_request:
+    branches: [main]          # каждый PR в main проверяется ДО слияния
+  push:
+    branches: [main]          # и каждое изменение main (после слияния) — с публикацией отчёта
+  workflow_dispatch:          # ручной запуск из вкладки Actions
     inputs:
       test_marker:
-        description: 'Теги для запуска (smoke, regression, api, ui, security, hybrid, playwright). Оставь пустым для всех тестов.'
+        description: 'Маркеры pytest: smoke, regression, api, ui, security, hybrid, playwright, contract, mutation или выражение ("api and security"). Пусто — все тесты'
         required: false
         default: ''
         type: string
 
+# Минимальные права по умолчанию; права на Pages получает только job deploy
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: read
+
+# Один запуск на группу (PR или ветку). Отменяется предыдущий запуск только у PR: результат
+# устаревшего коммита PR никому не нужен. Запуски на main не отменяются, а ждут в очереди:
+# иначе второй быстрый пуш оборвал бы первый посреди выкладки отчёта на Pages. Ограничение
+# GitHub: ждать в группе может только один запуск — при трёх пушах подряд средний, ещё
+# не начавшийся, заменяется последним (уже идущий запуск доходит до конца).
+# Отменённый запуск PR не собирает отчёт (job'ы отчёта стоят на !cancelled(), а не на always())
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# ==========================================
+# РАЗБИЕНИЕ ТЕСТОВ МЕЖДУ JOB'АМИ
+# ==========================================
+# Маркер selenium ставит хук в conftest.py каждому тесту, который использует фикстуру
+# driver или authenticated_driver. Ручные маркеры для этого не годятся: они уже расходились
+# с тем, что тест на самом деле запускает. Выражения взаимно дополняют друг друга:
+#   selenium:           selenium       — матрица браузеров через Selenium Grid
+#   api-and-playwright: not selenium   — API и Playwright, один раз (Playwright всегда берёт
+#                                        свой chromium, браузер матрицы ему не нужен)
+# Job split-check проверяет это на каждом запуске (scripts/check_ci_split.py): ни одна часть
+# не пуста, пересечения нет, сумма — весь набор.
+# Маркер ручного запуска добавляется через and, и он берётся в скобки: без скобок
+# "smoke or api and selenium" читается как "smoke or (api and selenium)" и отбирает лишнее.
+# Пустой отбор (код выхода pytest 5) — ошибка: сломанное выражение иначе дало бы зелёный job,
+# который ничего не проверил. Исключение — ручной запуск с test_marker: маркер вправе не оставить
+# тестов одному из job'ов (например, test_marker=api для матрицы Selenium).
+env:
+  SELENIUM_EXPR: selenium
+  OTHER_EXPR: not selenium
 
 jobs:
-  # =========================================
-  # JOB 1: ПАРАЛЛЕЛЬНЫЙ ЗАПУСК ТЕСТОВ (МАТРИЦА)
-  # =========================================
-  test-execution:
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chrome, firefox]
-
+  # ==========================================
+  # JOB 0: ПРОВЕРКА РАЗБИЕНИЯ (сбор тестов без запуска, около минуты)
+  # ==========================================
+  split-check:
+    name: Split check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Скачиваем код проекта
+        uses: actions/checkout@v7
 
-      # Образы хаба и узлов Selenium Grid docker compose скачивает сам при первом запуске
-      - name: Run Tests in Docker Compose (Selenium Grid)
+      # Python — тот же, что в Docker-образе с тестами (Dockerfile: python:3.12-slim)
+      - name: Ставим Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Устанавливаем зависимости (браузеры не нужны — тесты только собираются)
+        run: python -m pip install --quiet -r requirements.txt
+
+      - name: Проверяем, что каждый тест попадает ровно в один job
+        run: python scripts/check_ci_split.py "$SELENIUM_EXPR" "$OTHER_EXPR"
+
+  # ==========================================
+  # JOB 1: API И PLAYWRIGHT — ОДИН РАЗ, БЕЗ SELENIUM GRID
+  # ==========================================
+  api-and-playwright:
+    name: API and Playwright
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Скачиваем код проекта
+        uses: actions/checkout@v7
+
+      - name: Запускаем API- и Playwright-тесты в Docker (без Grid)
+        env:
+          # pytest сам дочитывает аргументы из PYTEST_ADDOPTS (docker-compose.yml передаёт её
+          # в контейнер). Маркер передаётся как данные, а не вклеивается в текст shell-команды
+          PYTEST_ADDOPTS: ${{ inputs.test_marker && format('-m "({0}) and {1}"', inputs.test_marker, env.OTHER_EXPR) || format('-m "{0}"', env.OTHER_EXPR) }}
+          # Пустой отбор допустим только при ручном запуске с маркером (см. разбиение выше)
+          ALLOW_EMPTY: ${{ github.event_name == 'workflow_dispatch' && inputs.test_marker != '' }}
+        # run --no-deps: стартует только контейнер с тестами, хаб и узлы Grid не нужны.
+        # -T: без псевдотерминала (в CI его нет). Код выхода — код pytest
+        run: |
+          echo "Отбор: $PYTEST_ADDOPTS"
+          code=0
+          docker compose run --rm --no-deps --build -T qa-framework || code=$?
+          if [ "$code" -eq 5 ]; then
+            if [ "$ALLOW_EMPTY" = "true" ]; then echo "::notice::Маркер не отобрал API- и Playwright-тестов — job пропускает прогон"; exit 0; fi
+            echo "::error::Job не отобрал ни одного теста — проверь выражение ($PYTEST_ADDOPTS)"
+          fi
+          exit "$code"
+
+      - name: Возвращаем себе права на результаты
+        # Контейнер пишет файлы от root; без этого upload-artifact не сможет их прочитать
+        if: always()
+        run: sudo chown -R "$USER:$USER" allure-results || true
+
+      - name: Сохраняем сырые результаты Allure
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          # Имя папки после скачивания — allure-results-api-playwright: скрипт склейки
+          # не помечает эти тесты браузером (они идут один раз)
+          name: allure-results-api-playwright
+          path: allure-results
+          if-no-files-found: ignore
+          retention-days: 3
+
+  # ==========================================
+  # JOB 2: SELENIUM-ТЕСТЫ В МАТРИЦЕ БРАУЗЕРОВ ЧЕРЕЗ SELENIUM GRID
+  # ==========================================
+  selenium:
+    name: Selenium (${{ matrix.browser }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40       # зависший прогон не будет висеть 6 часов (лимит GitHub по умолчанию)
+    strategy:
+      fail-fast: false        # падение в одном браузере не отменяет прогон в остальных
+      matrix:
+        browser: [chrome, firefox, edge]
+    steps:
+      - name: Скачиваем код проекта
+        uses: actions/checkout@v7
+
+      # Образы хаба и узлов Grid docker compose скачивает сам при первом запуске
+      - name: Запускаем Selenium-тесты в Docker Compose (Selenium Grid)
         env:
           # Узлы браузеров живут в профилях compose: профиль = браузер матрицы
           COMPOSE_PROFILES: ${{ matrix.browser }}
           BROWSER: ${{ matrix.browser }}
-          TEST_MARKER: ${{ inputs.test_marker }}
-        run: docker compose up --build --exit-code-from qa-framework
-        continue-on-error: true
+          PYTEST_ADDOPTS: ${{ inputs.test_marker && format('-m "({0}) and {1}"', inputs.test_marker, env.SELENIUM_EXPR) || format('-m "{0}"', env.SELENIUM_EXPR) }}
+          ALLOW_EMPTY: ${{ github.event_name == 'workflow_dispatch' && inputs.test_marker != '' }}
+        # Упавший тест делает job красным; отчёт всё равно соберётся (следующие шаги — if: always(),
+        # job отчёта — !cancelled()). Именно up, а не run: узлы браузеров не входят в depends_on
+        # qa-framework, их запускает профиль. --exit-code-from останавливает стенд после тестов
+        # и возвращает код выхода pytest
+        run: |
+          echo "Отбор: $PYTEST_ADDOPTS"
+          code=0
+          docker compose up --build --exit-code-from qa-framework || code=$?
+          if [ "$code" -eq 5 ]; then
+            if [ "$ALLOW_EMPTY" = "true" ]; then echo "::notice::Маркер не отобрал Selenium-тестов — job пропускает прогон"; exit 0; fi
+            echo "::error::Job не отобрал ни одного теста — проверь выражение ($PYTEST_ADDOPTS)"
+          fi
+          exit "$code"
 
-      - name: Исправляем права доступа для артефактов
+      - name: Возвращаем себе права на результаты
         if: always()
-        run: sudo chown -R $USER:$USER allure-results
+        run: sudo chown -R "$USER:$USER" allure-results || true
 
-      - name: Сохраняем сырые результаты Allure как артефакт
-        uses: actions/upload-artifact@v4
+      - name: Сохраняем сырые результаты Allure
         if: always()
+        uses: actions/upload-artifact@v7
         with:
           name: allure-results-${{ matrix.browser }}
           path: allure-results
-          retention-days: 1
+          if-no-files-found: ignore
+          retention-days: 3
 
-  # =========================================
-  # JOB 2: СБОРКА ЕДИНОГО ОТЧЕТА И ПУБЛИКАЦИЯ
-  # =========================================
-  generate-report:
-    needs: test-execution
-    runs-on: ubuntu-22.04
-    if: always()
-
+  # ==========================================
+  # JOB 3: ОБЩИЙ ОТЧЁТ ALLURE С ИСТОРИЕЙ
+  # ==========================================
+  report:
+    name: Allure report
+    needs: [split-check, api-and-playwright, selenium]
+    # Отчёт нужен именно тогда, когда тесты упали. !cancelled() вместо always(): запуск,
+    # отменённый более новым (concurrency), не должен собирать и публиковать отчёт
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      passed: ${{ steps.merge.outputs.passed }}
+      xfailed: ${{ steps.merge.outputs.xfailed }}
+      failed: ${{ steps.merge.outputs.failed }}
+      broken: ${{ steps.merge.outputs.broken }}
+      skipped: ${{ steps.merge.outputs.skipped }}
+      total: ${{ steps.merge.outputs.total }}
     steps:
-      - name: Скачиваем результаты Chrome
-        uses: actions/download-artifact@v4
-        with:
-          name: allure-results-chrome
-          path: allure-results-chrome
+      - name: Скачиваем код проекта (нужен скрипт склейки)
+        uses: actions/checkout@v7
 
-      - name: Скачиваем результаты Firefox
-        uses: actions/download-artifact@v4
+      - name: Скачиваем результаты всех job'ов
+        uses: actions/download-artifact@v8
         with:
-          name: allure-results-firefox
-          path: allure-results-firefox
+          pattern: allure-results-*   # каждый артефакт — в свою папку allure-results-<метка>
 
-      - name: Уникализируем результаты для Allure (Python Script)
+      - name: Склеиваем результаты и считаем итог
+        id: merge
+        run: python3 scripts/merge_allure_results.py allure-results-*
+
+      # История (график Trend) живёт в папке history опубликованного отчёта. Allure строит
+      # тренды, если положить её в результаты перед генерацией. Источник — сам сайт на Pages:
+      # он хранится, пока его не перезапишут, в отличие от кэша и артефактов с их сроками жизни.
+      # Запуски по PR тоже берут историю main — их отчёт показывает, как PR выглядит на её фоне
+      - name: Забираем историю с опубликованного отчёта
+        env:
+          PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
         run: |
-          cat << 'EOF' > process_allure.py
-          import json
-          import glob
+          dirs=(allure-results-*)
+          mkdir -p "${dirs[0]}/history"
+          found=0
+          for name in history.json history-trend.json duration-trend.json categories-trend.json retry-trend.json; do
+            if curl -fsSL --retry 3 "$PAGES_URL/history/$name" -o "${dirs[0]}/history/$name"; then
+              found=$((found + 1))
+            else
+              rm -f "${dirs[0]}/history/$name"
+            fi
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "::warning::История с $PAGES_URL не получена — график трендов начнётся заново (нормально для первой публикации)"
+          else
+            echo "Файлов истории получено: $found"
+          fi
 
-          def process_folder(folder, browser):
-              files = glob.glob(f"{folder}/*result.json")
-              for file_path in files:
-                  with open(file_path, 'r', encoding='utf-8') as f:
-                      data = json.load(f)
-                  
-                  if 'testCaseId' in data:
-                      data['testCaseId'] = f"{data['testCaseId']}-{browser}"
-                  
-                  if 'historyId' in data:
-                      data['historyId'] = f"{data['historyId']}-{browser}"
-                  
-                  if 'fullName' in data:
-                      data['fullName'] = f"{data['fullName']} [{browser.upper()}]"
-                  
-                  if 'name' in data:
-                      data['name'] = f"{data['name']} [{browser.upper()}]"
-                  
-                  if 'labels' in data:
-                      for label in data['labels']:
-                          if label['name'] == 'suite':
-                              label['value'] = f"{label['value']} ({browser.upper()})"
-                      
-                  with open(file_path, 'w', encoding='utf-8') as f:
-                      json.dump(data, f)
-
-          process_folder('allure-results-chrome', 'chrome')
-          process_folder('allure-results-firefox', 'firefox')
-          EOF
-          
-          python3 process_allure.py
-          
-          echo "Browsers=Chrome, Firefox" > allure-results-chrome/environment.properties
-          echo "Environment=Docker Compose (Selenium Grid)" >> allure-results-chrome/environment.properties
-          echo "CI=GitHub Actions Matrix" >> allure-results-chrome/environment.properties
-          echo "Test_Filter=${{ inputs.test_marker || 'All Tests (Full Suite)' }}" >> allure-results-chrome/environment.properties
-
-      - name: Устанавливаем Allure CLI и генерируем ОБЩИЙ отчет
+      - name: Генерируем отчёт
         run: |
-          npm install -g allure-commandline --save-dev
-          allure generate allure-results-chrome allure-results-firefox -o allure-report --clean
+          npm install -g allure-commandline@2.46.1
+          allure generate allure-results-* -o allure-report --clean
 
-      - name: Публикуем финальный отчет на GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Сохраняем отчёт как артефакт
+        # Для PR это единственный способ посмотреть отчёт: скачать и открыть через allure open
+        uses: actions/upload-artifact@v7
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: allure-report
+          name: allure-report
+          path: allure-report
+          retention-days: 7
 
-      - name: Отправляем сводное уведомление в Telegram
-        uses: appleboy/telegram-action@master
+      - name: Готовим отчёт к публикации на Pages
+        # Публикуется только main (push или ручной запуск): PR не перезаписывает официальный отчёт
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
         with:
-            to: ${{ secrets.TELEGRAM_TO }}
-            token: ${{ secrets.TELEGRAM_TOKEN }}
-            message: |
-              🤖 Кроссбраузерные автотесты IlCarro завершены!
-              🌐 Проверено в: Chrome и Firefox
-              🏷 Фильтр тегов: ${{ inputs.test_marker || 'Все тесты (Full Suite)' }}
-              📊 Посмотреть общий Allure-отчет можно по ссылке:
-              👉 https://warmanofmars-star.github.io/QA3553_IlCarro_Tests/
+          path: allure-report
+
+  # ==========================================
+  # JOB 4: ПУБЛИКАЦИЯ НА GITHUB PAGES (только main)
+  # ==========================================
+  deploy:
+    name: Deploy report
+    needs: report
+    # Явная проверка результата report: тесты могли упасть, а отчёт собран — его и публикуем.
+    # Сбой выкладки делает запуск красным
+    if: ${{ !cancelled() && needs.report.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write            # выкладка на Pages
+      id-token: write         # deploy-pages подтверждает, что артефакт собран этим запуском
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Публикуем отчёт
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+  # ==========================================
+  # УВЕДОМЛЕНИЯ В TELEGRAM (только main)
+  # ==========================================
+  # Отправка — curl к Bot API из scripts/send_telegram.sh, без сторонних action'ов: секрет
+  # не уходит в чужой код. Секреты попадают в шаг только через env; скрипт передаёт их curl,
+  # не раскрывая в командной строке и в выводе (подробности — в самом скрипте).
+  # Сообщения шлются только для запусков на main (push или ручной): по PR — тишина, его
+  # результат виден в самом PR. Если секреты не заданы, скрипт пишет предупреждение и выходит.
+
+  # ==========================================
+  # JOB 5: УВЕДОМЛЕНИЕ ОБ ОПУБЛИКОВАННОМ ОТЧЁТЕ
+  # ==========================================
+  notify-report:
+    name: Notify report
+    needs: [api-and-playwright, selenium, report, deploy]
+    # Только после успешной выкладки: ссылка в сообщении берётся из результата deploy.
+    # Условие на main продублировано явно, чтобы не зависеть от условия deploy
+    if: ${{ !cancelled() && needs.deploy.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Скачиваем скрипт отправки
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: scripts/send_telegram.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Отправляем отчёт в Telegram
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_TO: ${{ secrets.TELEGRAM_TO }}
+          # Текст собирается здесь, в env, а не в run: значения выражений (в том числе
+          # введённый вручную маркер) не становятся частью shell-команды
+          TELEGRAM_TEXT: |
+            ${{ (needs.report.outputs.failed == '0' && needs.report.outputs.broken == '0' && needs.api-and-playwright.result == 'success' && needs.selenium.result == 'success') && '✅' || '⚠️' }} IlCarro — отчёт Allure опубликован
+            Ветка: ${{ github.ref_name }}, событие: ${{ github.event_name }}
+            Фильтр: ${{ inputs.test_marker || 'все тесты' }}
+            Selenium: chrome, firefox, edge; API и Playwright — один раз
+            passed: ${{ needs.report.outputs.passed }}, xfailed: ${{ needs.report.outputs.xfailed }}, failed: ${{ needs.report.outputs.failed }}, broken: ${{ needs.report.outputs.broken }}
+            Отчёт: ${{ needs.deploy.outputs.page_url }}
+            Запуск: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash scripts/send_telegram.sh
+
+  # ==========================================
+  # JOB 6: УВЕДОМЛЕНИЕ О ПРОВАЛЕ
+  # ==========================================
+  notify-failure:
+    name: Notify failure
+    needs: [split-check, api-and-playwright, selenium, report, deploy]
+    # failure() — упал любой из job'ов выше (тесты, разбиение, отчёт или выкладка).
+    # Отменённый запуск сюда не попадает; запуск по PR — тоже (только main)
+    if: ${{ failure() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Скачиваем скрипт отправки
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: scripts/send_telegram.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Отправляем сообщение о провале в Telegram
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_TO: ${{ secrets.TELEGRAM_TO }}
+          TELEGRAM_TEXT: |
+            🔴 IlCarro — запуск CI упал
+            Ветка: ${{ github.ref_name }}, событие: ${{ github.event_name }}
+            Фильтр: ${{ inputs.test_marker || 'все тесты' }}
+            Разбиение: ${{ needs.split-check.result }}
+            API и Playwright: ${{ needs.api-and-playwright.result }}
+            Selenium (chrome, firefox, edge): ${{ needs.selenium.result }}
+            Отчёт: ${{ needs.report.result }}, выкладка: ${{ needs.deploy.result }}
+            Запуск: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash scripts/send_telegram.sh
