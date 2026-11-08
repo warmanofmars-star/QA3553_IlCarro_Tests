@@ -53,15 +53,15 @@ jobs:
   # ==========================================
   split-check:
     name: Split check
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Скачиваем код проекта
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Python — тот же, что в Docker-образе с тестами (Dockerfile: python:3.12-slim)
       - name: Ставим Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
           cache: pip
@@ -78,11 +78,11 @@ jobs:
   # ==========================================
   api-and-playwright:
     name: API and Playwright
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Скачиваем код проекта
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Запускаем API- и Playwright-тесты в Docker (без Grid)
         env:
@@ -110,7 +110,7 @@ jobs:
 
       - name: Сохраняем сырые результаты Allure
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           # Имя папки после скачивания — allure-results-api-playwright: скрипт склейки
           # не помечает эти тесты браузером (они идут один раз)
@@ -124,7 +124,7 @@ jobs:
   # ==========================================
   selenium:
     name: Selenium (${{ matrix.browser }})
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 40       # зависший прогон не будет висеть 6 часов (лимит GitHub по умолчанию)
     strategy:
       fail-fast: false        # падение в одном браузере не отменяет прогон в остальных
@@ -132,7 +132,7 @@ jobs:
         browser: [chrome, firefox, edge]
     steps:
       - name: Скачиваем код проекта
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Образы хаба и узлов Grid docker compose скачивает сам при первом запуске
       - name: Запускаем Selenium-тесты в Docker Compose (Selenium Grid)
@@ -162,7 +162,7 @@ jobs:
 
       - name: Сохраняем сырые результаты Allure
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: allure-results-${{ matrix.browser }}
           path: allure-results
@@ -178,7 +178,7 @@ jobs:
     # Отчёт нужен именно тогда, когда тесты упали. !cancelled() вместо always(): запуск,
     # отменённый более новым (concurrency), не должен собирать и публиковать отчёт
     if: ${{ !cancelled() }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     outputs:
       passed: ${{ steps.merge.outputs.passed }}
@@ -189,10 +189,10 @@ jobs:
       total: ${{ steps.merge.outputs.total }}
     steps:
       - name: Скачиваем код проекта (нужен скрипт склейки)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Скачиваем результаты всех job'ов
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: allure-results-*   # каждый артефакт — в свою папку allure-results-<метка>
 
@@ -231,7 +231,7 @@ jobs:
 
       - name: Сохраняем отчёт как артефакт
         # Для PR это единственный способ посмотреть отчёт: скачать и открыть через allure open
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: allure-report
           path: allure-report
@@ -240,7 +240,7 @@ jobs:
       - name: Готовим отчёт к публикации на Pages
         # Публикуется только main (push или ручной запуск): PR не перезаписывает официальный отчёт
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: allure-report
 
@@ -253,7 +253,7 @@ jobs:
     # Явная проверка результата report: тесты могли упасть, а отчёт собран — его и публикуем.
     # Сбой выкладки делает запуск красным
     if: ${{ !cancelled() && needs.report.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       pages: write            # выкладка на Pages
@@ -266,7 +266,7 @@ jobs:
     steps:
       - name: Публикуем отчёт
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   # ==========================================
   # JOB 5: УВЕДОМЛЕНИЕ ОБ ОПУБЛИКОВАННОМ ОТЧЁТЕ
@@ -276,7 +276,7 @@ jobs:
     needs: [api-and-playwright, selenium, report, deploy]
     # Только после успешной выкладки: ссылка в сообщении берётся из результата deploy
     if: ${{ !cancelled() && needs.deploy.result == 'success' }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     env:
       TELEGRAM_CONFIGURED: ${{ secrets.TELEGRAM_TOKEN != '' && secrets.TELEGRAM_TO != '' }}
@@ -287,7 +287,8 @@ jobs:
 
       - name: Отправляем отчёт в Telegram
         if: env.TELEGRAM_CONFIGURED == 'true'
-        uses: appleboy/telegram-action@master
+        # Сторонний action получает секрет, поэтому закреплён на коммите, а не на теге
+        uses: appleboy/telegram-action@214f06cfa3d3a588c1472116889437e7c6fd29b1 # v1.1.1
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
@@ -310,7 +311,7 @@ jobs:
     # failure() — упал любой из job'ов выше (тесты, разбиение, отчёт или выкладка).
     # Отменённый запуск сюда не попадает
     if: ${{ failure() }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     env:
       TELEGRAM_CONFIGURED: ${{ secrets.TELEGRAM_TOKEN != '' && secrets.TELEGRAM_TO != '' }}
@@ -321,7 +322,7 @@ jobs:
 
       - name: Отправляем сообщение о провале в Telegram
         if: env.TELEGRAM_CONFIGURED == 'true'
-        uses: appleboy/telegram-action@master
+        uses: appleboy/telegram-action@214f06cfa3d3a588c1472116889437e7c6fd29b1 # v1.1.1
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
