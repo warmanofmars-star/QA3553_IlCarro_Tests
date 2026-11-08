@@ -1,9 +1,9 @@
 # CLAUDE.md — правила проекта для Claude Code
 
 Учебный фреймворк автотестов (UI + API) для веб-приложения IlCarro (аренда машин): Python 3.14
-локально, 3.12 в Docker; pytest, Selenium, Playwright, Allure, Docker, Selenium Grid 4, GitHub Actions.
-UI: https://icarro-v1.netlify.app, API: https://ilcarro-backend.herokuapp.com.
-Браузеры в Docker — через Selenium Grid 4, Jenkins нет. Подробности — в README.md.
+локально, 3.12 в Docker; pytest, Selenium, Playwright, Allure, Docker, Selenium Grid 4, GitHub Actions,
+Jenkins. UI: https://icarro-v1.netlify.app, API: https://ilcarro-backend.herokuapp.com.
+Браузеры в Docker — через Selenium Grid 4. Подробности — в README.md.
 
 ## Безопасность (обязательно)
 
@@ -75,6 +75,30 @@ Environment для Allure пишет `pytest_sessionfinish` в `conftest.py`, а
 Отдельный job вручную: `test_marker=selenium` (только матрица) или `test_marker=not selenium`
 (только API и Playwright); подробности и локальные аналоги — в `commands.md`.
 После изменения маркеров или фикстур браузера проверь разбиение: `python scripts/check_ci_split.py`.
+
+## CI (Jenkins, `Jenkinsfile`)
+
+Jenkins общий с Phonebook (контейнер `jenkins-master`, localhost:8080, Docker хоста через
+`docker.sock`); настраивает его пользователь по `docs/jenkins-setup.md`, сам к Jenkins не обращайся.
+Запуск: вебхук GitHub через ngrok на push в `main` или **Build with Parameters**. Параметры:
+`BROWSER` (chrome / firefox / edge) и `TEST_MARKER` (пусто — все тесты). Стадии:
+
+- `Prepare` — проверка браузера, очистка `allure-results` workspace, параметры в лог и в описание сборки;
+- `API and Playwright` — `-m "not selenium"`, `up --no-deps qa-framework`;
+- `Selenium (Grid)` — `-m "selenium"`, хаб и узлы выбранного браузера; части идут друг за другом,
+  сбой одной не отменяет другую (`catchError`). Маркер — `(маркер) and …`, как в GitHub Actions;
+  пустой отбор без маркера — ошибка.
+
+Изоляция: compose-проект `ilcarro-jenkins-<job>-<номер>` на сборку; `COMPOSE_FILE` добавляет
+`docker-compose.jenkins-build.yml` — порт хаба на хост не публикуется, `allure-results` не монтируется
+(результаты — `docker cp` из остановленного контейнера). Уборка в `post { always }` —
+`docker compose down -v --remove-orphans --rmi local` только этого проекта; `prune` и глобальные
+удаления в Jenkinsfile запрещены. Статус: упавшие тесты — `UNSTABLE`, сбой запуска — `FAILURE`.
+Отчёт — плагин Allure; Environment дополняет Jenkinsfile (`JenkinsBrowser`, `JenkinsMarker`,
+`JenkinsBuild`). Защита от «молча проигнорированного» параметра: Jenkinsfile сверяет `SeleniumBrowser`
+и `MarkerFilter` из `environment.properties` контейнера с параметрами; расхождение — `FAILURE`.
+Ловушка: Jenkins экспортирует параметры в окружение, и `TEST_MARKER` через `docker-compose.yml` перебил бы
+`-m` части — поэтому при запуске compose он обнуляется. Telegram из Jenkins не шлётся.
 
 ## Соглашения проекта
 

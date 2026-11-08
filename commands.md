@@ -151,6 +151,55 @@ selenium [chrome,        │      │
 
 ---
 
+## 🤖 CI: Jenkins (`Jenkinsfile`)
+Jenkins общий с Phonebook: контейнер `jenkins-master` (http://localhost:8080) из репозитория
+Phonebook, Docker хоста — через `docker.sock`. Job создаётся по [`docs/jenkins-setup.md`](docs/jenkins-setup.md),
+сборку запускает вебхук GitHub (через ngrok) на push в `main` или кнопка **Build with Parameters**.
+
+**Параметры:** `BROWSER` — `chrome` / `firefox` / `edge` (по умолчанию `chrome`), только для Selenium;
+`TEST_MARKER` — выражение pytest (`smoke`, `api and security`…), пусто — все тесты.
+
+**Стадии:**
+```
+Prepare ─► API and Playwright ─► Selenium (Grid) ─► post: уборка ─► отчёт Allure
+```
+- `Prepare` — проверка браузера, очистка `allure-results` в workspace, параметры и версия compose в лог,
+  браузер и фильтр — в описание сборки.
+- `API and Playwright` — `-m "not selenium"`, один раз, только контейнер с тестами (`up --no-deps qa-framework`).
+- `Selenium (Grid)` — `-m "selenium"`, хаб + 3 узла выбранного браузера + тесты (`up --exit-code-from qa-framework`).
+- Маркер добавляется как в GitHub Actions: `(маркер) and selenium` / `(маркер) and not selenium`.
+  Пустой отбор (код 5) — ошибка, кроме сборки с заданным маркером.
+- Сбой одной части не отменяет другую (`catchError`), как независимые job'ы GitHub Actions.
+
+**Статус сборки (как в Phonebook):** упавшие тесты — `UNSTABLE` (жёлтая), сбой запуска, пустой
+отбор без маркера, не дошедшие до контейнера параметры — `FAILURE` (красная).
+
+**Браузер виден трижды:** в логе `Prepare` и в строке «Отбор: … | браузер: …» каждой части,
+в описании сборки и в блоке Environment отчёта: `JenkinsBrowser` (выбрано в Jenkins) рядом
+с `SeleniumBrowser` (с каким `--browser_name` реально запустился pytest). Если они не совпали —
+или `-m` в контейнере не тот, что ожидался (`MarkerFilter`), — сборка красная.
+
+**Изоляция от Phonebook и локального стенда:**
+- у каждой сборки свой compose-проект `ilcarro-jenkins-<job>-<номер>`: свои контейнеры, сеть,
+  том с видео и образ `qa-framework`;
+- `COMPOSE_FILE` подключает `docker-compose.jenkins-build.yml`: хаб не публикует порт на хост
+  (4444 локального Grid и 4445 сборок Phonebook свободны), а `allure-results` не монтируется —
+  результаты забирает `docker cp` из остановленного контейнера;
+- уборка в `post { always }`: `docker compose down -v --remove-orphans --rmi local` — только проект
+  этой сборки, без `prune`. Скачанные образы Selenium остаются (общий кэш).
+
+**Отчёт:** плагин Allure (как в Phonebook), ссылка **Allure Report** на странице сборки; историю
+трендов плагин хранит сам. О прогонах на `main` в Telegram сообщает GitHub Actions, Jenkins — нет.
+
+**Найти и убрать остатки упавшей сборки** (обычно не нужно — уборка в `post`):
+`docker ps -a --filter "label=com.docker.compose.project=ilcarro-jenkins-<job>-<номер>"`
+`COMPOSE_PROJECT_NAME=ilcarro-jenkins-<job>-<номер> COMPOSE_PROFILES=chrome docker compose -f docker-compose.yml -f docker-compose.jenkins-build.yml down -v --rmi local`
+
+**Посмотреть, во что compose развернёт сборку** (без запуска контейнеров):
+`COMPOSE_PROJECT_NAME=ilcarro-jenkins-x-1 COMPOSE_PROFILES=firefox docker compose -f docker-compose.yml -f docker-compose.jenkins-build.yml config`
+
+---
+
 ## 🧹 Очистка и обслуживание Docker (Если что-то зависло)
 **Убить все активные контейнеры проекта и удалить виртуальные тома:**
 `docker compose down -v`
