@@ -16,13 +16,13 @@ on:
         default: ''
         type: string
 
+# Минимальные права по умолчанию; права на Pages получает только job deploy
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: read
 
 # Новый запуск для той же ветки или того же PR отменяет предыдущий: результат устаревшего
-# коммита уже никому не нужен
+# коммита уже никому не нужен. Отменённый запуск не публикует отчёт и не шлёт уведомлений
+# (job'ы отчёта стоят на !cancelled(), а не на always())
 concurrency:
   group: tests-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -170,7 +170,7 @@ jobs:
           retention-days: 3
 
   # ==========================================
-  # JOB 3: ОБЩИЙ ОТЧЁТ, ПУБЛИКАЦИЯ И УВЕДОМЛЕНИЕ
+  # JOB 3: ОБЩИЙ ОТЧЁТ ALLURE С ИСТОРИЕЙ
   # ==========================================
   report:
     name: Allure report
@@ -180,6 +180,13 @@ jobs:
     if: ${{ !cancelled() }}
     runs-on: ubuntu-22.04
     timeout-minutes: 15
+    outputs:
+      passed: ${{ steps.merge.outputs.passed }}
+      xfailed: ${{ steps.merge.outputs.xfailed }}
+      failed: ${{ steps.merge.outputs.failed }}
+      broken: ${{ steps.merge.outputs.broken }}
+      skipped: ${{ steps.merge.outputs.skipped }}
+      total: ${{ steps.merge.outputs.total }}
     steps:
       - name: Скачиваем код проекта (нужен скрипт склейки)
         uses: actions/checkout@v4
@@ -193,18 +200,75 @@ jobs:
         id: merge
         run: python3 scripts/merge_allure_results.py allure-results-*
 
+      # История (график Trend) живёт в папке history опубликованного отчёта. Allure строит
+      # тренды, если положить её в результаты перед генерацией. Источник — сам сайт на Pages:
+      # он хранится, пока его не перезапишут, в отличие от кэша и артефактов с их сроками жизни.
+      # Запуски по PR тоже берут историю main — их отчёт показывает, как PR выглядит на её фоне
+      - name: Забираем историю с опубликованного отчёта
+        env:
+          PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+        run: |
+          dirs=(allure-results-*)
+          mkdir -p "${dirs[0]}/history"
+          found=0
+          for name in history.json history-trend.json duration-trend.json categories-trend.json retry-trend.json; do
+            if curl -fsSL --retry 3 "$PAGES_URL/history/$name" -o "${dirs[0]}/history/$name"; then
+              found=$((found + 1))
+            else
+              rm -f "${dirs[0]}/history/$name"
+            fi
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "::warning::История с $PAGES_URL не получена — график трендов начнётся заново (нормально для первой публикации)"
+          else
+            echo "Файлов истории получено: $found"
+          fi
+
       - name: Генерируем отчёт
         run: |
           npm install -g allure-commandline@2.46.1
           allure generate allure-results-* -o allure-report --clean
 
-      - name: Публикуем финальный отчет на GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Сохраняем отчёт как артефакт
+        # Для PR это единственный способ посмотреть отчёт: скачать и открыть через allure open
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: allure-report
+          name: allure-report
+          path: allure-report
+          retention-days: 7
 
+      - name: Готовим отчёт к публикации на Pages
+        # Публикуется только main (push или ручной запуск): PR не перезаписывает официальный отчёт
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: allure-report
+
+  # ==========================================
+  # JOB 4: ПУБЛИКАЦИЯ НА GITHUB PAGES (только main)
+  # ==========================================
+  deploy:
+    name: Deploy report
+    needs: report
+    # Явная проверка результата report: тесты могли упасть, а отчёт собран — его и публикуем.
+    # Сбой выкладки делает запуск красным
+    if: ${{ !cancelled() && needs.report.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      pages: write            # выкладка на Pages
+      id-token: write         # deploy-pages подтверждает, что артефакт собран этим запуском
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Публикуем отчёт
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      # Временный шаг до отдельных job'ов уведомлений: ссылка — из результата deploy
       - name: Отправляем сводное уведомление в Telegram
         uses: appleboy/telegram-action@master
         with:
@@ -215,4 +279,4 @@ jobs:
               🌐 Selenium: chrome, firefox, edge; API и Playwright — один раз
               🏷 Фильтр тегов: ${{ inputs.test_marker || 'Все тесты (Full Suite)' }}
               📊 Посмотреть общий Allure-отчет можно по ссылке:
-              👉 https://warmanofmars-star.github.io/QA3553_IlCarro_Tests/
+              👉 ${{ steps.deployment.outputs.page_url }}
