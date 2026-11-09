@@ -13,11 +13,10 @@ from models.user import User
 logger = logging.getLogger(__name__)
 
 # Инициализируем Faker один раз
-fake = Faker('en_US')
+fake = Faker("en_US")
 
 
 class UserGenerator:
-
     @staticmethod
     def generate_valid_password():
         """Генерирует валидный пароль: минимум 8 символов, 1 большая, 1 маленькая, 1 цифра, 1 спецсимвол"""
@@ -26,12 +25,12 @@ class UserGenerator:
         digit = random.choice(string.digits)
         special = random.choice("@$#^&*!")
 
-        rest = ''.join(random.choices(string.ascii_letters + string.digits, k=5))
+        rest = "".join(random.choices(string.ascii_letters + string.digits, k=5))
 
         password_list = list(upper + lower + digit + special + rest)
         random.shuffle(password_list)
 
-        return ''.join(password_list)
+        return "".join(password_list)
 
     @staticmethod
     def generate_valid_email():
@@ -49,7 +48,7 @@ class UserGenerator:
             "name": fake.first_name(),
             "last_name": fake.last_name(),
             "email": cls.generate_valid_email(),  # ЗАМЕНИЛИ FAKER НА UUID
-            "password": cls.generate_valid_password()
+            "password": cls.generate_valid_password(),
         }
 
         data.update(overrides)
@@ -68,15 +67,60 @@ class SearchDataGenerator:
     _cached_safe_cities = None
 
     UI_CITIES = [
-        "Tel Aviv", "Jerusalem", "Haifa", "Rishon LeZion", "Petah Tikva", "Ashdod",
-        "Netanya", "Beersheba", "Bnei Brak", "Holon", "Ramat Gan", "Ashkelon",
-        "Rehovot", "Bat Yam", "Beit Shemesh", "Kfar Saba", "Herzliya", "Hadera",
-        "Modi'in-Maccabim-Re'ut", "Nazareth", "Lod", "Ramla", "Ra'anana",
-        "Rosh HaAyin", "Acre", "Eilat", "Kiryat Ata", "Kiryat Gat", "Kiryat Yam",
-        "Kiryat Motzkin", "Kiryat Bialik", "Nahariya", "Tiberias", "Safed", "Afula",
-        "Carmiel", "Nes Ziona", "Yavne", "Or Yehuda", "Givatayim", "Kiryat Ono",
-        "Umm al-Fahm", "Sakhnin", "Tamra", "Tayibe", "Tira", "Ma'alot-Tarshiha",
-        "Migdal HaEmek", "Sderot", "Arad", "Dimona", "Ofakim", "Yeruham", "Kiryat Shmona"
+        "Tel Aviv",
+        "Jerusalem",
+        "Haifa",
+        "Rishon LeZion",
+        "Petah Tikva",
+        "Ashdod",
+        "Netanya",
+        "Beersheba",
+        "Bnei Brak",
+        "Holon",
+        "Ramat Gan",
+        "Ashkelon",
+        "Rehovot",
+        "Bat Yam",
+        "Beit Shemesh",
+        "Kfar Saba",
+        "Herzliya",
+        "Hadera",
+        "Modi'in-Maccabim-Re'ut",
+        "Nazareth",
+        "Lod",
+        "Ramla",
+        "Ra'anana",
+        "Rosh HaAyin",
+        "Acre",
+        "Eilat",
+        "Kiryat Ata",
+        "Kiryat Gat",
+        "Kiryat Yam",
+        "Kiryat Motzkin",
+        "Kiryat Bialik",
+        "Nahariya",
+        "Tiberias",
+        "Safed",
+        "Afula",
+        "Carmiel",
+        "Nes Ziona",
+        "Yavne",
+        "Or Yehuda",
+        "Givatayim",
+        "Kiryat Ono",
+        "Umm al-Fahm",
+        "Sakhnin",
+        "Tamra",
+        "Tayibe",
+        "Tira",
+        "Ma'alot-Tarshiha",
+        "Migdal HaEmek",
+        "Sderot",
+        "Arad",
+        "Dimona",
+        "Ofakim",
+        "Yeruham",
+        "Kiryat Shmona",
     ]
 
     @classmethod
@@ -155,7 +199,7 @@ class CarGenerator:
             "reg_number": f"IL-{uuid.uuid4().hex[:8].upper()}",
             "price": str(random.randint(100, 1000)),
             "about": fake.sentence(),
-            "photo_path": None
+            "photo_path": None,
         }
 
         data.update(overrides)

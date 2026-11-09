@@ -5,6 +5,7 @@
 Токены маскируются, email временных пользователей и серийные номера машин заменяются
 на стабильные метки (<user1>, <car1>), чтобы логи двух прогонов можно было сравнить через diff.
 """
+
 import ast
 import contextlib
 import json
@@ -126,11 +127,13 @@ def run_name(script: str) -> str:
 
 # ---------------------------------------------------------------- даты
 
+
 def d(offset_days: int) -> str:
     return (date.today() + timedelta(days=offset_days)).strftime("%Y-%m-%d")
 
 
 # ---------------------------------------------------------------- HTTP
+
 
 def describe(resp) -> str:
     ctype = resp.headers.get("Content-Type", "-")
@@ -164,6 +167,7 @@ def message_type(resp) -> str:
 
 # ---------------------------------------------------------------- данные
 
+
 def new_email(prefix: str = "probe") -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}@example.com"
 
@@ -176,8 +180,11 @@ def register_user(email=None, password=VALID_PASSWORD, track=True):
     """Регистрирует временного пользователя через API. Возвращает (email, password, token, response)."""
     email = email or new_email()
     REG.label_user(email)
-    resp = call("POST", "/v1/user/registration/usernamepassword",
-                json={"firstName": "Probe", "lastName": "User", "username": email, "password": password})
+    resp = call(
+        "POST",
+        "/v1/user/registration/usernamepassword",
+        json={"firstName": "Probe", "lastName": "User", "username": email, "password": password},
+    )
     token = None
     if resp.status_code == 200:
         token = (body_json(resp) or {}).get("accessToken")
@@ -191,9 +198,16 @@ def car_payload(base_city: str, serial: str = None, **overrides) -> dict:
     serial = serial or new_serial()
     REG.label_car(serial)
     payload = {
-        "serialNumber": serial, "manufacture": "ProbeMake", "model": "ProbeModel", "year": "2020",
-        "fuel": "Petrol", "seats": 4, "carClass": "Economy", "pricePerDay": 100.0,
-        "about": "research probe", "city": base_city,
+        "serialNumber": serial,
+        "manufacture": "ProbeMake",
+        "model": "ProbeModel",
+        "year": "2020",
+        "fuel": "Petrol",
+        "seats": 4,
+        "carClass": "Economy",
+        "pricePerDay": 100.0,
+        "about": "research probe",
+        "city": base_city,
     }
     payload.update(overrides)
     for key in [k for k, v in payload.items() if v is _MISSING]:

@@ -26,7 +26,6 @@ class SearchPage(BasePage):
     # Кнопка переключения месяца вперед в календаре react-date-range
     NEXT_MONTH_BTN = (By.CSS_SELECTOR, ".rdrNextButton")
 
-
     # --- ДЕЙСТВИЯ ---:
     @staticmethod
     def get_day_locator(day):
@@ -90,7 +89,7 @@ class SearchPage(BasePage):
         # Умный вейт: ждем максимум 3 секунды, пока текст месяца перестанет быть равен old_month
         WebDriverWait(self.driver, 3).until(
             lambda driver: self.get_current_month() != old_month,
-            message=f"Месяц так и не изменился после клика! Ожидали, что он перестанет быть '{old_month}'"
+            message=f"Месяц так и не изменился после клика! Ожидали, что он перестанет быть '{old_month}'",
         )
 
     @allure.step("Чтение доступности дней показанного месяца календаря")
@@ -100,6 +99,7 @@ class SearchPage(BasePage):
         Недоступный день react-date-range помечает классом rdrDayDisabled. Месяц и год читаем
         до и после дней: снимок принимается, только если за это время календарь не перерисовался.
         """
+
         def read_month(driver):
             month = driver.find_element(*self.ACTIVE_MONTH_LABEL).text
             year = driver.find_element(*self.ACTIVE_YEAR_LABEL).text
@@ -117,7 +117,9 @@ class SearchPage(BasePage):
 
         (month_name, year), cells = WebDriverWait(
             self.driver, 5, ignored_exceptions=(StaleElementReferenceException, NoSuchElementException)
-        ).until(snapshot, message="Не удалось прочитать дни календаря: он не отрисовался или постоянно перерисовывается")
+        ).until(
+            snapshot, message="Не удалось прочитать дни календаря: он не отрисовался или постоянно перерисовывается"
+        )
 
         month = datetime.strptime(month_name, "%B").month
         return {date(int(year), month, day): available for day, available in cells}
@@ -125,7 +127,6 @@ class SearchPage(BasePage):
     @allure.step("Клик по кнопке Y'alla! (Submit)")
     def click_submit_button(self):
         self.click(self.SUBMIT_BTN)
-
 
     # --- ПРОВЕРКИ ---:
     def is_submit_button_disabled(self):

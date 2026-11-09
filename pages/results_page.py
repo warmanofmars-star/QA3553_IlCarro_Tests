@@ -11,6 +11,7 @@ from pages.base_page import BasePage
 
 logger = logging.getLogger(__name__)
 
+
 class ResultsPage(BasePage):
     # --- ЛОКАТОРЫ ---
     CAR_CARD_LINK = (By.CSS_SELECTOR, "a.car-container")
@@ -24,9 +25,8 @@ class ResultsPage(BasePage):
         logger.info("Ждем обновления URL с параметрами поиска...")
         WebDriverWait(self.driver, 10).until(
             lambda d: "city=" in d.current_url and "from=" in d.current_url,
-            message="Поисковый запрос не выполнился: URL не обновился!"
+            message="Поисковый запрос не выполнился: URL не обновился!",
         )
-
 
     # --- ДЕЙСТВИЯ ---
     @allure.step("Показать выдачу по {size} карточек на странице")

@@ -32,11 +32,7 @@ def export_all_available_cars():
 
     print(f"🚗 2. Начинаем сбор машин (Даты: {start_date} - {end_date})...")
     for city in cities:
-        payload = {
-            "city": city,
-            "startDate": start_date,
-            "endDate": end_date
-        }
+        payload = {"city": city, "startDate": start_date, "endDate": end_date}
 
         search_resp = requests.post(f"{BASE_URL}/v1/cars/search", json=payload)
 

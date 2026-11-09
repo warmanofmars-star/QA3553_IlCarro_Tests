@@ -26,17 +26,12 @@ class BasePage:
 
     @allure.step("Поиск элемента: {locator}")
     def find(self, locator: tuple[str, str]) -> WebElement:
-        return WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
-            EC.presence_of_element_located(locator)
-        )
+        return WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(EC.presence_of_element_located(locator))
 
     @allure.step("Клик по элементу: {locator}")
     def click(self, locator: tuple[str, str]) -> None:
-        element = WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
-            EC.element_to_be_clickable(locator)
-        )
+        element = WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(EC.element_to_be_clickable(locator))
         element.click()
-
 
     def fill(self, locator, value, is_secret=False):
         # Если флаг is_secret=True, заменяем текст на звездочки для логов
@@ -50,9 +45,7 @@ class BasePage:
     @allure.step("Проверка видимости элемента: {locator}")
     def is_element_visible(self, locator):
         try:
-            WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
-                EC.visibility_of_element_located(locator)
-            )
+            WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(EC.visibility_of_element_located(locator))
             return True
         except TimeoutException:
             # Если элемент не появился, пишем warning в консоль/файл
@@ -73,9 +66,7 @@ class BasePage:
     def is_element_invisible(self, locator):
         try:
             # Ждем, пока элемент физически исчезнет или станет display: none
-            WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
-                EC.invisibility_of_element_located(locator)
-            )
+            WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(EC.invisibility_of_element_located(locator))
             return True
         except TimeoutException:
             logger.error(f"Элемент {locator} не исчез в течение {self.DEFAULT_TIMEOUT} сек.")
@@ -92,7 +83,6 @@ class BasePage:
         except TimeoutException:
             logger.error(f"Поле {locator} не очистилось в течение {self.DEFAULT_TIMEOUT} сек.")
             return False
-
 
     @allure.step("Снятие фокуса с элемента (клик по фону)")
     def remove_focus(self):

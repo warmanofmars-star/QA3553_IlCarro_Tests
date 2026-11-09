@@ -33,5 +33,5 @@ class Car:
             "carClass": self.car_class,
             "pricePerDay": float(self.price),
             "about": self.about,
-            "city": self.city
+            "city": self.city,
         }

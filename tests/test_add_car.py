@@ -10,15 +10,19 @@ logger = logging.getLogger(__name__)
 
 pytestmark = pytest.mark.ui
 
+
 @pytest.mark.smoke
 @allure.epic("UI Testing")
 @allure.feature("Add Car Page (Let the car work)")
 @allure.story("Positive Add Car")
 @allure.severity(allure.severity_level.CRITICAL)
-@pytest.mark.parametrize("fuel_type, car_class, scenario", [
-    ("Petrol", "Economy", "Добавление бензиновой машины эконом-класса"),
-    ("Electric", "Premium", "Добавление премиального электрокара")
-])
+@pytest.mark.parametrize(
+    "fuel_type, car_class, scenario",
+    [
+        ("Petrol", "Economy", "Добавление бензиновой машины эконом-класса"),
+        ("Electric", "Premium", "Добавление премиального электрокара"),
+    ],
+)
 def test_add_car_success(authenticated_driver, car_cleanup, fuel_type, car_class, scenario):
     with allure.step(f"Сценарий: {scenario}"):
         logger.info(f"--- ЗАПУСК ТЕСТА: {scenario} ---")
@@ -47,6 +51,7 @@ def test_add_car_success(authenticated_driver, car_cleanup, fuel_type, car_class
 
         logger.info("--- ТЕСТ УСПЕШНО ЗАВЕРШЕН ---")
 
+
 @pytest.mark.regression
 @pytest.mark.hybrid
 @allure.epic("UI Testing")
@@ -74,7 +79,9 @@ def test_add_car_duplicate(authenticated_driver, create_car):
         error_text = add_car_page.get_submit_error_text()
         logger.info(f"Фронтенд выдал ошибку: {error_text}")
 
-        assert error_text == "Failed to submit car", f"Ожидалась ошибка 'Failed to submit car', но получили '{error_text}'"
+        assert error_text == "Failed to submit car", (
+            f"Ожидалась ошибка 'Failed to submit car', но получили '{error_text}'"
+        )
 
         # 2. Проверяем, что форма НЕ очистилась (данные остались на месте)
         # Обращаемся к элементу правильно, чтобы PyCharm не ругался!

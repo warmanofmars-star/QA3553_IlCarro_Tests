@@ -12,22 +12,23 @@ logger = logging.getLogger(__name__)
 
 pytestmark = pytest.mark.ui
 
+
 @pytest.mark.smoke
 @allure.epic("Playwright Testing")
 @allure.feature("Cars Management")
 @allure.story("Real E2E Car Addition")
 @allure.title("Реальное добавление машины (E2E Playwright)")
-def test_real_add_car_success(page: Page, temp_user, car_cleanup): # <-- Добавили temp_user
+def test_real_add_car_success(page: Page, temp_user, car_cleanup):  # <-- Добавили temp_user
     car = CarGenerator.get_random_car()
     # Машина создаётся через UI — номер регистрируем, чтобы фабрика удалила её после теста
     car_cleanup.register(car.reg_number)
     logger.info(f"Playwright будет создавать машину: {car}")
-    user = temp_user.user # <-- Берем чистые креды
+    user = temp_user.user  # <-- Берем чистые креды
 
     with allure.step("Авторизация"):
         login_page = PwLoginPage(page)
         login_page.open()
-        login_page.login(user.email, user.password) # <-- Логинимся в песочницу
+        login_page.login(user.email, user.password)  # <-- Логинимся в песочницу
         login_page.click_ok_button()
 
     with allure.step("Переход на форму и отправка данных"):
@@ -47,8 +48,8 @@ def test_real_add_car_success(page: Page, temp_user, car_cleanup): # <-- Доб�
 @allure.feature("Playwright: Cars Management")
 @allure.story("API Setup -> UI Duplicate Check (Negative)")
 @allure.title("Создание дубликата машины (Playwright + API)")
-def test_pw_add_car_duplicate(page: Page, temp_user, create_car): # <-- Заменили auth_api на temp_user
-    user = temp_user.user # <-- Достаем UI-креды песочницы (create_car создаёт машину у него же)
+def test_pw_add_car_duplicate(page: Page, temp_user, create_car):  # <-- Заменили auth_api на temp_user
+    user = temp_user.user  # <-- Достаем UI-креды песочницы (create_car создаёт машину у него же)
 
     with allure.step("API PRECONDITION: Создаем машину"):
         car = create_car()
@@ -56,7 +57,7 @@ def test_pw_add_car_duplicate(page: Page, temp_user, create_car): # <-- Заме
     with allure.step("UI SCENARIO: Пытаемся создать ту же машину через UI"):
         login_page = PwLoginPage(page)
         login_page.open()
-        login_page.login(user.email, user.password) # <-- Синхронизируем UI с тем же Sandbox-юзером
+        login_page.login(user.email, user.password)  # <-- Синхронизируем UI с тем же Sandbox-юзером
         login_page.click_ok_button()
 
         add_car_page = PwAddCarPage(page)

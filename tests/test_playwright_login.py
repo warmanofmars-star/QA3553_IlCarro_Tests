@@ -6,6 +6,7 @@ from pages.pw_login_page import PwLoginPage
 
 pytestmark = pytest.mark.ui
 
+
 @pytest.mark.smoke
 @allure.epic("Playwright Testing")
 @allure.feature("Login")
@@ -28,10 +29,13 @@ def test_pw_login_success(page: Page, temp_user):
 @allure.feature("Login")
 @allure.story("Negative Login - Frontend")
 @allure.title("Ошибки валидации формы логина (Playwright)")
-@pytest.mark.parametrize("email, password, expected_error, scenario", [
-    ("bad-email", "ValidPass123!", "Wrong email format", "Невалидный email"),
-    ("valid_user@example.com", "", "Password is required", "Пустой пароль")
-])
+@pytest.mark.parametrize(
+    "email, password, expected_error, scenario",
+    [
+        ("bad-email", "ValidPass123!", "Wrong email format", "Невалидный email"),
+        ("valid_user@example.com", "", "Password is required", "Пустой пароль"),
+    ],
+)
 def test_pw_login_negative(page: Page, email, password, expected_error, scenario):
     with allure.step(f"Сценарий: {scenario}"):
         pw_login_page = PwLoginPage(page)

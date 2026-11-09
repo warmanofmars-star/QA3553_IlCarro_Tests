@@ -17,31 +17,51 @@ pytestmark = [pytest.mark.api, pytest.mark.regression, pytest.mark.mutation]
 @allure.severity(allure.severity_level.CRITICAL)
 # state_is_precondition: известный баг касается только кода ответа, а данные ведут себя правильно.
 # Тогда проверка состояния — предусловие (require): её провал не должен спрятаться за xfail.
-@pytest.mark.parametrize("mutate_func, expected_status, scenario, state_is_precondition", [
-    # 1. Удаление обязательного поля
-    pytest.param(lambda p: p.pop("manufacture"), 400, "Удаление обязательного поля (manufacture)", False,
-                 marks=allure.tag("REQ-CAR-02")),
-
-    # 2. Пустые строки в обязательном поле
-    pytest.param(lambda p: p.update({"model": ""}), 400, "Пустая строка вместо значения (model)", False,
-                 marks=allure.tag("REQ-CAR-02")),
-
-    # 3. Null вместо строки
-    pytest.param(lambda p: p.update({"carClass": None}), 400, "Null вместо строки (carClass)", False,
-                 marks=allure.tag("REQ-CAR-02")),
-
-    # 4. Неверный тип данных: REQ-CAR-03 (500 вместо 400; машина при этом не создаётся)
-    pytest.param(
-        lambda p: p.update({"seats": "пять"}), 400, "Строка вместо числа (seats)", True,
-        marks=[known_bug("WRONG_TYPE_500"), allure.tag("REQ-CAR-03")]
-    ),
-
-    # 5. Бессмысленное значение: OBS-03 (требования нет, API сохраняет машину — это и есть наблюдение)
-    pytest.param(
-        lambda p: p.update({"pricePerDay": -100}), 400, "Отрицательная цена", False,
-        marks=[observation("NONSENSE_CAR_VALUES"), allure.tag("OBS-03")]
-    ),
-])
+@pytest.mark.parametrize(
+    "mutate_func, expected_status, scenario, state_is_precondition",
+    [
+        # 1. Удаление обязательного поля
+        pytest.param(
+            lambda p: p.pop("manufacture"),
+            400,
+            "Удаление обязательного поля (manufacture)",
+            False,
+            marks=allure.tag("REQ-CAR-02"),
+        ),
+        # 2. Пустые строки в обязательном поле
+        pytest.param(
+            lambda p: p.update({"model": ""}),
+            400,
+            "Пустая строка вместо значения (model)",
+            False,
+            marks=allure.tag("REQ-CAR-02"),
+        ),
+        # 3. Null вместо строки
+        pytest.param(
+            lambda p: p.update({"carClass": None}),
+            400,
+            "Null вместо строки (carClass)",
+            False,
+            marks=allure.tag("REQ-CAR-02"),
+        ),
+        # 4. Неверный тип данных: REQ-CAR-03 (500 вместо 400; машина при этом не создаётся)
+        pytest.param(
+            lambda p: p.update({"seats": "пять"}),
+            400,
+            "Строка вместо числа (seats)",
+            True,
+            marks=[known_bug("WRONG_TYPE_500"), allure.tag("REQ-CAR-03")],
+        ),
+        # 5. Бессмысленное значение: OBS-03 (требования нет, API сохраняет машину — это и есть наблюдение)
+        pytest.param(
+            lambda p: p.update({"pricePerDay": -100}),
+            400,
+            "Отрицательная цена",
+            False,
+            marks=[observation("NONSENSE_CAR_VALUES"), allure.tag("OBS-03")],
+        ),
+    ],
+)
 def test_api_car_mutations(auth_api, car_cleanup, mutate_func, expected_status, scenario, state_is_precondition):
     with allure.step(f"Сценарий мутации: {scenario}"):
         # 1. Генерируем 100% валидный словарь данных
@@ -95,11 +115,12 @@ def test_api_car_mass_assignment(auth_api, create_car, second_user, temp_user):
         owner_cars = my_cars(auth_api)
         assert car.reg_number in owner_cars, f"Машины {car.reg_number} нет в /v1/cars/my создателя"
         saved = owner_cars[car.reg_number]
-        assert saved.get("owner") == temp_user.user.email, \
+        assert saved.get("owner") == temp_user.user.email, (
             f"owner подменён из тела запроса: ожидали {temp_user.user.email}, получили {saved.get('owner')}"
-        assert not saved.get("bookedPeriods"), \
-            f"bookedPeriods взят из тела запроса: {saved.get('bookedPeriods')}"
+        )
+        assert not saved.get("bookedPeriods"), f"bookedPeriods взят из тела запроса: {saved.get('bookedPeriods')}"
 
     with allure.step("Проверка: у пользователя из подложного owner этой машины нет"):
-        assert car.reg_number not in my_cars(second_user.api), \
+        assert car.reg_number not in my_cars(second_user.api), (
             f"Машина {car.reg_number} появилась в /v1/cars/my пользователя из подложного owner"
+        )

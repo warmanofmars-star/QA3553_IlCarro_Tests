@@ -28,7 +28,7 @@ class PwLoginPage(PwBasePage):
     def fill_email(self, email: str):
         self.email_input.fill(email)
 
-    #@allure.step("Ввод пароля")
+    # @allure.step("Ввод пароля")
     def fill_password(self, password: str):
         # ИСПОЛЬЗУЕМ КОНТЕКСТНЫЙ МЕНЕДЖЕР ВНУТРИ
         with allure.step("Ввод пароля: ********"):
@@ -57,7 +57,7 @@ class PwLoginPage(PwBasePage):
     def check_logout_button_visible(self):
         expect(self.logout_btn).to_be_visible()
 
-    #for Playwright:
+    # for Playwright:
     @allure.step("Проверка ошибки валидации: {expected_text}")
     def check_error_message(self, expected_text: str):
         # Playwright сам будет ждать, пока текст не совпадет!

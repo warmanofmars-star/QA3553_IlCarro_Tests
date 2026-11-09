@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 pytestmark = pytest.mark.ui
 
+
 @pytest.mark.smoke
 @allure.epic("UI Testing")
 @allure.feature("Search Page")
@@ -53,10 +54,12 @@ def test_search_form_dynamic(driver, auth_api, create_car):
 
     with allure.step("Проверка рендера карточки: заголовок и цена (REQ-UI-SEARCH-05)"):
         assert card["title"].strip(), "Заголовок карточки пустой"
-        assert UI_PRICE_PATTERN.match(card["price"]), \
+        assert UI_PRICE_PATTERN.match(card["price"]), (
             f"Цена на карточке не в формате с одним знаком после запятой: {card['price']!r}"
-        assert card["price"] == ui_price(car.price), \
+        )
+        assert card["price"] == ui_price(car.price), (
             f"Цена на карточке {card['price']!r}, ожидали {ui_price(car.price)!r} (pricePerDay {car.price})"
+        )
 
 
 @pytest.mark.regression
@@ -88,4 +91,6 @@ def test_search_dates_readonly_protection(driver):
 
     with allure.step("Проверка защиты от дурака: поле дат не должно принимать ручной ввод текста"):
         # Если поле readonly, пользователь не сможет вбить туда "Привет" вместо "12/12/2026"
-        assert search_page.is_dates_input_readonly() is True, "Критическая уязвимость UI: Поле дат доступно для ручного ввода текста!"
+        assert search_page.is_dates_input_readonly() is True, (
+            "Критическая уязвимость UI: Поле дат доступно для ручного ввода текста!"
+        )
