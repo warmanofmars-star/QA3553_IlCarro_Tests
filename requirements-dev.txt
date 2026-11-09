@@ -1,0 +1,6 @@
+# Зависимости для разработки: всё из requirements.txt плюс инструменты качества кода.
+# В Docker-образ с тестами они не попадают — там нужен только requirements.txt.
+# gitleaks — не пакет Python: его ставит сам pre-commit (версия — в .pre-commit-config.yaml).
+-r requirements.txt
+ruff==0.17.1          # та же версия, что в .pre-commit-config.yaml и job Lint
+pre-commit==4.7.0

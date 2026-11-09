@@ -1,0 +1,27 @@
+# Настройки инструментов разработки (ruff).
+# Тесты настраиваются отдельно — в pytest.ini; инструменты ставятся из requirements-dev.txt.
+
+[tool.ruff]
+# Нижняя граница совместимости, а не версия запуска: локально 3.14, в Docker и на раннерах
+# GitHub Actions — 3.12. Ruff не станет предлагать синтаксис, который сломается на 3.12.
+target-version = "py312"
+line-length = 120
+# Где искать «свои» модули для сортировки импортов. research/ — отдельный корень:
+# скрипты там импортируют соседний common.py как модуль верхнего уровня (через sys.path).
+src = [".", "research"]
+extend-exclude = ["allure-results", "allure-report", "logs", "test-results"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle: базовый стиль
+    "F",        # pyflakes: неиспользуемые импорты и переменные, опечатки в именах
+    "I",        # isort: порядок импортов
+    "B",        # flake8-bugbear: типичные ошибки (изменяемые аргументы по умолчанию и т.п.)
+    "UP",       # pyupgrade: современный синтаксис для нашей версии Python
+    "SIM",      # flake8-simplify: код, который можно записать проще
+    "PT",       # flake8-pytest-style: стиль тестов pytest
+]
+
+[tool.ruff.lint.flake8-pytest-style]
+# Имена параметров в parametrize пишем строкой через запятую: "field, value"
+parametrize-names-type = "csv"

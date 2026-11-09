@@ -1,0 +1,43 @@
+# Проверки, которые автоматически запускаются перед каждым `git commit`.
+#
+# Установка (один раз на машине, после клонирования репозитория):
+#     pip install -r requirements-dev.txt
+#     pre-commit install
+#
+# Ручной запуск на всех файлах — обязателен перед коммитом (см. CLAUDE.md):
+#     pre-commit run --all-files
+#
+# Если хук нашёл проблему, коммит не создаётся. Часть хуков исправляет файлы сама —
+# тогда проверь изменения, снова сделай `git add` и повтори коммит. Обходить хуки
+# через `git commit --no-verify` нельзя.
+# Версии (rev) зафиксированы: обновлять их стоит осознанно, командой `pre-commit autoupdate`.
+
+repos:
+  # Базовая гигиена файлов
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace        # пробелы в конце строк
+        # Markdown: два пробела в конце строки — это перенос строки, а не мусор
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer          # ровно один перевод строки в конце файла
+      - id: check-yaml                 # синтаксис YAML: compose-файлы, workflow GitHub Actions
+      - id: check-toml                 # синтаксис pyproject.toml и .gitleaks.toml
+      - id: check-merge-conflict       # забытые маркеры конфликтов <<<<<<< / >>>>>>>
+      - id: check-added-large-files    # случайно добавленные большие файлы (видео, дампы)
+        args: [--maxkb=1024]
+
+  # Линтер и форматтер Python (настройки — в pyproject.toml)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.1                       # та же версия, что в requirements-dev.txt и job Lint
+    hooks:
+      - id: ruff-check
+        args: [--fix]                  # исправимое — исправит сам, коммит всё равно остановится
+      - id: ruff-format
+
+  # Поиск секретов в добавляемых изменениях: токены, ключи API, пароли в формате .env
+  # (своё правило — в .gitleaks.toml, исторические находки — в .gitleaksignore)
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1                       # та же версия, что в job Lint
+    hooks:
+      - id: gitleaks
