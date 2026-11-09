@@ -22,6 +22,9 @@ repos:
         args: [--markdown-linebreak-ext=md]
       - id: end-of-file-fixer          # ровно один перевод строки в конце файла
       - id: check-yaml                 # синтаксис YAML: compose-файлы, workflow GitHub Actions
+        # Только синтаксис, без разбора тегов: docker-compose.jenkins-build.yml использует
+        # теги Compose !reset и !override, которых нет в стандартном YAML
+        args: [--unsafe]
       - id: check-toml                 # синтаксис pyproject.toml и .gitleaks.toml
       - id: check-merge-conflict       # забытые маркеры конфликтов <<<<<<< / >>>>>>>
       - id: check-added-large-files    # случайно добавленные большие файлы (видео, дампы)
