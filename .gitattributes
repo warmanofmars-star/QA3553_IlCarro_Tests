@@ -1,0 +1,19 @@
+# Окончания строк. В репозитории все текстовые файлы хранятся с LF, и в рабочей копии тоже LF —
+# независимо от core.autocrlf на машине. Причина: файлы попадают в Linux-контейнеры
+# (Dockerfile, COPY . .) и на раннеры CI, где CRLF ломает shell-скрипты и сбивает diff.
+* text=auto eol=lf
+
+# Скрипты Windows, если появятся, исполняет cmd/PowerShell — им нужен CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Двоичные файлы: не нормализовать и не показывать текстовый diff
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.mp4 binary

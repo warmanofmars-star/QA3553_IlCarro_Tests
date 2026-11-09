@@ -1,12 +1,14 @@
 import allure
 import pytest
+
 from data.data_generator import SearchDataGenerator
-from pages.search_page import SearchPage
 from pages.results_page import ResultsPage
+from pages.search_page import SearchPage
 from utils.price_format import UI_PRICE_PATTERN, ui_price
 from utils.search_helpers import RESULTS_PAGE_SIZE, require_city_fits_one_page
 
 pytestmark = pytest.mark.ui
+
 
 @pytest.mark.hybrid
 @pytest.mark.smoke
@@ -43,12 +45,15 @@ def test_hybrid_car_search(driver, auth_api, create_car):
         results_page.show_page_size(RESULTS_PAGE_SIZE)
 
         card = results_page.get_car_details(car.reg_number)
-        assert card is not None, \
+        assert card is not None, (
             f"Машина {car.reg_number} не найдена в выдаче по городу {target_city}, хотя API успешно её создал!"
+        )
 
     with allure.step("UI: Карточка отрисована: заголовок не пустой, цена по правилу отображения"):
         assert card["title"].strip(), "Заголовок карточки пустой"
-        assert UI_PRICE_PATTERN.match(card["price"]), \
+        assert UI_PRICE_PATTERN.match(card["price"]), (
             f"Цена на карточке не в формате с одним знаком после запятой: {card['price']!r}"
-        assert card["price"] == ui_price(car.price), \
+        )
+        assert card["price"] == ui_price(car.price), (
             f"Цена на карточке {card['price']!r}, ожидали {ui_price(car.price)!r} (pricePerDay {car.price})"
+        )

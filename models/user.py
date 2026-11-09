@@ -10,9 +10,4 @@ class User:
 
     def to_api_payload(self) -> dict:
         """Превращает объект User в словарь формата JSON для регистрации через API."""
-        return {
-            "firstName": self.name,
-            "lastName": self.last_name,
-            "username": self.email,
-            "password": self.password
-        }
+        return {"firstName": self.name, "lastName": self.last_name, "username": self.email, "password": self.password}

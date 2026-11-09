@@ -1,7 +1,9 @@
-import allure
 from datetime import date
-from pages.search_page import SearchPage
+
+import allure
 import pytest
+
+from pages.search_page import SearchPage
 from utils.preconditions import require
 
 pytestmark = [pytest.mark.ui, pytest.mark.regression]
@@ -17,11 +19,11 @@ def test_calendar_ui_and_close(driver):
 
     search_page.click_dates_input()
     # СИНХРОНИЗАЦИЯ: ждем открытия попапа
-    assert search_page.is_calendar_visible() == True, "Календарь не открылся!"
+    assert search_page.is_calendar_visible() is True, "Календарь не открылся!"
 
-    assert search_page.is_today_highlighted() == True, "Сегодняшний день не выделен!"
+    assert search_page.is_today_highlighted() is True, "Сегодняшний день не выделен!"
     search_page.click(search_page.CITY_INPUT)
-    assert search_page.is_calendar_invisible() == True, "Календарь не закрылся!"
+    assert search_page.is_calendar_invisible() is True, "Календарь не закрылся!"
 
 
 @allure.epic("UI Testing")

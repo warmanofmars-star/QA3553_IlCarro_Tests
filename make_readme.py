@@ -6,35 +6,66 @@ lines = [
     "# 🚗 IlCarro Hybrid Test Automation Framework\n\n",
     "[![UI Tests in Docker](https://github.com/warmanofmars-star/QA3553_IlCarro_Tests/actions/workflows/tests.yml/badge.svg)](https://github.com/warmanofmars-star/QA3553_IlCarro_Tests/actions)\n",
     "📊 **Live Allure Report:** [View Dashboard](https://warmanofmars-star.github.io/QA3553_IlCarro_Tests/)\n\n",
-    "Robust, production-ready hybrid test automation framework for the \"IlCarro\" (Car Rental) web application, featuring a fully containerized **Infrastructure as Code (IaC)** approach, cross-browser CI/CD matrix execution, and enterprise-grade API security & contract testing.\n\n",
-    "This project demonstrates a senior-level approach to QA automation, combining classic UI testing, deep API validation, remote browser execution via Selenium Grid 4, advanced network mocking, and modern container orchestration.\n\n",
+    'Robust, production-ready hybrid test automation framework for the "IlCarro" (Car Rental) web '
+    "application, featuring a fully containerized **Infrastructure as Code (IaC)** approach, "
+    "cross-browser CI/CD matrix execution, and enterprise-grade API security & contract testing.\n\n",
+    "This project demonstrates a senior-level approach to QA automation, combining classic UI "
+    "testing, deep API validation, remote browser execution via Selenium Grid 4, advanced network "
+    "mocking, and modern container orchestration.\n\n",
     "## 🛠️ Tech Stack\n",
     "* **Language:** Python 3.12+\n",
     "* **UI Frameworks:** Selenium WebDriver (Chrome, Firefox, Edge), Playwright (Sync API)\n",
     "* **API & Contract Testing:** Requests, `jsonschema`\n",
-    "* **Containerization & Orchestration:** Docker, Docker Compose, Selenium Grid 4 (hub + browser nodes with built-in video recording)\n",
+    "* **Containerization & Orchestration:** Docker, Docker Compose, Selenium Grid 4 (hub + browser "
+    "nodes with built-in video recording)\n",
     "* **Test Runner:** Pytest (with `pytest-xdist` for parallel execution)\n",
     "* **Data Modeling & Generation:** Python `dataclasses`, Faker & UUID\n",
     "* **Reporting:** Allure Report (with embedded test session videos)\n",
     "* **CI/CD:** GitHub Actions (Fully containerized pipeline execution with Build Matrix)\n",
     "* **Notifications:** Telegram Bot API\n\n",
     "## 🚀 Key Architectural Features\n\n",
-    "* **Cross-Browser CI/CD Matrix:** Configured GitHub Actions matrix strategy to dynamically spawn parallel test suites in Google Chrome and Mozilla Firefox inside isolated Docker containers.\n",
-    "* **Dockerized Infrastructure (IaC):** The entire test environment (framework, Selenium Grid hub, Chrome/Firefox/Edge nodes, video recording) is orchestrated via Docker Compose, guaranteeing absolute consistency across local machines and CI/CD.\n",
-    "* **Allure Report Deduplication:** Custom Python data-processing injection inside the CI/CD pipeline ensures accurate merging of parallel matrix test execution results without data collisions.\n",
-    "* **Strict Contract Validation (JSON Schema):** All positive API responses are validated against strict JSON Schemas enforcing `additionalProperties: False` to catch undocumented fields, type mismatches, and silent data leaks.\n",
-    "* **OOP Payload Serialization (Dataclasses):** Test data models (`Car`, `User`) encapsulate their own API mapping logic via `.to_api_payload()`, eliminating hardcoded dictionaries across test suites and enforcing DRY principles.\n",
-    "* **Data-Driven Negative Mutations (DDT):** Utilizes inline `lambda` mutations with `@pytest.mark.parametrize` to dynamically corrupt valid payloads on the fly (missing required fields, null injections, wrong types, boundary violations, and mass assignment checks).\n",
-    "* **API Security & Vulnerability Auditing:** Dedicated security suite covering Broken Object Level Authorization (BOLA / IDOR), authentication token tampering, `DELETE` idempotency, HTTP method restrictions (`405`), media type validation (`415`), and pagination DoS protection.\n",
-    "* **Global Data Leak Scanner:** Custom `assert_secure_error()` validator automatically scans all negative API responses for sensitive backend exposures (`stack trace`, `sqlexception`, `password_hash`, internal paths).\n",
-    "* **Defect Documentation via XFAIL:** Known backend contract violations and security flaws are strictly documented in code using `@pytest.mark.xfail(reason=...)` without polluting CI/CD stability.\n",
-    "* **Strict Data Isolation (Sandbox Users):** Employs a robust `temp_user` fixture that dynamically registers a unique user via API before each test, eliminating race conditions during parallel execution (`pytest-xdist`).\n",
-    "* **Universal Video Attachment:** Every Selenium test is recorded by the Selenium Grid node's built-in recorder, while Playwright tests utilize the native recording engine. All resulting `.mp4` files are automatically attached to the Allure report upon teardown.\n",
-    "* **Hybrid Testing Approach:** Tests use API calls to set up preconditions and teardown data, drastically reducing UI test execution time.\n",
-    "* **Network Interception & Mocking:** Utilizes Playwright's `page.route()` to intercept backend requests and inject mock responses, isolating frontend UI rendering logic.\n",
-    "* **Security & Log Masking:** Sensitive data (passwords, tokens) are strictly masked (`********`) in all console outputs, test logs, and Allure reports.\n",
-    "* **Context-Aware Custom Logging:** Features a proprietary logging utility injected via a global Pytest fixture (`sys_logger`) that dynamically adapts to parallel `xdist` workers.\n",
-    "* **API Connection Pooling:** Utilizes `requests.Session()` for backend interactions, reusing TCP connections and automatically managing Bearer tokens.\n\n",
+    "* **Cross-Browser CI/CD Matrix:** Configured GitHub Actions matrix strategy to dynamically spawn "
+    "parallel test suites in Google Chrome and Mozilla Firefox inside isolated Docker containers.\n",
+    "* **Dockerized Infrastructure (IaC):** The entire test environment (framework, Selenium Grid "
+    "hub, Chrome/Firefox/Edge nodes, video recording) is orchestrated via Docker Compose, "
+    "guaranteeing absolute consistency across local machines and CI/CD.\n",
+    "* **Allure Report Deduplication:** Custom Python data-processing injection inside the CI/CD "
+    "pipeline ensures accurate merging of parallel matrix test execution results without data "
+    "collisions.\n",
+    "* **Strict Contract Validation (JSON Schema):** All positive API responses are validated against "
+    "strict JSON Schemas enforcing `additionalProperties: False` to catch undocumented fields, type "
+    "mismatches, and silent data leaks.\n",
+    "* **OOP Payload Serialization (Dataclasses):** Test data models (`Car`, `User`) encapsulate "
+    "their own API mapping logic via `.to_api_payload()`, eliminating hardcoded dictionaries across "
+    "test suites and enforcing DRY principles.\n",
+    "* **Data-Driven Negative Mutations (DDT):** Utilizes inline `lambda` mutations with "
+    "`@pytest.mark.parametrize` to dynamically corrupt valid payloads on the fly (missing required "
+    "fields, null injections, wrong types, boundary violations, and mass assignment checks).\n",
+    "* **API Security & Vulnerability Auditing:** Dedicated security suite covering Broken Object "
+    "Level Authorization (BOLA / IDOR), authentication token tampering, `DELETE` idempotency, HTTP "
+    "method restrictions (`405`), media type validation (`415`), and pagination DoS protection.\n",
+    "* **Global Data Leak Scanner:** Custom `assert_secure_error()` validator automatically scans all "
+    "negative API responses for sensitive backend exposures (`stack trace`, `sqlexception`, "
+    "`password_hash`, internal paths).\n",
+    "* **Defect Documentation via XFAIL:** Known backend contract violations and security flaws are "
+    "strictly documented in code using `@pytest.mark.xfail(reason=...)` without polluting CI/CD "
+    "stability.\n",
+    "* **Strict Data Isolation (Sandbox Users):** Employs a robust `temp_user` fixture that "
+    "dynamically registers a unique user via API before each test, eliminating race conditions during "
+    "parallel execution (`pytest-xdist`).\n",
+    "* **Universal Video Attachment:** Every Selenium test is recorded by the Selenium Grid node's "
+    "built-in recorder, while Playwright tests utilize the native recording engine. All resulting "
+    "`.mp4` files are automatically attached to the Allure report upon teardown.\n",
+    "* **Hybrid Testing Approach:** Tests use API calls to set up preconditions and teardown data, "
+    "drastically reducing UI test execution time.\n",
+    "* **Network Interception & Mocking:** Utilizes Playwright's `page.route()` to intercept backend "
+    "requests and inject mock responses, isolating frontend UI rendering logic.\n",
+    "* **Security & Log Masking:** Sensitive data (passwords, tokens) are strictly masked "
+    "(`********`) in all console outputs, test logs, and Allure reports.\n",
+    "* **Context-Aware Custom Logging:** Features a proprietary logging utility injected via a global "
+    "Pytest fixture (`sys_logger`) that dynamically adapts to parallel `xdist` workers.\n",
+    "* **API Connection Pooling:** Utilizes `requests.Session()` for backend interactions, reusing "
+    "TCP connections and automatically managing Bearer tokens.\n\n",
     "## ⚙️ Setup & Installation\n\n",
     "1. Clone the repository:\n",
     f"{TICK}bash\n",
@@ -63,8 +94,8 @@ lines = [
     f"{TICK}\n\n",
     "**Run specific test layers using Pytest markers (`smoke`, `regression`, `api`, `ui`, `security`, `hybrid`):**\n",
     f"{TICK}bash\n",
-    "pytest -m \"api and security\" -v\n",
-    "pytest -m \"smoke\" -n 3\n",
+    'pytest -m "api and security" -v\n',
+    'pytest -m "smoke" -n 3\n',
     f"{TICK}\n\n",
     "**Run modern Playwright tests (headed mode for debugging):**\n",
     f"{TICK}bash\n",
@@ -77,7 +108,8 @@ lines = [
     "## 📊 CI/CD Pipeline\n",
     "The project features an advanced **GitHub Actions** pipeline:\n",
     "* Automatically triggers on manual dispatch (`workflow_dispatch`).\n",
-    "* Configured with a **Build Matrix** to dynamically spawn parallel test suites in Google Chrome and Mozilla Firefox.\n",
+    "* Configured with a **Build Matrix** to dynamically spawn parallel test suites in Google Chrome "
+    "and Mozilla Firefox.\n",
     "* Executes a custom Python script to deduplicate and merge Allure results from multiple browser streams.\n",
     "* Spins up a clean Linux runner, builds the Docker Compose stack, and executes all tests in parallel.\n",
     "* Securely injects credentials via **GitHub Secrets**.\n",
@@ -103,7 +135,7 @@ lines = [
     "└── requirements.txt      # Project dependencies\n",
     f"{TICK}\n\n",
     "---\n",
-    "*Author: Maksim Vinogradov*\n"
+    "*Author: Maksim Vinogradov*\n",
 ]
 
 with open("README.md", "w", encoding="utf-8") as f:

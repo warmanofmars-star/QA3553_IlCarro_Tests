@@ -1,6 +1,8 @@
 import logging
-import requests
+
 import allure
+import requests
+
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -19,10 +21,7 @@ class IlCarroAPI:
             url = f"{self.BASE_URL}/v1/user/login/usernamepassword"
             logger.info(f"POST {url} [User: {username}]")
 
-            payload = {
-                "username": username,
-                "password": password
-            }
+            payload = {"username": username, "password": password}
             # 2. Запрос делаем через сессию
             response = self.session.post(url, json=payload)
 
@@ -41,12 +40,7 @@ class IlCarroAPI:
         url = f"{self.BASE_URL}/v1/user/registration/usernamepassword"
         logger.info(f"POST {url} [Регистрация: {username}]")
 
-        payload = {
-            "firstName": "Temp",
-            "lastName": "User",
-            "username": username,
-            "password": password
-        }
+        payload = {"firstName": "Temp", "lastName": "User", "username": username, "password": password}
         response = self.session.post(url, json=payload)
 
         if response.status_code == 200:
@@ -58,11 +52,10 @@ class IlCarroAPI:
             logger.error(f"Ошибка регистрации: {response.status_code} - {response.text}")
         return response
 
-
     @allure.step("API: Добавление новой машины")
     def add_car(self, car_payload):
         url = f"{self.BASE_URL}/v1/cars"
-        serial = car_payload.get('serialNumber', 'UNKNOWN')
+        serial = car_payload.get("serialNumber", "UNKNOWN")
         logger.info(f"POST {url} [Создание машины: {serial}]")
 
         # 4. Обрати внимание: параметра headers больше нет, код стал чище
@@ -106,11 +99,7 @@ class IlCarroAPI:
         url = f"{self.BASE_URL}/v1/cars/search"
         logger.info(f"POST {url} [Поиск: {city}, даты: {start_date} - {end_date}]")
 
-        payload = {
-            "city": city,
-            "startDate": start_date,
-            "endDate": end_date
-        }
+        payload = {"city": city, "startDate": start_date, "endDate": end_date}
         response = self.session.post(url, json=payload)
 
         if response.status_code == 200:
@@ -126,10 +115,7 @@ class IlCarroAPI:
         url = f"{self.BASE_URL}/v1/cars/{serial_number}/booking"
         logger.info(f"POST {url} [Бронирование: {serial_number}, даты: {start_date} - {end_date}]")
 
-        payload = {
-            "startDate": start_date,
-            "endDate": end_date
-        }
+        payload = {"startDate": start_date, "endDate": end_date}
         response = self.session.post(url, json=payload)
 
         if response.status_code == 200:

@@ -1,5 +1,6 @@
 import allure
 import pytest
+
 from api.car_api import IlCarroAPI
 from data.known_bugs import known_bug
 from utils.preconditions import require
@@ -7,15 +8,60 @@ from utils.preconditions import require
 pytestmark = [pytest.mark.api, pytest.mark.regression, pytest.mark.contract]
 
 FRONTEND_CITIES = [
-    "Tel Aviv", "Jerusalem", "Haifa", "Rishon LeZion", "Petah Tikva", "Ashdod",
-    "Netanya", "Beersheba", "Bnei Brak", "Holon", "Ramat Gan", "Ashkelon",
-    "Rehovot", "Bat Yam", "Beit Shemesh", "Kfar Saba", "Herzliya", "Hadera",
-    "Modi'in-Maccabim-Re'ut", "Nazareth", "Lod", "Ramla", "Ra'anana",
-    "Rosh HaAyin", "Acre", "Eilat", "Kiryat Ata", "Kiryat Gat", "Kiryat Yam",
-    "Kiryat Motzkin", "Kiryat Bialik", "Nahariya", "Tiberias", "Safed", "Afula",
-    "Carmiel", "Nes Ziona", "Yavne", "Or Yehuda", "Givatayim", "Kiryat Ono",
-    "Umm al-Fahm", "Sakhnin", "Tamra", "Tayibe", "Tira", "Ma'alot-Tarshiha",
-    "Migdal HaEmek", "Sderot", "Arad", "Dimona", "Ofakim", "Yeruham", "Kiryat Shmona"
+    "Tel Aviv",
+    "Jerusalem",
+    "Haifa",
+    "Rishon LeZion",
+    "Petah Tikva",
+    "Ashdod",
+    "Netanya",
+    "Beersheba",
+    "Bnei Brak",
+    "Holon",
+    "Ramat Gan",
+    "Ashkelon",
+    "Rehovot",
+    "Bat Yam",
+    "Beit Shemesh",
+    "Kfar Saba",
+    "Herzliya",
+    "Hadera",
+    "Modi'in-Maccabim-Re'ut",
+    "Nazareth",
+    "Lod",
+    "Ramla",
+    "Ra'anana",
+    "Rosh HaAyin",
+    "Acre",
+    "Eilat",
+    "Kiryat Ata",
+    "Kiryat Gat",
+    "Kiryat Yam",
+    "Kiryat Motzkin",
+    "Kiryat Bialik",
+    "Nahariya",
+    "Tiberias",
+    "Safed",
+    "Afula",
+    "Carmiel",
+    "Nes Ziona",
+    "Yavne",
+    "Or Yehuda",
+    "Givatayim",
+    "Kiryat Ono",
+    "Umm al-Fahm",
+    "Sakhnin",
+    "Tamra",
+    "Tayibe",
+    "Tira",
+    "Ma'alot-Tarshiha",
+    "Migdal HaEmek",
+    "Sderot",
+    "Arad",
+    "Dimona",
+    "Ofakim",
+    "Yeruham",
+    "Kiryat Shmona",
 ]
 
 
@@ -43,6 +89,10 @@ def test_frontend_backend_cities_mapping():
         if fake_frontend_cities:
             error_msg += f"\n[CRITICAL] Фронтенд отправляет города, которых нет в БД: {sorted(fake_frontend_cities)}"
         if unreachable_backend_cities:
-            error_msg += f"\n[WARNING] В БД есть машины в этих городах, но юзер их не найдет: {sorted(unreachable_backend_cities)}"
+            error_msg += (
+                "\n[WARNING] В БД есть машины в этих городах, но юзер их не найдет: "
+                f"{sorted(unreachable_backend_cities)}"
+            )
 
-        assert not fake_frontend_cities and not unreachable_backend_cities, error_msg
+        assert not fake_frontend_cities, error_msg
+        assert not unreachable_backend_cities, error_msg

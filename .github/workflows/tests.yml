@@ -52,6 +52,54 @@ env:
 
 jobs:
   # ==========================================
+  # LINT: КАЧЕСТВО КОДА И СЕКРЕТЫ (не зависит от тестов, идёт параллельно с ними)
+  # ==========================================
+  # Те же проверки, что хуки pre-commit, но на сервере: хук можно не установить, а job — нет.
+  # Тесты Lint не ждут и от него не зависят: замечание стиля не должно задерживать прогон.
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      RUFF_VERSION: 0.17.1        # та же версия, что в requirements-dev.txt и .pre-commit-config.yaml
+      GITLEAKS_VERSION: 8.30.1    # та же версия, что в .pre-commit-config.yaml
+    steps:
+      # Вся история, а не последний коммит: gitleaks проверяет каждый коммит репозитория
+      - name: Скачиваем код проекта со всей историей
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Ставим Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      # Оба шага выполняются, даже если первый упал: в логе видны все замечания сразу
+      - name: Проверяем код линтером (ruff check)
+        run: |
+          python -m pip install --quiet "ruff==$RUFF_VERSION"
+          ruff check --output-format=github .    # замечания появятся прямо в diff PR
+
+      - name: Проверяем форматирование (ruff format --check)
+        if: ${{ !cancelled() }}
+        run: ruff format --check .
+
+      # Бинарник с GitHub Releases, сверка контрольной суммы — защита от подменённого архива.
+      # Настройки gitleaks подхватывает сам: своё правило — .gitleaks.toml, признанные
+      # исторические находки — .gitleaksignore. --redact: найденный секрет не попадает в лог
+      - name: Ищем секреты во всей истории (gitleaks)
+        if: ${{ !cancelled() }}
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/$archive" "$base/$archive"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/checksums.txt" "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          (cd "$RUNNER_TEMP" && grep " $archive\$" checksums.txt | sha256sum -c -)
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" git --redact --verbose --no-banner .
+
+  # ==========================================
   # JOB 0: ПРОВЕРКА РАЗБИЕНИЯ (сбор тестов без запуска, около минуты)
   # ==========================================
   split-check:
@@ -319,8 +367,8 @@ jobs:
   # ==========================================
   notify-failure:
     name: Notify failure
-    needs: [split-check, api-and-playwright, selenium, report, deploy]
-    # failure() — упал любой из job'ов выше (тесты, разбиение, отчёт или выкладка).
+    needs: [lint, split-check, api-and-playwright, selenium, report, deploy]
+    # failure() — упал любой из job'ов выше (линтер, тесты, разбиение, отчёт или выкладка).
     # Отменённый запуск сюда не попадает; запуск по PR — тоже (только main)
     if: ${{ failure() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-24.04
@@ -340,6 +388,7 @@ jobs:
             🔴 IlCarro — запуск CI упал
             Ветка: ${{ github.ref_name }}, событие: ${{ github.event_name }}
             Фильтр: ${{ inputs.test_marker || 'все тесты' }}
+            Lint: ${{ needs.lint.result }}
             Разбиение: ${{ needs.split-check.result }}
             API и Playwright: ${{ needs.api-and-playwright.result }}
             Selenium (chrome, firefox, edge): ${{ needs.selenium.result }}

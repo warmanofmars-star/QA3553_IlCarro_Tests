@@ -1,5 +1,6 @@
 import allure
 from playwright.sync_api import Page, expect
+
 from pages.pw_base_page import PwBasePage
 
 
@@ -70,7 +71,7 @@ class PwAddCarPage(PwBasePage):
         # Если поле очистилось, значит React принял ответ 200 OK от реального сервера
         expect(self.make_input).to_be_empty(timeout=self.expect_timeout)
 
-    #for Playwright:
+    # for Playwright:
     @allure.step("Проверка появления ошибки отправки: {expected_text}")
     def check_submit_error(self, expected_text: str):
         expect(self.submit_error_message).to_have_text(expected_text)

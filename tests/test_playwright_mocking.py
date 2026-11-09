@@ -30,7 +30,7 @@ def test_mock_search_results(page: Page):
                 "pricePerDay": 9999.99,
                 "about": "Does it come in black?",
                 "city": "Tel Aviv",
-                "image": None
+                "image": None,
             }
         ]
     }

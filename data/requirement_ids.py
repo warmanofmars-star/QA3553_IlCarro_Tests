@@ -26,5 +26,7 @@ def requirement_ids() -> frozenset[str]:
         )
     ids = frozenset(_ID_PATTERN.findall(REQUIREMENTS_FILE.read_text(encoding="utf-8")))
     if not ids:
-        raise ValueError(f"В {REQUIREMENTS_FILE} не найдено ни одного ID (REQ-…, DISC-…, OBS-…): формат таблиц изменился?")
+        raise ValueError(
+            f"В {REQUIREMENTS_FILE} не найдено ни одного ID (REQ-…, DISC-…, OBS-…): формат таблиц изменился?"
+        )
     return ids

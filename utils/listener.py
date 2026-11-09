@@ -1,6 +1,8 @@
 import logging
+
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.support.abstract_event_listener import AbstractEventListener
-from selenium.common.exceptions import WebDriverException, NoSuchElementException
+
 
 class IlCarroListener(AbstractEventListener):
     def __init__(self):
@@ -17,11 +19,11 @@ class IlCarroListener(AbstractEventListener):
             tag_name = element.tag_name
 
             # 1. Запрещаем собирать текст с глобальных контейнеров
-            if tag_name.lower() in ['body', 'html', 'form']:
+            if tag_name.lower() in ["body", "html", "form"]:
                 self.logger.info(f"Клик по фону <{tag_name}> (снятие фокуса/сабмит)")
             else:
                 # 2. Вычитываем текст и убираем переносы строк для красоты лога
-                element_text = element.text.replace('\n', ' ').strip()
+                element_text = element.text.replace("\n", " ").strip()
 
                 # 3. Защита от спама: обрезаем текст длиннее 50 символов
                 if len(element_text) > 50:

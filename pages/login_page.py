@@ -1,4 +1,5 @@
 from selenium.webdriver.common.by import By
+
 from pages.base_page import BasePage
 
 
@@ -28,7 +29,7 @@ class LoginPage(BasePage):
         self.fill(self.EMAIL_INPUT, email)
 
     def fill_password(self, password):
-        self.fill(self.PASSWORD_INPUT, password, is_secret=True) # Добавили флаг
+        self.fill(self.PASSWORD_INPUT, password, is_secret=True)  # Добавили флаг
 
     def submit_login(self):
         self.click(self.SUBMIT_BTN)

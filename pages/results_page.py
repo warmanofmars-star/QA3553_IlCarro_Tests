@@ -2,13 +2,15 @@ import logging
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 import allure
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
+
 from pages.base_page import BasePage
 
 logger = logging.getLogger(__name__)
+
 
 class ResultsPage(BasePage):
     # --- ЛОКАТОРЫ ---
@@ -23,9 +25,8 @@ class ResultsPage(BasePage):
         logger.info("Ждем обновления URL с параметрами поиска...")
         WebDriverWait(self.driver, 10).until(
             lambda d: "city=" in d.current_url and "from=" in d.current_url,
-            message="Поисковый запрос не выполнился: URL не обновился!"
+            message="Поисковый запрос не выполнился: URL не обновился!",
         )
-
 
     # --- ДЕЙСТВИЯ ---
     @allure.step("Показать выдачу по {size} карточек на странице")

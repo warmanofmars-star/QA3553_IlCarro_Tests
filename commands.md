@@ -100,6 +100,38 @@
 
 ---
 
+## 🧽 Качество кода: ruff, pre-commit, gitleaks
+**Установить инструменты и хуки (один раз после клонирования):**
+```bash
+pip install -r requirements-dev.txt     # requirements.txt + ruff и pre-commit
+pre-commit install                      # хуки в .git/hooks: запускаются на каждом git commit
+```
+
+**Перед коммитом — все хуки на всех файлах (обязательно, см. CLAUDE.md):**
+`pre-commit run --all-files`
+
+Хуки: гигиена файлов (пробелы в конце строк, перевод строки в конце файла, синтаксис YAML/TOML,
+маркеры конфликтов, большие файлы), ruff, ruff-format, gitleaks. Если хук исправил файл, коммит
+не создаётся: проверь изменения, `git add`, повтори коммит. `git commit --no-verify` — запрещён.
+
+**Линтер и форматтер по отдельности:**
+```bash
+ruff check .               # замечания
+ruff check --fix .         # исправить то, что ruff умеет исправлять сам
+ruff format --check .      # только проверить форматирование (как в CI)
+ruff format .              # отформатировать
+```
+
+**Секреты во всей истории git (как job Lint в CI):** gitleaks ставит сам pre-commit, отдельной
+установки не нужно; учитываются `.gitleaks.toml` и `.gitleaksignore`.
+`pre-commit run gitleaks --all-files` — только изменения для коммита; вся история — бинарником
+gitleaks: `gitleaks git --redact -v .`
+
+**Обновить версии хуков (осознанно, затем выровнять версии в requirements-dev.txt и job lint):**
+`pre-commit autoupdate`
+
+---
+
 ## 🚦 CI: GitHub Actions (`.github/workflows/tests.yml`)
 **Когда запускается:** PR в `main`, push в `main`, вручную (Actions → IlCarro Tests → Run workflow).
 Новый запуск PR отменяет предыдущий запуск того же PR; запуски на `main` не отменяются, а ждут
@@ -107,11 +139,14 @@
 
 **Схема jobs:**
 ```
+lint ─────────────────────────────────────────────────(что-то упало)──► notify-failure
 split-check ─────────────┐
 api-and-playwright ──────┼─► report ─► deploy (только main) ─► notify-report
 selenium [chrome,        │      │
           firefox, edge] ┘      └──────────────(что-то упало)──► notify-failure
 ```
+- `lint` — ruff check, ruff format --check и gitleaks по всей истории репозитория. От тестов
+  не зависит и идёт параллельно с ними.
 - `split-check` — собирает тесты без запуска и проверяет, что разбиение дополняющее.
 - `api-and-playwright` — `-m "not selenium"`, один раз, в Docker без Grid.
 - `selenium` — `-m "selenium"`, матрица из трёх браузеров через Selenium Grid.
@@ -228,5 +263,6 @@ Prepare ─► API and Playwright ─► Selenium (Grid) ─► post: уборк
 **Отключить предупреждение Git о замене LF на CRLF в Windows:**
 `git config --global core.safecrlf false`
 
-**Обновить файл зависимостей проекта:**
-`pip freeze > requirements.txt`
+**Обновить файл зависимостей проекта:** версии в `requirements.txt` правь вручную.
+`pip freeze` выгрузил бы и инструменты разработки (ruff, pre-commit) — им место в
+`requirements-dev.txt`; а `>` в PowerShell пишет файл в UTF-16, который git считает двоичным.

@@ -34,7 +34,7 @@ OBSERVATIONS: dict[str, Observation] = {
         ref="OBS-03",
         description=(
             "API сохраняет машину с бессмысленными значениями полей: отрицательная цена, цена 0, seats 0, "
-            "year \"abc\", fuel \"banana\""
+            'year "abc", fuel "banana"'
         ),
     ),
 }

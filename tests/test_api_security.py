@@ -1,5 +1,6 @@
-import pytest
 import allure
+import pytest
+
 from api.car_api import IlCarroAPI
 from data.data_generator import CarGenerator, UserGenerator
 from data.known_bugs import known_bug
@@ -14,12 +15,19 @@ pytestmark = [pytest.mark.api, pytest.mark.security]
 @allure.feature("Security")
 @allure.story("Authentication (Tokens)")
 @allure.severity(allure.severity_level.BLOCKER)
-@pytest.mark.parametrize("token_strategy, expected_status, scenario", [
-    pytest.param("empty", 401, "Пустой токен (Отсутствует заголовок)",
-                 marks=[known_bug("NO_AUTH_403"), allure.tag("REQ-SEC-01")]),
-    ("invalid", 401, "Невалидный токен (Мусорная строка)"),
-    ("wrong_scheme", 401, "Неверная схема (Basic вместо Bearer)")
-])
+@pytest.mark.parametrize(
+    "token_strategy, expected_status, scenario",
+    [
+        pytest.param(
+            "empty",
+            401,
+            "Пустой токен (Отсутствует заголовок)",
+            marks=[known_bug("NO_AUTH_403"), allure.tag("REQ-SEC-01")],
+        ),
+        ("invalid", 401, "Невалидный токен (Мусорная строка)"),
+        ("wrong_scheme", 401, "Неверная схема (Basic вместо Bearer)"),
+    ],
+)
 def test_api_security_auth_tokens(token_strategy, expected_status, scenario):
     """
     Проверка того, как сервер отбивает неавторизованные запросы
@@ -41,7 +49,9 @@ def test_api_security_auth_tokens(token_strategy, expected_status, scenario):
         response = api.get_my_cars()
 
     with allure.step(f"Проверка: Сервер должен вернуть {expected_status} Unauthorized"):
-        assert response.status_code == expected_status, f"УЯЗВИМОСТЬ: Ожидался статус {expected_status}, получен {response.status_code}"
+        assert response.status_code == expected_status, (
+            f"УЯЗВИМОСТЬ: Ожидался статус {expected_status}, получен {response.status_code}"
+        )
 
 
 @pytest.mark.smoke
@@ -65,7 +75,10 @@ def test_api_security_bola_delete(auth_api, create_car, second_user):
         response = second_user.api.delete_car(car.reg_number)
 
     with allure.step("Проверка: машина осталась в /v1/cars/my владельца"):
-        assert car.reg_number in my_cars(auth_api),             f"КРИТИЧЕСКАЯ УЯЗВИМОСТЬ BOLA! Второй пользователь удалил чужую машину. Ответ: {response.status_code} {response.text}"
+        assert car.reg_number in my_cars(auth_api), (
+            "КРИТИЧЕСКАЯ УЯЗВИМОСТЬ BOLA! Второй пользователь удалил чужую машину. Ответ: "
+            f"{response.status_code} {response.text}"
+        )
 
 
 @pytest.mark.regression
@@ -91,7 +104,9 @@ def test_api_security_bola_delete_status(auth_api, create_car, second_user):
         require(car.reg_number in my_cars(auth_api), "Машина пропала у владельца после удаления вторым пользователем")
 
     with allure.step("Проверка: сервер ответил 404 Not Found"):
-        assert response.status_code == 404,             f"Ожидался 404 для чужой машины, сервер вернул {response.status_code}. Ответ: {response.text}"
+        assert response.status_code == 404, (
+            f"Ожидался 404 для чужой машины, сервер вернул {response.status_code}. Ответ: {response.text}"
+        )
 
 
 @pytest.mark.regression
@@ -118,7 +133,9 @@ def test_api_idempotency_delete(auth_api, create_car):
         res_second = auth_api.delete_car(serial_number)
 
     with allure.step("Проверка: Сервер корректно обработал дублирующий DELETE-запрос"):
-        assert res_second.status_code == 404, f"Ожидался 404 для несуществующей машины, сервер вернул {res_second.status_code}. Ответ: {res_second.text}"
+        assert res_second.status_code == 404, (
+            f"Ожидался 404 для несуществующей машины, сервер вернул {res_second.status_code}. Ответ: {res_second.text}"
+        )
 
 
 @pytest.mark.regression
@@ -142,7 +159,9 @@ def test_api_security_method_not_allowed(auth_api, car_cleanup):
         response = auth_api.session.put(url, json=car.to_api_payload())
 
     with allure.step("Проверка: Ожидаем 405 Method Not Allowed"):
-        assert response.status_code == 405, f"БАГ БЭКЕНДА: Ожидался статус 405, получен {response.status_code}. Ответ: {response.text}"
+        assert response.status_code == 405, (
+            f"БАГ БЭКЕНДА: Ожидался статус 405, получен {response.status_code}. Ответ: {response.text}"
+        )
 
 
 @pytest.mark.regression
@@ -164,4 +183,6 @@ def test_api_security_unsupported_media_type(auth_api):
         response = auth_api.session.post(url, data="Just some malicious plain text here", headers=headers)
 
     with allure.step("Проверка: Ожидаем 415 Unsupported Media Type"):
-        assert response.status_code == 415, f"БАГ БЭКЕНДА: Ожидался статус 415, получен {response.status_code}. Ответ: {response.text}"
+        assert response.status_code == 415, (
+            f"БАГ БЭКЕНДА: Ожидался статус 415, получен {response.status_code}. Ответ: {response.text}"
+        )

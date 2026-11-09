@@ -53,11 +53,38 @@ COMPOSE_PROFILES=chrome TEST_MARKER=smoke docker compose up --build --exit-code-
 по фикстурам: `selenium` — тестам с `driver`/`authenticated_driver`, `playwright` — тестам с `page`;
 вручную их не расставляй.
 
+## Качество кода (ruff, pre-commit, gitleaks)
+
+Инструменты — в `requirements-dev.txt` (в Docker-образ не попадают), настройки ruff — `pyproject.toml`
+(`py312`, строка 120; `research/`, `scripts/`, `merge_code.py`, `make_readme.py` проверяются тоже).
+
+```bash
+pip install -r requirements-dev.txt && pre-commit install   # один раз после клонирования
+pre-commit run --all-files                                  # все хуки на всех файлах
+ruff check .            # линтер;  ruff check --fix .  — исправить исправимое
+ruff format .           # форматирование;  ruff format --check .  — только проверить
+```
+
+- **Перед каждым коммитом — `pre-commit run --all-files`, все хуки зелёные.** Хук, исправивший
+  файл, тоже «Failed»: проверь изменения, `git add`, повтори.
+- **`git commit --no-verify` запрещён**, как и любой другой обход хуков. Хук мешает законному коду —
+  чини настройку (`pyproject.toml`, `.gitleaks.toml`, `.pre-commit-config.yaml`) и сообщи пользователю.
+- Замечание ruff, которое требует изменить логику теста или ослабить проверку, не исправляй — сообщи.
+  `# noqa` — только с указанием правила и причиной рядом.
+- gitleaks: свои правила — `.gitleaks.toml` (`env-style-password` — пароли в формате `.env`),
+  признанные исторические находки — `.gitleaksignore` (отпечаток + комментарий: что это, когда
+  отозвано). Новую находку в ignore не добавляй сам: секрет сначала отзывают — решает пользователь.
+- Окончания строк — `.gitattributes` (LF; `.bat`/`.cmd`/`.ps1` — CRLF).
+- Версии ruff и gitleaks согласованы в трёх местах: `requirements-dev.txt`, `.pre-commit-config.yaml`
+  и job `lint` в `.github/workflows/tests.yml`. Меняешь одно — меняй все.
+
 ## CI (GitHub Actions, `.github/workflows/tests.yml`)
 
 Запуск: PR в `main`, push в `main`, ручной (`workflow_dispatch`, поле `test_marker`). Новый запуск
 PR отменяет предыдущий запуск того же PR; запуски на `main` не отменяются, а ждут в очереди. Jobs:
 
+- `lint` — ruff check, ruff format --check, gitleaks по всей истории; от тестов не зависит,
+  идёт параллельно с ними;
 - `split-check` — `scripts/check_ci_split.py`: отборы `selenium` и `not selenium` не пусты,
   не пересекаются, в сумме дают весь набор;
 - `api-and-playwright` — `-m "not selenium"`, один раз, Docker без Grid;
@@ -65,8 +92,8 @@ PR отменяет предыдущий запуск того же PR; запу
 - `report` (`!cancelled()`) — склейка `scripts/merge_allure_results.py`, история с опубликованного
   отчёта, генерация, артефакт `allure-report`;
 - `deploy` — только `main` (push или ручной запуск): `actions/deploy-pages`;
-- `notify-report` — Telegram после успешной выкладки; `notify-failure` — Telegram, если что-то упало.
-  Оба — только для `main`; отправка — `scripts/send_telegram.sh` (curl к Bot API).
+- `notify-report` — Telegram после успешной выкладки; `notify-failure` — Telegram, если что-то упало
+  (включая `lint`). Оба — только для `main`; отправка — `scripts/send_telegram.sh` (curl к Bot API).
 
 Отбор передаётся в контейнер через `PYTEST_ADDOPTS`; маркер ручного запуска добавляется как
 `(маркер) and selenium` — скобки обязательны. Пустой отбор (код pytest 5) валит job, кроме ручного

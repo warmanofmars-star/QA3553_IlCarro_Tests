@@ -1,14 +1,17 @@
 import logging
-import pytest
+
 import allure
-from pages.registration_page import RegistrationPage
+import pytest
+
 from data.data_generator import UserGenerator
 from data.known_bugs import known_bug
+from pages.registration_page import RegistrationPage
 from utils.preconditions import require
 
 logger = logging.getLogger(__name__)
 
 pytestmark = pytest.mark.ui
+
 
 @pytest.mark.smoke
 @allure.epic("UI Testing")
@@ -46,14 +49,17 @@ def test_registration_success(driver):
 @allure.feature("Registration Page")
 @allure.story("Negative Registration - Frontend")
 @allure.severity(allure.severity_level.CRITICAL)
-@pytest.mark.parametrize("field_name, invalid_value, expected_error, scenario", [
-    ("name", "", "Name is required", "Пустое имя"),
-    ("last_name", "", "Last name is required", "Пустая фамилия"),
-    ("email", "tonygmail.com", "Wrong email format", "Неверный формат email"),
-    ("email", "", "Email is required", "Пустой email"),
-    ("password", "P123$", "Password must contain minimum 6 symbols", "Слишком короткий пароль"),
-    ("password", "", "Password is required", "Пустой пароль")
-])
+@pytest.mark.parametrize(
+    "field_name, invalid_value, expected_error, scenario",
+    [
+        ("name", "", "Name is required", "Пустое имя"),
+        ("last_name", "", "Last name is required", "Пустая фамилия"),
+        ("email", "tonygmail.com", "Wrong email format", "Неверный формат email"),
+        ("email", "", "Email is required", "Пустой email"),
+        ("password", "P123$", "Password must contain minimum 6 symbols", "Слишком короткий пароль"),
+        ("password", "", "Password is required", "Пустой пароль"),
+    ],
+)
 def test_registration_negative_fields(driver, field_name, invalid_value, expected_error, scenario):
     with allure.step(f"Сценарий: {scenario}"):
         registration_page = RegistrationPage(driver)
@@ -67,7 +73,7 @@ def test_registration_negative_fields(driver, field_name, invalid_value, expecte
         registration_page.remove_focus()
 
         assert registration_page.error_message_text() == expected_error, f"Ожидалась ошибка '{expected_error}'"
-        assert registration_page.submit_button_disabled() == True, "Кнопка Y'alla! не заблокировалась"
+        assert registration_page.submit_button_disabled() is True, "Кнопка Y'alla! не заблокировалась"
 
 
 @pytest.mark.regression
@@ -77,10 +83,13 @@ def test_registration_negative_fields(driver, field_name, invalid_value, expecte
 @allure.story("Negative Registration - Backend")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.tag("REQ-AUTH-04", "REQ-UI-REG-03")
-@pytest.mark.parametrize("password_strategy, scenario", [
-    ("same_password", "Занятый email + Тот же пароль"),
-    ("new_valid_password", "Занятый email + Другой пароль (валидный и для фронта, и для API)"),
-])
+@pytest.mark.parametrize(
+    "password_strategy, scenario",
+    [
+        ("same_password", "Занятый email + Тот же пароль"),
+        ("new_valid_password", "Занятый email + Другой пароль (валидный и для фронта, и для API)"),
+    ],
+)
 def test_registration_existing_user(driver, temp_user, password_strategy, scenario):
     """
     Повторная регистрация занятого email отклоняется (REQ-AUTH-04), окно «Registration failed»
@@ -114,7 +123,9 @@ def test_registration_existing_user(driver, temp_user, password_strategy, scenar
         logger.info(f"Окно: '{title}' / '{actual_error_details}'")
 
         assert title == "Registration failed", f"Бэкенд не отбил регистрацию занятого email! Заголовок окна: '{title}'"
-        assert "User already exists" in actual_error_details,             f"Ожидали текст 'User already exists', а получили '{actual_error_details}'"
+        assert "User already exists" in actual_error_details, (
+            f"Ожидали текст 'User already exists', а получили '{actual_error_details}'"
+        )
 
 
 @pytest.mark.regression
@@ -139,7 +150,10 @@ def test_registration_password_rejected_by_api(driver):
         registration_page.set_policy_checkbox(True)
         registration_page.remove_focus()
         # Предмет бага — текст окна; то, что фронт пропускает пароль, — предусловие сценария
-        require(not registration_page.submit_button_disabled(), "Фронт не пропустил пароль abc123: сценарий DISC-01 не воспроизвести")
+        require(
+            not registration_page.submit_button_disabled(),
+            "Фронт не пропустил пароль abc123: сценарий DISC-01 не воспроизвести",
+        )
         registration_page.submit_registration()
 
     with allure.step("Проверка текста окна ошибки"):
@@ -148,7 +162,8 @@ def test_registration_password_rejected_by_api(driver):
         details = registration_page.confirmation_text_1()
         logger.info(f"Текст окна ошибки: '{details}'")
 
-        assert details.strip() and "[object Object]" not in details,             f"Текст окна ошибки нечитаемый: '{details}'"
+        assert details.strip(), f"Текст окна ошибки нечитаемый: '{details}'"
+        assert "[object Object]" not in details, f"Текст окна ошибки нечитаемый: '{details}'"
 
 
 @pytest.mark.regression
@@ -167,4 +182,4 @@ def test_registration_without_check_box(driver):
     registration_page.remove_focus()
 
     assert registration_page.error_message_text() == "You must accept the terms", "Ошибка чекбокса не появилась"
-    assert registration_page.submit_button_disabled() == True, "Кнопка не заблокировалась без чекбокса"
+    assert registration_page.submit_button_disabled() is True, "Кнопка не заблокировалась без чекбокса"

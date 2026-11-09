@@ -1,14 +1,16 @@
-import allure
 import datetime
+
+import allure
 import pytest
-from api.car_api import IlCarroAPI
-from data.known_bugs import known_bug
-from utils.car_state import my_cars
-from utils.preconditions import require
-from data.data_generator import CarGenerator
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
+
+from api.car_api import IlCarroAPI
+from data.data_generator import CarGenerator
+from data.known_bugs import known_bug
 from schemas.car_schemas import GET_CARS_RESPONSE_SCHEMA, MESSAGE_RESPONSE_SCHEMA
+from utils.car_state import my_cars
+from utils.preconditions import require
 
 pytestmark = pytest.mark.api
 
@@ -30,7 +32,10 @@ def test_api_add_car_success(auth_api, car_cleanup):
         response = auth_api.add_car(car_obj.to_api_payload())
 
     with allure.step("3. Состояние: машина появилась в /v1/cars/my владельца"):
-        assert car_obj.reg_number in my_cars(auth_api),             f"Машина {car_obj.reg_number} не сохранилась: её нет в /v1/cars/my. Ответ создания: {response.status_code} {response.text}"
+        assert car_obj.reg_number in my_cars(auth_api), (
+            f"Машина {car_obj.reg_number} не сохранилась: её нет в /v1/cars/my. Ответ создания: "
+            f"{response.status_code} {response.text}"
+        )
 
     with allure.step("4. Проверка статус-кода и строгого контракта ответа"):
         assert response.status_code == 200, f"Бэкенд вернул ошибку: {response.status_code} - {response.text}"
@@ -101,8 +106,7 @@ def test_api_add_car_unauthorized():
         response = api.add_car(car_obj.to_api_payload())
 
     with allure.step("Проверка: без токена сервер отвечает 401 Unauthorized"):
-        assert response.status_code == 401, \
-            f"Ожидался статус 401, но получен {response.status_code}"
+        assert response.status_code == 401, f"Ожидался статус 401, но получен {response.status_code}"
 
 
 @pytest.mark.smoke
@@ -130,13 +134,16 @@ def test_api_car_booking_flow(auth_api, create_car, second_user):
 
     with allure.step(f"2. Второй пользователь {booker.email} бронирует машину"):
         response_book = second_user.api.book_car(car.reg_number, start_date, end_date)
-        require(response_book.status_code == 200, f"Бронирование не принято: {response_book.status_code} {response_book.text}")
+        require(
+            response_book.status_code == 200,
+            f"Бронирование не принято: {response_book.status_code} {response_book.text}",
+        )
 
     with allure.step("3. Состояние: в bookedPeriods машины владельца есть период бронирующего"):
         cars = my_cars(auth_api)
         require(car.reg_number in cars, f"Машины {car.reg_number} нет в /v1/cars/my владельца")
         booked_periods = cars[car.reg_number].get("bookedPeriods") or []
         expected_period = {"email": booker.email, "startDate": start_date, "endDate": end_date}
-        assert any(
-            {key: period.get(key) for key in expected_period} == expected_period for period in booked_periods
-        ), f"Бронь не сохранилась: ожидали период {expected_period} в bookedPeriods, получили {booked_periods}"
+        assert any({key: period.get(key) for key in expected_period} == expected_period for period in booked_periods), (
+            f"Бронь не сохранилась: ожидали период {expected_period} в bookedPeriods, получили {booked_periods}"
+        )

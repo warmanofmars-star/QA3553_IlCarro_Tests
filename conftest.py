@@ -5,18 +5,19 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-import pytest
 import allure
+import pytest
 from selenium.webdriver.support.events import EventFiringWebDriver
-from config import PROJECT_ROOT, settings
-from drivers.factory import SUPPORTED_BROWSERS, GridUnavailableError, attach_session_video, create_driver, wait_for_grid
-from utils.listener import IlCarroListener
+
 from api.car_api import IlCarroAPI
-from pages.login_page import LoginPage
+from config import PROJECT_ROOT, settings
 from data.data_generator import CarGenerator, UserGenerator
+from drivers.factory import SUPPORTED_BROWSERS, GridUnavailableError, attach_session_video, create_driver, wait_for_grid
 from models.car import Car
 from models.user import User
+from pages.login_page import LoginPage
 from utils.car_cleanup import CarCleanup, journal_summary, reset_journal
+from utils.listener import IlCarroListener
 from utils.preconditions import require
 
 logger = logging.getLogger(__name__)
@@ -196,15 +197,15 @@ def pytest_runtest_makereport(item, call):
     outcome = yield
     report = outcome.get_result()
 
-    if report.when == 'call' and report.failed:
+    if report.when == "call" and report.failed:
         # Учитываем, что фикстура может называться driver или authenticated_driver
-        driver = item.funcargs.get('driver') or item.funcargs.get('authenticated_driver')
+        driver = item.funcargs.get("driver") or item.funcargs.get("authenticated_driver")
         if driver:
             test_name = item.name.replace("/", "_").replace("::", "_")
             allure.attach(
                 driver.get_screenshot_as_png(),
                 name=f"Скриншот ошибки: {test_name}",
-                attachment_type=allure.attachment_type.PNG
+                attachment_type=allure.attachment_type.PNG,
             )
 
 
@@ -357,8 +358,4 @@ def page(context):
 
     # 3. Прикрепляем готовый файл в Allure
     if video_path and os.path.exists(video_path):
-        allure.attach.file(
-            video_path,
-            name="Видео Playwright",
-            attachment_type=allure.attachment_type.MP4
-        )
+        allure.attach.file(video_path, name="Видео Playwright", attachment_type=allure.attachment_type.MP4)

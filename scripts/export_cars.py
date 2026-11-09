@@ -1,8 +1,9 @@
-import requests
 import json
-from datetime import datetime, timedelta
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
+
+import requests
 
 # Скрипт запускают как `python scripts/export_cars.py`: корень проекта добавляем сами, чтобы импортировать config
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -31,11 +32,7 @@ def export_all_available_cars():
 
     print(f"🚗 2. Начинаем сбор машин (Даты: {start_date} - {end_date})...")
     for city in cities:
-        payload = {
-            "city": city,
-            "startDate": start_date,
-            "endDate": end_date
-        }
+        payload = {"city": city, "startDate": start_date, "endDate": end_date}
 
         search_resp = requests.post(f"{BASE_URL}/v1/cars/search", json=payload)
 

@@ -18,8 +18,8 @@
 печатает итог: сколько машин создано и сколько удалено (см. pytest_terminal_summary в conftest.py).
 """
 
-import logging
 import json
+import logging
 from dataclasses import asdict, dataclass, field
 
 import allure
@@ -34,6 +34,7 @@ JOURNAL_FILE = PROJECT_ROOT / "logs" / "car_factory.jsonl"
 @dataclass
 class CleanupReport:
     """Итог очистки машин одного пользователя после одного теста."""
+
     owner: str
     test: str
     registered: int = 0  # номеров зарегистрировано для очистки

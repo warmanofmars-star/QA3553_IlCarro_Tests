@@ -1,8 +1,10 @@
 import allure
 import pytest
+
 from pages.login_page import LoginPage
 
 pytestmark = pytest.mark.ui
+
 
 @pytest.mark.smoke
 @allure.epic("UI Testing")
@@ -18,17 +20,21 @@ def test_login_success(driver, temp_user):
 
     assert login_page.get_global_message_text() == "You are logged in success", "Сообщение об успехе не совпадает!"
     login_page.click_ok_button()
-    assert login_page.is_logout_button_visible() == True, "Кнопка 'Log out' не найдена"
+    assert login_page.is_logout_button_visible() is True, "Кнопка 'Log out' не найдена"
+
 
 @pytest.mark.regression
 @allure.epic("UI Testing")
 @allure.feature("Login Page")
 @allure.story("Negative Login - Frontend Validation")
 @allure.severity(allure.severity_level.NORMAL)
-@pytest.mark.parametrize("email, pass_condition, expected_error, scenario", [
-    ("123", "valid", "Wrong email format", "Невалидный формат email"),
-    ("valid_user@example.com", "empty", "Password is required", "Пустой пароль")
-])
+@pytest.mark.parametrize(
+    "email, pass_condition, expected_error, scenario",
+    [
+        ("123", "valid", "Wrong email format", "Невалидный формат email"),
+        ("valid_user@example.com", "empty", "Password is required", "Пустой пароль"),
+    ],
+)
 def test_login_negative_frontend(driver, email, pass_condition, expected_error, scenario):
     with allure.step(f"Сценарий: {scenario}"):
         login_page = LoginPage(driver)
@@ -41,7 +47,7 @@ def test_login_negative_frontend(driver, email, pass_condition, expected_error, 
         login_page.remove_focus()
 
         assert login_page.get_error_message_text() == expected_error, f"Ожидалась ошибка: {expected_error}"
-        assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована"
+        assert login_page.is_submit_button_disabled() is True, "Кнопка Y'alla! должна быть заблокирована"
 
 
 @pytest.mark.regression
@@ -51,10 +57,13 @@ def test_login_negative_frontend(driver, email, pass_condition, expected_error, 
 @allure.story("Negative Login - Backend Validation")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.tag("REQ-UI-LOGIN-03")
-@pytest.mark.parametrize("email_condition, pass_condition, expected_details, scenario", [
-    ("fake_user", "valid_pass", "Login or Password incorrect", "Несуществующий пользователь"),
-    ("valid_email", "wrong_pass", "Login or Password incorrect", "Неверный пароль")
-])
+@pytest.mark.parametrize(
+    "email_condition, pass_condition, expected_details, scenario",
+    [
+        ("fake_user", "valid_pass", "Login or Password incorrect", "Несуществующий пользователь"),
+        ("valid_email", "wrong_pass", "Login or Password incorrect", "Неверный пароль"),
+    ],
+)
 def test_login_negative_backend(driver, temp_user, email_condition, pass_condition, expected_details, scenario):
     with allure.step(f"Сценарий: {scenario}"):
         login_page = LoginPage(driver)
@@ -70,5 +79,4 @@ def test_login_negative_backend(driver, temp_user, email_condition, pass_conditi
         assert login_page.get_global_message_text() == "Login failed", "Неверный заголовок ошибки бэкенда"
         actual_details = login_page.get_global_message_details_text()
 
-        assert expected_details in actual_details, \
-            f"Ожидали текст '{expected_details}', а получили '{actual_details}'"
+        assert expected_details in actual_details, f"Ожидали текст '{expected_details}', а получили '{actual_details}'"

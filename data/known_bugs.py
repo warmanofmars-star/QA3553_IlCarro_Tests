@@ -75,7 +75,7 @@ KNOWN_BUGS: dict[str, KnownBug] = {
         refs=("DISC-01", "REQ-UI-REG-03"),
         description=(
             "Форма регистрации пропускает пароль, который API отклоняет (правила пароля фронтенда и API разные), "
-            "а окно ошибки показывает \"[object Object]\""
+            'а окно ошибки показывает "[object Object]"'
         ),
     ),
 }
