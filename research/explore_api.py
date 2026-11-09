@@ -128,11 +128,13 @@ def q_api_02_search_and_dates(city):
     for variant in ("Tel Aviv", "tel aviv", "TEL AVIV"):
         resp = search(variant, d(10), d(14))
         data = body_json(resp) or {}
-        LOG.fact(f"поиск города '{variant}', будущие даты: HTTP {resp.status_code}; машин={len(data.get('cars', [])) if isinstance(data, dict) else '-'}")
+        LOG.fact(f"поиск города '{variant}', будущие даты: HTTP {resp.status_code}; "
+            f"машин={len(data.get('cars', [])) if isinstance(data, dict) else '-'}")
     for params in (None, {"page": 0, "size": 1}, {"page": 0, "size": 2}, {"page": 1, "size": 1}, {"page": 0, "size": 1000}):
         resp = search(city, d(10), d(14), params=params)
         data = body_json(resp) or {}
-        LOG.fact(f"поиск {city} с query {params}: HTTP {resp.status_code}; машин={len(data.get('cars', [])) if isinstance(data, dict) else '-'}")
+        LOG.fact(f"поиск {city} с query {params}: HTTP {resp.status_code}; "
+            f"машин={len(data.get('cars', [])) if isinstance(data, dict) else '-'}")
 
 
 def q_api_03_cities():
@@ -156,7 +158,8 @@ def q_api_03_cities():
         resp = create_car(tok, car_payload(city, serial))
         LOG.fact(f"создание машины в городе '{city}' ({label}): {describe(resp)}")
         car = find_my_car(tok, serial)
-        LOG.fact(f"  в /v1/cars/my: city={car.get('city') if car else None}; lat={car.get('lat') if car else None}; lng={car.get('lng') if car else None}")
+        LOG.fact(f"  в /v1/cars/my: city={car.get('city') if car else None}; lat={car.get('lat') if car else None}; "
+            f"lng={car.get('lng') if car else None}")
         LOG.fact(f"  поиск по '{city}' на будущие даты находит машину: {serial in search_serials(city, d(10), d(14))}")
         LOG.fact(f"  '{city}' есть в /v1/cars/cities после создания: {city in api_cities()}")
 
@@ -175,8 +178,10 @@ def q_api_04_extra_fields(city):
              f"bookedPeriods={short(car.get('bookedPeriods')) if car else None}")
     car2 = find_my_car(tok_other, serial)
     LOG.fact(f"в /v1/cars/my второго пользователя (указан как owner): найдена={car2 is not None}")
-    LOG.fact(f"поиск {city} на {d(20)}..{d(22)} (подложный период) находит машину: {serial in search_serials(city, d(20), d(22))}")
-    LOG.fact(f"поиск {city} на {d(40)}..{d(42)} (свободные даты) находит машину: {serial in search_serials(city, d(40), d(42))}")
+    LOG.fact(f"поиск {city} на {d(20)}..{d(22)} (подложный период) находит машину: "
+        f"{serial in search_serials(city, d(20), d(22))}")
+    LOG.fact(f"поиск {city} на {d(40)}..{d(42)} (свободные даты) находит машину: "
+        f"{serial in search_serials(city, d(40), d(42))}")
 
 
 def q_api_05_field_bounds(city):
@@ -200,8 +205,10 @@ def q_api_05_field_bounds(city):
         stored = find_my_car(tok, serial)
         extra = ""
         if stored:
-            extra = (f"; сохранено: seats={stored.get('seats')}, pricePerDay={stored.get('pricePerDay')}, year={stored.get('year')!r}, "
-                     f"fuel={stored.get('fuel')!r}, model={stored.get('model')!r}, city={stored.get('city')!r}, about(длина)={len(stored.get('about') or '')}")
+            extra = (f"; сохранено: seats={stored.get('seats')}, pricePerDay={stored.get('pricePerDay')}, "
+                f"year={stored.get('year')!r}, "
+                     f"fuel={stored.get('fuel')!r}, model={stored.get('model')!r}, city={stored.get('city')!r}, "
+                         f"about(длина)={len(stored.get('about') or '')}")
         LOG.fact(f"{title}: {describe(resp)}; машина в /v1/cars/my={stored is not None}{extra}")
 
 
@@ -326,7 +333,8 @@ def q_api_11_text_plain(city):
     REG.car_owner_token[serial] = tok
     resp = call("POST", "/v1/cars", token=tok, data=_json.dumps(payload), headers={"Content-Type": "text/plain"})
     created = find_my_car(tok, serial) is not None
-    LOG.fact(f"POST /v1/cars с Content-Type text/plain и JSON-текстом: {describe(resp)}; машина появилась у владельца={created}")
+    LOG.fact(f"POST /v1/cars с Content-Type text/plain и JSON-текстом: {describe(resp)}; машина появилась у "
+        f"владельца={created}")
     if created:
         REG.cars_created += 1
     else:
@@ -353,7 +361,8 @@ def q_api_12_booked_periods_scan():
         total_booked += len(with_booked)
         if with_booked:
             LOG.fact(f"поиск {city}: машин={len(cars)}; с непустым bookedPeriods={len(with_booked)}")
-    LOG.fact(f"итого по {len(cities) - failed} городам: машин={total_cars}; с непустым bookedPeriods={total_booked}; городов с ошибкой поиска={failed}")
+    LOG.fact(f"итого по {len(cities) - failed} городам: машин={total_cars}; с непустым "
+        f"bookedPeriods={total_booked}; городов с ошибкой поиска={failed}")
 
 
 # ---------------------------------------------------------------- запуск

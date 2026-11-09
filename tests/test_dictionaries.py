@@ -44,6 +44,10 @@ def test_frontend_backend_cities_mapping():
         if fake_frontend_cities:
             error_msg += f"\n[CRITICAL] Фронтенд отправляет города, которых нет в БД: {sorted(fake_frontend_cities)}"
         if unreachable_backend_cities:
-            error_msg += f"\n[WARNING] В БД есть машины в этих городах, но юзер их не найдет: {sorted(unreachable_backend_cities)}"
+            error_msg += (
+                "\n[WARNING] В БД есть машины в этих городах, но юзер их не найдет: "
+                f"{sorted(unreachable_backend_cities)}"
+            )
 
-        assert not fake_frontend_cities and not unreachable_backend_cities, error_msg
+        assert not fake_frontend_cities, error_msg
+        assert not unreachable_backend_cities, error_msg

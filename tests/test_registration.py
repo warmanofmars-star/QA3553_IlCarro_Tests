@@ -69,7 +69,7 @@ def test_registration_negative_fields(driver, field_name, invalid_value, expecte
         registration_page.remove_focus()
 
         assert registration_page.error_message_text() == expected_error, f"Ожидалась ошибка '{expected_error}'"
-        assert registration_page.submit_button_disabled() == True, "Кнопка Y'alla! не заблокировалась"
+        assert registration_page.submit_button_disabled() is True, "Кнопка Y'alla! не заблокировалась"
 
 
 @pytest.mark.regression
@@ -150,7 +150,8 @@ def test_registration_password_rejected_by_api(driver):
         details = registration_page.confirmation_text_1()
         logger.info(f"Текст окна ошибки: '{details}'")
 
-        assert details.strip() and "[object Object]" not in details,             f"Текст окна ошибки нечитаемый: '{details}'"
+        assert details.strip(), f"Текст окна ошибки нечитаемый: '{details}'"
+        assert "[object Object]" not in details, f"Текст окна ошибки нечитаемый: '{details}'"
 
 
 @pytest.mark.regression
@@ -169,4 +170,4 @@ def test_registration_without_check_box(driver):
     registration_page.remove_focus()
 
     assert registration_page.error_message_text() == "You must accept the terms", "Ошибка чекбокса не появилась"
-    assert registration_page.submit_button_disabled() == True, "Кнопка не заблокировалась без чекбокса"
+    assert registration_page.submit_button_disabled() is True, "Кнопка не заблокировалась без чекбокса"

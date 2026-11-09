@@ -30,7 +30,10 @@ class SearchPage(BasePage):
     # --- ДЕЙСТВИЯ ---:
     @staticmethod
     def get_day_locator(day):
-        xpath = f"//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and not(contains(@class, 'rdrDayDisabled')) and .//*[text()='{day}']]"
+        xpath = (
+            "//button[contains(@class, 'rdrDay') and not(contains(@class, 'rdrDayPassive')) and "
+            f"not(contains(@class, 'rdrDayDisabled')) and .//*[text()='{day}']]"
+        )
         return By.XPATH, xpath
 
     def open(self):

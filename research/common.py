@@ -6,6 +6,7 @@
 на стабильные метки (<user1>, <car1>), чтобы логи двух прогонов можно было сравнить через diff.
 """
 import ast
+import contextlib
 import json
 import os
 import re
@@ -248,10 +249,9 @@ def cleanup_cars(log: FactLog):
             log.fact(f"чистка: не удалось удалить {REG.cars.get(serial, serial)}: {type(exc).__name__}")
     remaining = 0
     for token in tokens:
-        try:
+        # Подсчёт остатка — только отчёт: сбой одного запроса не должен обрывать итог
+        with contextlib.suppress(Exception):
             remaining += sum(1 for c in my_cars(token) if c.get("serialNumber", "").startswith(("RS-", "RU-")))
-        except Exception:
-            pass
     log.fact(f"после чистки у временных пользователей осталось машин с префиксом RS-/RU-: {remaining}")
 
 

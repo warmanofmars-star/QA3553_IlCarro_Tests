@@ -32,7 +32,10 @@ def test_api_add_car_success(auth_api, car_cleanup):
         response = auth_api.add_car(car_obj.to_api_payload())
 
     with allure.step("3. Состояние: машина появилась в /v1/cars/my владельца"):
-        assert car_obj.reg_number in my_cars(auth_api),             f"Машина {car_obj.reg_number} не сохранилась: её нет в /v1/cars/my. Ответ создания: {response.status_code} {response.text}"
+        assert car_obj.reg_number in my_cars(auth_api),             (
+            f"Машина {car_obj.reg_number} не сохранилась: её нет в /v1/cars/my. Ответ создания: "
+            f"{response.status_code} {response.text}"
+        )
 
     with allure.step("4. Проверка статус-кода и строгого контракта ответа"):
         assert response.status_code == 200, f"Бэкенд вернул ошибку: {response.status_code} - {response.text}"

@@ -66,7 +66,10 @@ def test_api_security_bola_delete(auth_api, create_car, second_user):
         response = second_user.api.delete_car(car.reg_number)
 
     with allure.step("Проверка: машина осталась в /v1/cars/my владельца"):
-        assert car.reg_number in my_cars(auth_api),             f"КРИТИЧЕСКАЯ УЯЗВИМОСТЬ BOLA! Второй пользователь удалил чужую машину. Ответ: {response.status_code} {response.text}"
+        assert car.reg_number in my_cars(auth_api),             (
+            "КРИТИЧЕСКАЯ УЯЗВИМОСТЬ BOLA! Второй пользователь удалил чужую машину. Ответ: "
+            f"{response.status_code} {response.text}"
+        )
 
 
 @pytest.mark.regression

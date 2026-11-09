@@ -19,7 +19,7 @@ def test_login_success(driver, temp_user):
 
     assert login_page.get_global_message_text() == "You are logged in success", "Сообщение об успехе не совпадает!"
     login_page.click_ok_button()
-    assert login_page.is_logout_button_visible() == True, "Кнопка 'Log out' не найдена"
+    assert login_page.is_logout_button_visible() is True, "Кнопка 'Log out' не найдена"
 
 @pytest.mark.regression
 @allure.epic("UI Testing")
@@ -42,7 +42,7 @@ def test_login_negative_frontend(driver, email, pass_condition, expected_error, 
         login_page.remove_focus()
 
         assert login_page.get_error_message_text() == expected_error, f"Ожидалась ошибка: {expected_error}"
-        assert login_page.is_submit_button_disabled() == True, "Кнопка Y'alla! должна быть заблокирована"
+        assert login_page.is_submit_button_disabled() is True, "Кнопка Y'alla! должна быть заблокирована"
 
 
 @pytest.mark.regression
