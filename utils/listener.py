@@ -1,6 +1,8 @@
 import logging
+
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from selenium.webdriver.support.abstract_event_listener import AbstractEventListener
-from selenium.common.exceptions import WebDriverException, NoSuchElementException
+
 
 class IlCarroListener(AbstractEventListener):
     def __init__(self):

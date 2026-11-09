@@ -5,18 +5,19 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-import pytest
 import allure
+import pytest
 from selenium.webdriver.support.events import EventFiringWebDriver
-from config import PROJECT_ROOT, settings
-from drivers.factory import SUPPORTED_BROWSERS, GridUnavailableError, attach_session_video, create_driver, wait_for_grid
-from utils.listener import IlCarroListener
+
 from api.car_api import IlCarroAPI
-from pages.login_page import LoginPage
+from config import PROJECT_ROOT, settings
 from data.data_generator import CarGenerator, UserGenerator
+from drivers.factory import SUPPORTED_BROWSERS, GridUnavailableError, attach_session_video, create_driver, wait_for_grid
 from models.car import Car
 from models.user import User
+from pages.login_page import LoginPage
 from utils.car_cleanup import CarCleanup, journal_summary, reset_journal
+from utils.listener import IlCarroListener
 from utils.preconditions import require
 
 logger = logging.getLogger(__name__)

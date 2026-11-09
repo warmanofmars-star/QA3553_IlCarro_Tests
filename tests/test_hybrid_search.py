@@ -1,8 +1,9 @@
 import allure
 import pytest
+
 from data.data_generator import SearchDataGenerator
-from pages.search_page import SearchPage
 from pages.results_page import ResultsPage
+from pages.search_page import SearchPage
 from utils.price_format import UI_PRICE_PATTERN, ui_price
 from utils.search_helpers import RESULTS_PAGE_SIZE, require_city_fits_one_page
 

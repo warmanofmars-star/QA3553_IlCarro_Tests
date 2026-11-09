@@ -1,14 +1,16 @@
-import allure
 import datetime
+
+import allure
 import pytest
-from api.car_api import IlCarroAPI
-from data.known_bugs import known_bug
-from utils.car_state import my_cars
-from utils.preconditions import require
-from data.data_generator import CarGenerator
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
+
+from api.car_api import IlCarroAPI
+from data.data_generator import CarGenerator
+from data.known_bugs import known_bug
 from schemas.car_schemas import GET_CARS_RESPONSE_SCHEMA, MESSAGE_RESPONSE_SCHEMA
+from utils.car_state import my_cars
+from utils.preconditions import require
 
 pytestmark = pytest.mark.api
 

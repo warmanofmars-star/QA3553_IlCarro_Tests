@@ -1,6 +1,8 @@
 import logging
-import requests
+
 import allure
+import requests
+
 from config import settings
 
 logger = logging.getLogger(__name__)

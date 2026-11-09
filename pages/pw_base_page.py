@@ -3,6 +3,7 @@ from playwright.sync_api import Page
 
 from config import settings
 
+
 class PwBasePage:
     def __init__(self, page: Page):
         self.page = page

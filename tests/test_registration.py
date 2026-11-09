@@ -1,9 +1,11 @@
 import logging
-import pytest
+
 import allure
-from pages.registration_page import RegistrationPage
+import pytest
+
 from data.data_generator import UserGenerator
 from data.known_bugs import known_bug
+from pages.registration_page import RegistrationPage
 from utils.preconditions import require
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,6 @@
-import pytest
 import allure
+import pytest
+
 from data.data_generator import CarGenerator, SearchDataGenerator
 from data.known_bugs import known_bug
 from data.observations import observation

@@ -18,8 +18,8 @@
 печатает итог: сколько машин создано и сколько удалено (см. pytest_terminal_summary в conftest.py).
 """
 
-import logging
 import json
+import logging
 from dataclasses import asdict, dataclass, field
 
 import allure

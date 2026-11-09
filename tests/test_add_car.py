@@ -1,8 +1,10 @@
 import logging
+
 import allure
 import pytest
-from pages.add_car_page import AddCarPage
+
 from data.data_generator import CarGenerator
+from pages.add_car_page import AddCarPage
 
 logger = logging.getLogger(__name__)
 

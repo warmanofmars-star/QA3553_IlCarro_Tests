@@ -1,8 +1,10 @@
+from datetime import date, datetime
+
 import allure
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
-from selenium.webdriver.support.wait import WebDriverWait
-from datetime import date, datetime
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+
 from pages.base_page import BasePage
 
 

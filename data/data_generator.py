@@ -1,13 +1,14 @@
 import logging
 import random
-import uuid
 import string
+import uuid
 from datetime import datetime, timedelta
+
 from faker import Faker
 
-from models.user import User
 from api.car_api import IlCarroAPI
 from models.car import Car
+from models.user import User
 
 logger = logging.getLogger(__name__)
 

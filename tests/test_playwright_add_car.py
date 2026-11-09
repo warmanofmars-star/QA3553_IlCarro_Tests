@@ -1,10 +1,12 @@
 import logging
+
 import allure
 import pytest
 from playwright.sync_api import Page
-from pages.pw_login_page import PwLoginPage
-from pages.pw_add_car_page import PwAddCarPage
+
 from data.data_generator import CarGenerator
+from pages.pw_add_car_page import PwAddCarPage
+from pages.pw_login_page import PwLoginPage
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,6 @@
-import pytest
 import allure
+import pytest
+
 from api.car_api import IlCarroAPI
 from data.data_generator import CarGenerator, UserGenerator
 from data.known_bugs import known_bug

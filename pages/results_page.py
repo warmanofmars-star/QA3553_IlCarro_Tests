@@ -2,10 +2,11 @@ import logging
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 import allure
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
+
 from pages.base_page import BasePage
 
 logger = logging.getLogger(__name__)

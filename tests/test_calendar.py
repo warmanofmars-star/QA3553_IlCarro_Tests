@@ -1,7 +1,9 @@
-import allure
 from datetime import date
-from pages.search_page import SearchPage
+
+import allure
 import pytest
+
+from pages.search_page import SearchPage
 from utils.preconditions import require
 
 pytestmark = [pytest.mark.ui, pytest.mark.regression]

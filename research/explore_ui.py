@@ -23,9 +23,27 @@ from playwright.sync_api import sync_playwright  # noqa: E402
 
 import common  # noqa: E402
 from common import (  # noqa: E402
-    API_BASE_URL, EVIDENCE_DIR, REG, UI_BASE_URL, VALID_PASSWORD, FactLog, body_json, call, car_payload,
-    cleanup_cars, create_car, d, find_my_car, load_ui_cities, mask, new_email, new_serial, print_stats,
-    register_user, run_name, short,
+    API_BASE_URL,
+    EVIDENCE_DIR,
+    REG,
+    UI_BASE_URL,
+    VALID_PASSWORD,
+    FactLog,
+    body_json,
+    call,
+    car_payload,
+    cleanup_cars,
+    create_car,
+    d,
+    find_my_car,
+    load_ui_cities,
+    mask,
+    new_email,
+    new_serial,
+    print_stats,
+    register_user,
+    run_name,
+    short,
 )
 
 LOG = FactLog(run_name("explore_ui"))

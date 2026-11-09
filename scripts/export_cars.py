@@ -1,8 +1,9 @@
-import requests
 import json
-from datetime import datetime, timedelta
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
+
+import requests
 
 # Скрипт запускают как `python scripts/export_cars.py`: корень проекта добавляем сами, чтобы импортировать config
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

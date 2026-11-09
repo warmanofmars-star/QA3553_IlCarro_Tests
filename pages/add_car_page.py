@@ -1,11 +1,13 @@
 import os
+
 import allure
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.select import Select
-from pages.base_page import BasePage
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.select import Select
+from selenium.webdriver.support.wait import WebDriverWait
+
+from pages.base_page import BasePage
 
 
 class AddCarPage(BasePage):
