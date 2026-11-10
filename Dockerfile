@@ -5,11 +5,10 @@
 # после выхода.
 FROM python:3.14.9-slim-trixie
 
-# Системные пакеты, нужные до установки Python-зависимостей. ffmpeg не ставим: видео Selenium пишут
-# узлы Grid (ffmpeg в их образах), а Playwright пишет видео своим ffmpeg, который скачивает
-# playwright install вместе с браузером
-RUN apt-get update && apt-get install -y wget gnupg
-
+# Системные пакеты отдельно не ставим: библиотеки браузера ставит playwright install-deps (сам
+# вызывает apt), скачивает браузеры playwright install без wget и gnupg. ffmpeg тоже не нужен:
+# видео Selenium пишут узлы Grid (ffmpeg в их образах), а Playwright пишет видео своим ffmpeg,
+# который скачивает playwright install вместе с браузером
 WORKDIR /app
 
 # Сначала только зависимости: эти слои пересобираются лишь при изменении requirements.txt,
