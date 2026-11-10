@@ -9,6 +9,7 @@
 
 import os
 import re
+import sys
 
 OUTPUT_FILE = "full_project_for_ai_ilcaro.txt"
 
@@ -83,6 +84,11 @@ def should_include(filename: str) -> bool:
 
 
 def main() -> None:
+    # Консоль Windows (и Git Bash при выводе в канал) пишет в cp1251, где нет эмодзи: print упал бы
+    # с UnicodeEncodeError уже после записи выгрузки. Символ, которого нет в кодировке консоли,
+    # заменяется на «?», а сама выгрузка всегда в UTF-8
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="replace")
     included = 0
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as outfile:
