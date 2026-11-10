@@ -76,6 +76,10 @@ ruff format .           # форматирование;  ruff format --check .  
   признанные исторические находки — `.gitleaksignore` (отпечаток + комментарий: что это, когда
   отозвано). Новую находку в ignore не добавляй сам: секрет сначала отзывают — решает пользователь.
 - Окончания строк — `.gitattributes` (LF; `.bat`/`.cmd`/`.ps1` — CRLF).
+- Секреты в отчёте Allure — `scripts/scan_report_secrets.py`: JWT и незамаскированные параметры
+  с `password`/`token`/`secret` в имени; печатает файл, поле и количество, без значений; код 1 —
+  найдено, 2 — нечего проверять. Запускается в CI и Jenkins до публикации отчёта; локально —
+  `python scripts/scan_report_secrets.py allure-results`. Находку не обходи: убери секрет из кода.
 - Версии ruff и gitleaks согласованы в трёх местах: `requirements-dev.txt`, `.pre-commit-config.yaml`
   и job `lint` в `.github/workflows/tests.yml`. Меняешь одно — меняй все.
 
@@ -90,8 +94,9 @@ PR отменяет предыдущий запуск того же PR; запу
   не пересекаются, в сумме дают весь набор;
 - `api-and-playwright` — `-m "not selenium"`, один раз, Docker без Grid;
 - `selenium` — `-m "selenium"`, матрица chrome / firefox / edge через Grid;
-- `report` (`!cancelled()`) — склейка `scripts/merge_allure_results.py`, история с опубликованного
-  отчёта, генерация, артефакт `allure-report`;
+- `report` (`!cancelled()`) — склейка `scripts/merge_allure_results.py`, проверка на секреты
+  `scripts/scan_report_secrets.py` (находка — job красный, отчёт не генерируется и не публикуется),
+  история с опубликованного отчёта, генерация, артефакт `allure-report`;
 - `deploy` — только `main` (push или ручной запуск): `actions/deploy-pages`;
 - `notify-report` — Telegram после успешной выкладки; `notify-failure` — Telegram, если что-то упало
   (включая `lint`). Оба — только для `main`; отправка — `scripts/send_telegram.sh` (curl к Bot API).
@@ -124,7 +129,9 @@ Jenkins общий с Phonebook (контейнер `jenkins-master`, localhost:
 сборками). Уборка в `post { always }` — `docker compose down -v --remove-orphans` только этого проекта
 и удаление безымянных старых версий образа по метке `ilcarro.jenkins.image=$QA_IMAGE`; `prune`
 и глобальные удаления в Jenkinsfile запрещены. Статус: упавшие тесты — `UNSTABLE`, сбой запуска — `FAILURE`.
-Отчёт — плагин Allure; Environment дополняет Jenkinsfile (`JenkinsBrowser`, `JenkinsMarker`,
+Отчёт — плагин Allure; перед публикацией — `scripts/scan_report_secrets.py` в образе `QA_IMAGE`
+(Python в образ Jenkins не ставится — `Dockerfile.jenkins` в Phonebook; результаты — через `docker cp`), находка — `FAILURE` без отчёта.
+Environment дополняет Jenkinsfile (`JenkinsBrowser`, `JenkinsMarker`,
 `JenkinsBuild`). Защита от «молча проигнорированного» параметра: Jenkinsfile сверяет `SeleniumBrowser`
 и `MarkerFilter` из `environment.properties` контейнера с параметрами; расхождение — `FAILURE`.
 Ловушка: Jenkins экспортирует параметры в окружение, и `TEST_MARKER` через `docker-compose.yml` перебил бы
@@ -145,6 +152,12 @@ Jenkins общий с Phonebook (контейнер `jenkins-master`, localhost:
   сменился, запрос ушёл). `time.sleep` и `page.wait_for_timeout` запрещены; в синхронном Playwright
   `time.sleep` недопустим вообще. Исключение — пауза, у которой нет наблюдаемого состояния: только
   с комментарием «почему» рядом (пример — 1,5 с перед закрытием браузера Grid в `conftest.py`).
+- **Пароли и токены не попадают в отчёт:** не передавай их аргументами функциям с `@allure.step`
+  (декоратор пишет все аргументы в параметры шага) — шаг с секретом делай через
+  `with allure.step(...)` внутри функции, как `IlCarroAPI.login`/`register`. Поле с секретом
+  в dataclass — `field(repr=False)` (repr аргументов теста попадает в трассу). Параметры
+  параметризации с `password`/`token`/`secret` в имени маскирует автофикстура `_mask_secret_params`
+  в `conftest.py` — имя параметра с секретом должно содержать одно из этих слов.
 - **Пользователь теста — `TempUser`** (dataclass из `conftest.py`, поля `user` и `api`); у
   `second_user` есть ещё `cleanup`. Обращение — атрибутами: `temp_user.user.email`, `second_user.api`,
   а не `temp_user["user"]`.
