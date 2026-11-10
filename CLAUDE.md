@@ -157,7 +157,11 @@ Environment дополняет Jenkinsfile (`JenkinsBrowser`, `JenkinsMarker`,
   `with allure.step(...)` внутри функции, как `IlCarroAPI.login`/`register`. Поле с секретом
   в dataclass — `field(repr=False)` (repr аргументов теста попадает в трассу). Параметры
   параметризации с `password`/`token`/`secret` в имени маскирует автофикстура `_mask_secret_params`
-  в `conftest.py` — имя параметра с секретом должно содержать одно из этих слов.
+  в `conftest.py` — имя параметра с секретом должно содержать одно из этих слов; метке сценария
+  такое имя не давай (`registration_case`, `auth_case`, а не `password_strategy`), иначе она
+  скроется в отчёте. Заведомо неверные пароли негативных тестов (`invalid_value` в
+  `test_registration_negative_fields` и подобные) не маскируются: это отклонённые данные,
+  а не учётные данные аккаунта, и в отчёте они нужны, чтобы понять сценарий.
 - **Пользователь теста — `TempUser`** (dataclass из `conftest.py`, поля `user` и `api`); у
   `second_user` есть ещё `cleanup`. Обращение — атрибутами: `temp_user.user.email`, `second_user.api`,
   а не `temp_user["user"]`.
