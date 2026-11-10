@@ -263,9 +263,6 @@ Prepare ─► API and Playwright ─► Selenium (Grid) ─► post: уборк
 ---
 
 ## 🐙 Полезные команды Git и утилит проекта
-**Сгенерировать актуальный `README.md` из скрипта:**
-`python make_readme.py`
-
 **Собрать весь код проекта в единый текстовый файл для ревью:**
 `python merge_code.py`
 
