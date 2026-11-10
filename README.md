@@ -1,121 +1,256 @@
-# 🚗 IlCarro Hybrid Test Automation Framework
+# IlCarro — Test Automation Framework
 
-[![UI Tests in Docker](https://github.com/warmanofmars-star/QA3553_IlCarro_Tests/actions/workflows/tests.yml/badge.svg)](https://github.com/warmanofmars-star/QA3553_IlCarro_Tests/actions)
-📊 **Live Allure Report:** [View Dashboard](https://warmanofmars-star.github.io/QA3553_IlCarro_Tests/)
+[![IlCarro Tests](https://github.com/warmanofmars-star/QA3553_IlCarro_Tests/actions/workflows/tests.yml/badge.svg)](https://github.com/warmanofmars-star/QA3553_IlCarro_Tests/actions/workflows/tests.yml)
+**Live Allure report:** [warmanofmars-star.github.io/QA3553_IlCarro_Tests](https://warmanofmars-star.github.io/QA3553_IlCarro_Tests/)
 
-Robust, production-ready hybrid test automation framework for the "IlCarro" (Car Rental) web application, featuring a fully containerized **Infrastructure as Code (IaC)** approach, cross-browser CI/CD matrix execution, and enterprise-grade API security & contract testing.
+UI and API test automation for **IlCarro**, a training car-rental web application:
+**52 tests** (19 API, 33 UI) in Python + pytest, Selenium and Playwright. They run locally,
+in Docker with Selenium Grid 4 (Chrome, Firefox, Edge), in GitHub Actions and in a self-hosted Jenkins.
 
-This project demonstrates a senior-level approach to QA automation, combining classic UI testing, deep API validation, remote browser execution via Selenium Grid 4, advanced network mocking, and modern container orchestration.
+- UI: <https://icarro-v1.netlify.app>
+- API: <https://ilcarro-backend.herokuapp.com> (Swagger: `/v3/api-docs`)
 
-## 🛠️ Tech Stack
-* **Language:** Python 3.12+
-* **UI Frameworks:** Selenium WebDriver (Chrome, Firefox, Edge), Playwright (Sync API)
-* **API & Contract Testing:** Requests, `jsonschema`
-* **Containerization & Orchestration:** Docker, Docker Compose, Selenium Grid 4 (hub + browser nodes with built-in video recording)
-* **Test Runner:** Pytest (with `pytest-xdist` for parallel execution)
-* **Data Modeling & Generation:** Python `dataclasses`, Faker & UUID
-* **Reporting:** Allure Report (with embedded test session videos)
-* **CI/CD:** GitHub Actions (Fully containerized pipeline execution with Build Matrix)
-* **Notifications:** Telegram Bot API
+This is a learning project from a QA automation course. It was later reworked step by step:
+first the requirements were reconstructed, then the tests were made to check them honestly.
 
-## 🚀 Key Architectural Features
-
-* **Cross-Browser CI/CD Matrix:** Configured GitHub Actions matrix strategy to dynamically spawn parallel test suites in Google Chrome and Mozilla Firefox inside isolated Docker containers.
-* **Dockerized Infrastructure (IaC):** The entire test environment (framework, Selenium Grid hub, Chrome/Firefox/Edge nodes, video recording) is orchestrated via Docker Compose, guaranteeing absolute consistency across local machines and CI/CD.
-* **Allure Report Deduplication:** Custom Python data-processing injection inside the CI/CD pipeline ensures accurate merging of parallel matrix test execution results without data collisions.
-* **Strict Contract Validation (JSON Schema):** All positive API responses are validated against strict JSON Schemas enforcing `additionalProperties: False` to catch undocumented fields, type mismatches, and silent data leaks.
-* **OOP Payload Serialization (Dataclasses):** Test data models (`Car`, `User`) encapsulate their own API mapping logic via `.to_api_payload()`, eliminating hardcoded dictionaries across test suites and enforcing DRY principles.
-* **Data-Driven Negative Mutations (DDT):** Utilizes inline `lambda` mutations with `@pytest.mark.parametrize` to dynamically corrupt valid payloads on the fly (missing required fields, null injections, wrong types, boundary violations, and mass assignment checks).
-* **API Security & Vulnerability Auditing:** Dedicated security suite covering Broken Object Level Authorization (BOLA / IDOR), authentication token tampering, `DELETE` idempotency, HTTP method restrictions (`405`), media type validation (`415`), and pagination DoS protection.
-* **Global Data Leak Scanner:** Custom `assert_secure_error()` validator automatically scans all negative API responses for sensitive backend exposures (`stack trace`, `sqlexception`, `password_hash`, internal paths).
-* **Defect Documentation via XFAIL:** Known backend contract violations and security flaws are strictly documented in code using `@pytest.mark.xfail(reason=...)` without polluting CI/CD stability.
-* **Strict Data Isolation (Sandbox Users):** Employs a robust `temp_user` fixture that dynamically registers a unique user via API before each test, eliminating race conditions during parallel execution (`pytest-xdist`).
-* **Universal Video Attachment:** Every Selenium test is recorded by the Selenium Grid node's built-in recorder, while Playwright tests utilize the native recording engine. All resulting `.mp4` files are automatically attached to the Allure report upon teardown.
-* **Hybrid Testing Approach:** Tests use API calls to set up preconditions and teardown data, drastically reducing UI test execution time.
-* **Network Interception & Mocking:** Utilizes Playwright's `page.route()` to intercept backend requests and inject mock responses, isolating frontend UI rendering logic.
-* **Security & Log Masking:** Sensitive data (passwords, tokens) are strictly masked (`********`) in all console outputs, test logs, and Allure reports.
-* **Context-Aware Custom Logging:** Features a proprietary logging utility injected via a global Pytest fixture (`sys_logger`) that dynamically adapts to parallel `xdist` workers.
-* **API Connection Pooling:** Utilizes `requests.Session()` for backend interactions, reusing TCP connections and automatically managing Bearer tokens.
-
-## ⚙️ Setup & Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/warmanofmars-star/QA3553_IlCarro_Tests.git
-```
-
-2. Create and activate a virtual environment.
-
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-playwright install chromium
-```
-
-4. Create a `.env` file in the root directory (all settings are listed in `.env.example`):
-```env
-HEADLESS_MODE=false
-USE_GRID=false
-ENABLE_CONSOLE_LOGS=true
-```
-
-## 🏃‍♂️ How to Run Tests
-
-**Run all tests in the isolated Docker cluster (Recommended):**
-```bash
-COMPOSE_PROFILES=chrome docker compose up --build --exit-code-from qa-framework
-```
-
-**Run locally via Pytest (parallel execution & specific browser):**
-```bash
-pytest tests/ -n 3 --browser_name=firefox --video=on --clean-alluredir --alluredir=allure-results
-```
-
-**Run specific test layers using Pytest markers (`smoke`, `regression`, `api`, `ui`, `security`, `hybrid`):**
-```bash
-pytest -m "api and security" -v
-pytest -m "smoke" -n 3
-```
-
-**Run modern Playwright tests (headed mode for debugging):**
-```bash
-pytest tests/test_playwright_*.py -s --headed
-```
-
-**Generate and view Allure Report locally:**
-```bash
-allure serve allure-results
-```
-
-## 📊 CI/CD Pipeline
-The project features an advanced **GitHub Actions** pipeline:
-* Automatically triggers on manual dispatch (`workflow_dispatch`).
-* Configured with a **Build Matrix** to dynamically spawn parallel test suites in Google Chrome and Mozilla Firefox.
-* Executes a custom Python script to deduplicate and merge Allure results from multiple browser streams.
-* Spins up a clean Linux runner, builds the Docker Compose stack, and executes all tests in parallel.
-* Securely injects credentials via **GitHub Secrets**.
-* Generates and deploys the unified Allure report to **GitHub Pages**.
-* Sends automated execution status notifications with a direct link to Telegram.
-
-## 🏗 Project Structure
-```text
-QA3553_IlCarro_Tests/
-├── .github/workflows/    # CI/CD pipeline configuration with Matrix (tests.yml)
-├── api/                  # API Client (Requests) for backend interactions
-├── data/                 # Test data generators (Faker, UUID)
-├── models/               # Data classes with API payload serialization (Car, User)
-├── pages/                # Page Object Model classes (Selenium & Playwright)
-├── schemas/              # Strict JSON Schemas for API contract validation
-├── drivers/              # WebDriver factory: local browsers, Selenium Grid, session video
-├── tests/                # UI, API, Hybrid, Mutation, and Security test suites
-├── utils/                # Custom logger, WebDriver listener, API security validators
-├── logs/                 # Auto-rotating local log files
-├── conftest.py           # Pytest fixtures, Grid readiness check, video attachment hooks
-├── pytest.ini            # Custom Pytest markers registration
-├── Dockerfile            # Container definition for the test framework
-├── docker-compose.yml    # Infrastructure orchestration (Selenium Grid + Framework + Volumes)
-└── requirements.txt      # Project dependencies
-```
+Project documentation other than this README is written in Russian; such links are marked *(in Russian)*.
 
 ---
-*Author: Maksim Vinogradov*
+
+## What is tested
+
+| Area | Examples | Tests |
+|---|---|---:|
+| **API** | registration and login, adding and deleting cars, booking, dictionaries (cities) | 19 (`-m api`) |
+| **API security** | missing / invalid token, BOLA (deleting another user's car), mass assignment of `owner` and `bookedPeriods`, unsupported method and content type | 15 (`-m security`, some UI form checks included) |
+| **UI (Selenium)** | registration, login, adding a car, search, the date picker | 27 (`-m selenium`) |
+| **UI (Playwright)** | login, adding a car, search with a mocked backend response (`page.route`) | 6 (`-m playwright`) |
+| **Hybrid** | data prepared via API (a user, a car), the scenario runs in the UI | 3 (`-m hybrid`) |
+
+Counts come from `pytest --collect-only -q -m <marker>`; areas overlap, so the column does not add up to 52.
+The `selenium` and `playwright` markers are set automatically by a hook in [`conftest.py`](conftest.py)
+from the fixtures a test uses (`driver` / `authenticated_driver` and `page`), not by hand.
+
+## What makes this project interesting
+
+- **Requirements reconstructed without an SRS.** IlCarro has no specification. Expected results are
+  taken from sources ranked by strength: the Swagger contract, HTTP RFC 9110 and OWASP, the frontend
+  code, and — weakest — observed behaviour. The result is
+  [`docs/requirements/requirements.md`](docs/requirements/requirements.md) *(in Russian)*: every item has an ID
+  (`REQ-…` requirement, `DISC-…` discrepancy between sources, `OBS-…` observation), a source and a dated
+  "actual behaviour" column. The facts behind it are in
+  [`research-log.md`](docs/requirements/research-log.md) *(in Russian)*, produced by the scripts in
+  [`research/`](research/README.md) *(in Russian)*. Tests reference these IDs with `@allure.tag`.
+- **Known bugs and observations live in registries.** Expected failures are declared only through
+  [`data/known_bugs.py`](data/known_bugs.py) (`@known_bug("KEY")`, references to `REQ-…` / `DISC-…`) and
+  [`data/observations.py`](data/observations.py) (`@observation("KEY")`, reference to `OBS-…`).
+  References are checked against `requirements.md` when the module is imported: a typo or an ID that
+  does not exist breaks test collection. Plain `pytest.mark.xfail` and `pytest.skip` are not used in tests.
+- **Tests check the state of the data, not only the response.** For example, booking answers
+  `200 "Car booked successfully!"`, and the test then reads the car back and finds that nothing was saved.
+  Helpers: [`utils/car_state.py`](utils/car_state.py).
+- **Preconditions are not assertions.** Setup steps use `require()` from
+  [`utils/preconditions.py`](utils/preconditions.py), so a broken environment fails as an error instead of
+  hiding behind a known bug.
+- **Clean test data on a shared backend.** Every test registers its own temporary user; cars created
+  by a test are deleted after it ([`utils/car_cleanup.py`](utils/car_cleanup.py), journal in
+  `logs/car_factory.jsonl`).
+- **CI with a test split and a browser matrix**, plus a Jenkins pipeline, and code-quality checks
+  (ruff, gitleaks, pre-commit) — see below.
+
+## Main defects found
+
+The application is not maintained, so defects stay. A selection — full lists are in the registries and in
+`requirements.md`:
+
+| What happens | IDs | Covered by |
+|---|---|---|
+| Booking answers 200 "Car booked successfully!" but saves nothing: the car's `bookedPeriods` stays empty. Booking a non-existent car also "succeeds". | REQ-BOOK-01, REQ-BOOK-02, DISC-06 | test (`BOOKING_NOT_PERSISTED`) for REQ-BOOK-01; research log Q-API-01 |
+| The frontend offers 54 cities, the API knows 37, only 22 match. Adding a car in a non-matching city fails with "Failed to submit car"; search there is silently empty. | DISC-02 | test (`CITIES_MISMATCH`); research log Q-UI-03, Q-UI-12 |
+| The registration form accepts a password that the API rejects (different password rules), and the error dialog shows `[object Object]`. | DISC-01, REQ-UI-REG-03 | test (`PASSWORD_RULES_MISMATCH`) |
+| The car page (`/cars/{serial}`) never loads: the frontend calls endpoints that exist neither in Swagger nor on the backend. | REQ-UI-CARPAGE-01, DISC-05 | research log Q-UI-01 only (no test yet) |
+| Status codes contradict the contract and RFC 9110: no token → 403 instead of 401; unknown car on delete → 400 instead of 404; wrong type in a field and `text/plain` body → 500. | REQ-SEC-01, REQ-CAR-10, REQ-CAR-03, REQ-SEC-04 | tests (`NO_AUTH_403`, `NOT_FOUND_400`, `WRONG_TYPE_500`, `WRONG_CONTENT_TYPE_500`) |
+
+## Current results
+
+```bash
+pytest --collect-only -q                                                          # 52 tests collected
+USE_GRID=false ENABLE_CONSOLE_LOGS=false pytest tests/ -n 2 --browser_name=chrome # 41 passed, 11 xfailed
+```
+
+**xfail in this project means "a documented defect is still there"**, not "a flaky or unfinished test".
+Of the 11: 10 are known bugs (8 registry entries, some cover several tests or parameters) and 1 is an
+observation (`NONSENSE_CAR_VALUES`, OBS-03: the API saves a car with a negative price).
+All xfails are strict and expect only `AssertionError`:
+
+- if a "known bug" test suddenly passes, the run fails with `XPASS` — the behaviour changed and the
+  registry entry has to be reviewed;
+- a timeout, a network error or a failed precondition stays a normal failure and is not counted as
+  the known bug.
+
+Results depend on an external backend (see [Known limitations](#known-limitations)) and are a snapshot
+at the time of writing; the published Allure report shows the latest run on `main`.
+
+## Tech stack
+
+| | |
+|---|---|
+| Language | Python 3.14 (locally and in the Docker image `python:3.14.9-slim-trixie`); code compatible with 3.12+ (ruff target `py312`) |
+| Test runner | pytest 9.1, pytest-xdist (parallel workers), pytest-rerunfailures |
+| UI | Selenium 4.49 (Chrome, Firefox, Edge), Playwright 1.63 (sync API, Chromium) |
+| API | requests, jsonschema |
+| Test data | dataclasses (`Car`, `User`), Faker |
+| Infrastructure | Docker, Docker Compose, Selenium Grid 4 (`selenium/hub` and nodes `4.51.0-20261010`, video recording on nodes) |
+| Reporting | Allure (allure-pytest 2.16) with screenshots and videos |
+| CI | GitHub Actions, GitHub Pages, Jenkins, Telegram notifications |
+| Code quality | ruff, pre-commit, gitleaks |
+
+Exact versions: [`requirements.txt`](requirements.txt), [`requirements-dev.txt`](requirements-dev.txt),
+[`docker-compose.yml`](docker-compose.yml), [`Dockerfile`](Dockerfile).
+
+## Project structure
+
+```text
+api/            API client (requests.Session)
+data/           test data generator, known bugs and observations registries
+docs/           reconstructed requirements, Swagger, research log, Jenkins setup (in Russian)
+drivers/        WebDriver factory: local browsers or Selenium Grid, Grid readiness check, session video
+models/         Car and User dataclasses with API payload serialization
+pages/          Page Objects for Selenium and Playwright
+research/       research scripts (not tests): produce docs/requirements/research-log.md
+schemas/        JSON Schemas for API responses
+scripts/        CI helpers: test split check, Allure results merge, Telegram notification
+tests/          all tests: API, security, mutations, Selenium, Playwright, hybrid
+utils/          preconditions, data state checks, car cleanup, validators, WebDriver listener
+conftest.py     fixtures (temporary users, drivers, cleanup), markers hook, Allure environment
+```
+
+## Running the tests
+
+### Locally
+
+Requires Python 3.14 (3.12+ should work).
+
+```bash
+git clone https://github.com/warmanofmars-star/QA3553_IlCarro_Tests.git
+cd QA3553_IlCarro_Tests
+python -m venv .venv
+.venv\Scripts\activate              # Windows; on Linux / macOS: source .venv/bin/activate
+pip install -r requirements-dev.txt # requirements.txt + ruff and pre-commit
+pip check                           # "No broken requirements found."
+playwright install chromium
+cp .env.example .env                # Windows: copy .env.example .env
+```
+
+All settings are listed in [`.env.example`](.env.example) and read only by [`config.py`](config.py).
+No permanent account is needed: every test registers its own user. To run browsers locally,
+set `USE_GRID=false` (in `.env` or in the environment):
+
+```bash
+USE_GRID=false pytest tests/ -n 2 --browser_name=chrome   # the whole suite, 2 parallel workers
+pytest -m api                                             # API tests only, no browser
+pytest -m "smoke and ui" --browser_name=firefox
+pytest --alluredir=allure-results && allure serve allure-results
+```
+
+Markers (from [`pytest.ini`](pytest.ini)): `smoke`, `regression`, `ui`, `api`, `hybrid`, `security`,
+`contract`, `mutation`, plus the automatic `selenium` and `playwright`. Logs go to `logs/`.
+
+### In Docker (Selenium Grid 4)
+
+The browser is selected by two variables with the same value — `chrome`, `firefox` or `edge`:
+`COMPOSE_PROFILES` starts the browser nodes, `BROWSER` tells the tests which browser to use.
+
+```bash
+COMPOSE_PROFILES=chrome docker compose up --build --exit-code-from qa-framework
+COMPOSE_PROFILES=firefox BROWSER=firefox docker compose up --build --exit-code-from qa-framework
+COMPOSE_PROFILES=chrome TEST_MARKER=smoke docker compose up --build --exit-code-from qa-framework
+```
+
+The stack is a hub and three nodes of the selected browser; tests run in 3 pytest workers. Each node records
+its sessions, and the video is attached to the Allure report. Grid UI: <http://localhost:4444/ui/>
+(host port is `GRID_HOST_PORT`, default 4444). If the Grid is not reachable, Selenium tests fail with an
+error that says so, while API and Playwright tests run as usual.
+
+More commands: [`commands.md`](commands.md) *(in Russian)*.
+
+### GitHub Actions
+
+[`.github/workflows/tests.yml`](.github/workflows/tests.yml) runs on pull requests to `main`, on push to `main`
+and manually (`workflow_dispatch` with an optional `test_marker`). Jobs:
+
+| Job | What it does |
+|---|---|
+| `lint` | `ruff check`, `ruff format --check`, gitleaks over the whole git history; runs in parallel with the tests |
+| `split-check` | [`scripts/check_ci_split.py`](scripts/check_ci_split.py): the `selenium` and `not selenium` selections are non-empty, do not overlap and together cover all tests (27 + 25 = 52) |
+| `api-and-playwright` | `-m "not selenium"` once, in Docker without the Grid |
+| `selenium` | `-m "selenium"`, matrix chrome / firefox / edge, each in Docker Compose with the Grid |
+| `report` | merges the results ([`scripts/merge_allure_results.py`](scripts/merge_allure_results.py)), takes the trend history from the published report, generates the Allure report and keeps it as an artifact |
+| `deploy` | publishes the report to GitHub Pages — only from `main` |
+| `notify-report` / `notify-failure` | Telegram message after a successful deploy, or when any job failed — only for `main` |
+
+So every test runs in exactly one job: 25 once plus 27 × 3 browsers = 106 test runs per pipeline
+instead of 52 × 3 = 156. An empty selection fails the job (except for a manual run with a marker);
+a failed test fails the job, `continue-on-error` is not used. A new run of a pull request cancels the previous one;
+runs on `main` wait in a queue.
+
+### Jenkins
+
+[`Jenkinsfile`](Jenkinsfile): parameters `BROWSER` (chrome / firefox / edge) and `TEST_MARKER`; stages
+`Prepare` → `API and Playwright` → `Selenium (Grid)`, the same split as in GitHub Actions. Each build gets
+its own Docker Compose project and is cleaned up afterwards. Failed tests mark the build `UNSTABLE`,
+infrastructure errors `FAILURE`; the report is published by the Allure plugin. The build also fails if the
+browser or marker that actually reached pytest differs from the build parameters. Triggered by a GitHub
+webhook (through ngrok) on push to `main` or by **Build with Parameters**.
+Setup: [`docs/jenkins-setup.md`](docs/jenkins-setup.md) *(in Russian)*.
+
+## Code quality
+
+- **ruff** — linter and formatter, configured in [`pyproject.toml`](pyproject.toml) (target `py312`, line length 120).
+- **pre-commit** ([`.pre-commit-config.yaml`](.pre-commit-config.yaml)) runs before every commit: file
+  hygiene (trailing whitespace, end of file, YAML and TOML syntax, merge-conflict markers, large files),
+  `ruff-check`, `ruff-format` and **gitleaks**. Besides the built-in gitleaks rules, a custom rule in
+  [`.gitleaks.toml`](.gitleaks.toml) catches `.env`-style passwords. Acknowledged historical findings
+  (revoked secrets) are listed in [`.gitleaksignore`](.gitleaksignore).
+  A local hook, [`scripts/check_links.py`](scripts/check_links.py), checks that relative links in changed
+  Markdown files point to existing files and headings.
+- The same ruff and gitleaks versions run in the CI `lint` job; gitleaks there scans the whole history.
+- `pip check` runs during the Docker image build, so incompatible package versions fail the build.
+
+```bash
+pre-commit install            # once after cloning
+pre-commit run --all-files    # check the whole project
+```
+
+## Known limitations
+
+- **Shared external backend.** The frontend and the backend (Heroku) are not part of this repository and
+  are used by other people. If they are down or slow, tests fail; absolute numbers (e.g. cars in a city)
+  cannot be asserted. Search for large cities returns tens of megabytes (Tel Aviv — about 18 MB).
+- **Users cannot be deleted.** The API has no such endpoint, so every run leaves temporary users behind.
+  Cars are deleted.
+- **Jenkins is a local learning setup.** It runs in a Docker container (shared with the author's Phonebook
+  project), runs as root and uses the host Docker socket — effectively root on the host. The webhook reaches it through ngrok; the free ngrok address changes on every restart
+  and the webhook URL has to be updated.
+- **Videos are attached only in Docker.** Grid nodes write them to a Docker volume that a local run cannot read.
+- **Frontend file names contain build hashes**, so references to frontend code in `requirements.md` are valid
+  for the build of 2026-11-05.
+
+## Plans
+
+Not done yet:
+
+- **Step 6 — requirements traceability matrix:** which test covers which `REQ-…` / `DISC-…` / `OBS-…`.
+- **Step 7 — UI resilience tests:** how the UI behaves when the backend fails (network interception in Playwright).
+
+## How the project is developed
+
+The project is developed together with an AI coding agent (Claude Code). Its rules are in
+[`CLAUDE.md`](CLAUDE.md) *(in Russian)*: security (never read `.env`, never push), conventions (registries,
+`require()`, waits by state, logging) and the source hierarchy for expected results.
+The process is "plan in chat → the agent implements it in a branch → review through a pull request": the agent
+commits only to a working branch, the author pushes and merges. The history so far — 12 merged pull requests.
+
+## License
+
+[Apache License 2.0](LICENSE)

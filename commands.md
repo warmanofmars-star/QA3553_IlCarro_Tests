@@ -1,7 +1,17 @@
 # 🚗 Шпаргалка по командам проекта IlCarro (Cheatsheet)
 
 ## 🏃‍♂️ Запуск тестов локально (Без Docker)
-Перед локальным запуском убедись, что в `.env` стоит `USE_GRID=false`.
+Перед локальным запуском убедись, что в `.env` стоит `USE_GRID=false`, или задай переменную
+в команде: `USE_GRID=false pytest ...` (переменные окружения перекрывают `.env`).
+
+**Сколько тестов собирается (без запуска):**
+`pytest --collect-only -q` → `52 tests collected`
+
+**Полный прогон без Grid (как проверяют изменения перед PR):**
+`USE_GRID=false ENABLE_CONSOLE_LOGS=false pytest tests/ -n 2 --browser_name=chrome -rfEsxX`
+`-rfEsxX` — в итоге перечислить упавшие, ошибки, пропуски, xfail и XPASS. Ожидаемые xfail —
+только из реестров `data/known_bugs.py` и `data/observations.py`; XPASS означает, что поведение
+приложения изменилось и запись реестра нужно пересмотреть.
 
 **Запуск всех тестов параллельно (в 3 потока) с видео и отчетом:**
 `pytest tests/ -n 3 --video=on --clean-alluredir --alluredir=allure-results`
@@ -9,12 +19,13 @@
 **Запуск с выбором конкретного браузера (`chrome`, `firefox`, `edge`):**
 `pytest tests/ -n 3 --browser_name=firefox --clean-alluredir --alluredir=allure-results`
 
-**Запуск по категориям (9 маркеров из `pytest.ini`):**
+**Запуск по категориям (10 маркеров из `pytest.ini`; числа — `pytest -m <маркер> --collect-only -q`):**
 - `pytest -m "smoke" -n 3` — критический путь (13 тестов: 9 UI + 4 API)
 - `pytest -m "regression" -n 3` — полный регресс (39 тестов: 24 UI + 15 API)
 - `pytest -m "api" -v` — все API-тесты без запуска браузеров (19 тестов)
 - `pytest -m "ui" -n 3` — все браузерные тесты Selenium и Playwright (33 теста)
 - `pytest -m "playwright" -v` — только тесты на Playwright (6 тестов; маркер ставится автоматически по фикстуре `page`)
+- `pytest -m "selenium" -n 3` — только тесты на Selenium (27 тестов; маркер ставится автоматически по фикстуре `driver`/`authenticated_driver`)
 - `pytest -m "hybrid" -v` — гибридные тесты API + UI (3 теста)
 - `pytest -m "security" -v` — проверки безопасности, BOLA и защит форм (15 тестов)
 - `pytest -m "contract" -v` — валидация JSON Schema и словарей (3 теста)
@@ -111,7 +122,8 @@ pre-commit install                      # хуки в .git/hooks: запуска
 `pre-commit run --all-files`
 
 Хуки: гигиена файлов (пробелы в конце строк, перевод строки в конце файла, синтаксис YAML/TOML,
-маркеры конфликтов, большие файлы), ruff, ruff-format, gitleaks. Если хук исправил файл, коммит
+маркеры конфликтов, большие файлы), ruff, ruff-format, gitleaks и проверка относительных ссылок в изменённых `*.md`
+(`scripts/check_links.py`: файл и заголовок `#…` существуют). Если хук исправил файл, коммит
 не создаётся: проверь изменения, `git add`, повтори коммит. `git commit --no-verify` — запрещён.
 
 **Линтер и форматтер по отдельности:**
@@ -263,9 +275,6 @@ Prepare ─► API and Playwright ─► Selenium (Grid) ─► post: уборк
 ---
 
 ## 🐙 Полезные команды Git и утилит проекта
-**Сгенерировать актуальный `README.md` из скрипта:**
-`python make_readme.py`
-
 **Собрать весь код проекта в единый текстовый файл для ревью:**
 `python merge_code.py`
 
