@@ -46,6 +46,11 @@ from the fixtures a test uses (`driver` / `authenticated_driver` and `page`), no
   [`data/observations.py`](data/observations.py) (`@observation("KEY")`, reference to `OBS-…`).
   References are checked against `requirements.md` when the module is imported: a typo or an ID that
   does not exist breaks test collection. Plain `pytest.mark.xfail` and `pytest.skip` are not used in tests.
+- **A traceability matrix generated from the tests.** Nobody writes it by hand:
+  [`scripts/coverage_matrix.py`](scripts/coverage_matrix.py) collects the `@allure.tag` IDs and the registries and
+  produces [`docs/requirements/traceability.md`](docs/requirements/traceability.md) *(in Russian)*. Every ID
+  either has a test or a recorded reason why it has none; CI fails if the matrix is out of date
+  (see [Requirements traceability](#requirements-traceability)).
 - **Tests check the state of the data, not only the response.** For example, booking answers
   `200 "Car booked successfully!"`, and the test then reads the car back and finds that nothing was saved.
   Helpers: [`utils/car_state.py`](utils/car_state.py).
@@ -91,6 +96,39 @@ All xfails are strict and expect only `AssertionError`:
 Results depend on an external backend (see [Known limitations](#known-limitations)) and are a snapshot
 at the time of writing; the published Allure report shows the latest run on `main`.
 
+## Requirements traceability
+
+Each of the 69 items in `requirements.md` (50 `REQ`, 8 `DISC`, 11 `OBS`) is either referenced by a test
+or listed in [`data/coverage_exceptions.py`](data/coverage_exceptions.py) with a category and a reason.
+The table is generated — do not edit it by hand:
+
+<!-- coverage:start -->
+| Status | REQ | DISC | OBS | Total |
+|---|---:|---:|---:|---:|
+| ✅ Covered by a passing test | 16 | 0 | 0 | 16 |
+| 🐞 Covered, the test hits a known bug (strict xfail) | 7 | 2 | 0 | 9 |
+| 👁 Covered as an observation (strict xfail) | 0 | 0 | 1 | 1 |
+| ⚪ No test — exception with a recorded reason | 3 | 1 | 0 | 4 |
+| 🕓 No test yet — planned | 24 | 5 | 10 | 39 |
+| **Total** | 50 | 8 | 11 | 69 |
+
+Exceptions: the check would harm the shared backend — 1; blocked by another defect — 1; the feature is unreachable — 2. Planned: 17 in step 6.2 (API), 22 in step 6.3 (UI and observations).
+48 of 52 tests reference at least one ID.
+<!-- coverage:end -->
+
+The full matrix — every ID with its tests, registry key and status, plus the list of exceptions and
+planned tests with reasons — is [`docs/requirements/traceability.md`](docs/requirements/traceability.md)
+*(in Russian)*. It shows what the suite checks, not the result of a run: tests are only collected.
+
+```bash
+python scripts/coverage_matrix.py           # regenerate the matrix and the table above
+python scripts/coverage_matrix.py --check   # what CI and the pre-commit hook run
+```
+
+`--check` fails if the matrix or the table above is out of date, if a test references an ID that does
+not exist, if an ID has neither a test nor an exception (or has both), and if a test marked as a known
+bug or an observation does not carry exactly the IDs of its registry entry.
+
 ## Tech stack
 
 | | |
@@ -112,14 +150,14 @@ Exact versions: [`requirements.txt`](requirements.txt), [`requirements-dev.txt`]
 
 ```text
 api/            API client (requests.Session)
-data/           test data generator, known bugs and observations registries
-docs/           reconstructed requirements, Swagger, research log, Jenkins setup (in Russian)
+data/           test data generator; registries: known bugs, observations, coverage exceptions
+docs/           reconstructed requirements, traceability matrix, Swagger, research log, Jenkins setup (in Russian)
 drivers/        WebDriver factory: local browsers or Selenium Grid, Grid readiness check, session video
 models/         Car and User dataclasses with API payload serialization
 pages/          Page Objects for Selenium and Playwright
 research/       research scripts (not tests): produce docs/requirements/research-log.md
 schemas/        JSON Schemas for API responses
-scripts/        CI helpers: test split check, Allure results merge, Telegram notification
+scripts/        CI helpers: test split check, traceability matrix, Allure results merge, report secrets scan, Telegram
 tests/          all tests: API, security, mutations, Selenium, Playwright, hybrid
 utils/          preconditions, data state checks, car cleanup, validators, WebDriver listener
 conftest.py     fixtures (temporary users, drivers, cleanup), markers hook, Allure environment
@@ -181,7 +219,7 @@ and manually (`workflow_dispatch` with an optional `test_marker`). Jobs:
 
 | Job | What it does |
 |---|---|
-| `lint` | `ruff check`, `ruff format --check`, gitleaks over the whole git history; runs in parallel with the tests |
+| `lint` | `ruff check`, `ruff format --check`, gitleaks over the whole git history, and [`scripts/coverage_matrix.py --check`](scripts/coverage_matrix.py): the traceability matrix is consistent and up to date; runs in parallel with the tests |
 | `split-check` | [`scripts/check_ci_split.py`](scripts/check_ci_split.py): the `selenium` and `not selenium` selections are non-empty, do not overlap and together cover all tests (27 + 25 = 52) |
 | `api-and-playwright` | `-m "not selenium"` once, in Docker without the Grid |
 | `selenium` | `-m "selenium"`, matrix chrome / firefox / edge, each in Docker Compose with the Grid |
@@ -214,7 +252,8 @@ Setup: [`docs/jenkins-setup.md`](docs/jenkins-setup.md) *(in Russian)*.
   [`.gitleaks.toml`](.gitleaks.toml) catches `.env`-style passwords. Acknowledged historical findings
   (revoked secrets) are listed in [`.gitleaksignore`](.gitleaksignore).
   A local hook, [`scripts/check_links.py`](scripts/check_links.py), checks that relative links in changed
-  Markdown files point to existing files and headings.
+  Markdown files point to existing files and headings. Another one runs `scripts/coverage_matrix.py --check`
+  when tests, registries, requirements or the README change (it needs the project's Python environment).
 - The same ruff and gitleaks versions run in the CI `lint` job; gitleaks there scans the whole history.
 - `pip check` runs during the Docker image build, so incompatible package versions fail the build.
 - **No secrets in the public report.** Steps that handle a password do not take it as an `@allure.step`
@@ -246,7 +285,8 @@ pre-commit run --all-files    # check the whole project
 
 Not done yet:
 
-- **Step 6 — requirements traceability matrix:** which test covers which `REQ-…` / `DISC-…` / `OBS-…`.
+- **Step 6.2 — API tests** and **step 6.3 — UI tests and observations** for the items marked as planned in the
+  [traceability matrix](docs/requirements/traceability.md) (step 6.1, the matrix itself, is done).
 - **Step 7 — UI resilience tests:** how the UI behaves when the backend fails (network interception in Playwright).
 
 ## How the project is developed

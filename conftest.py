@@ -41,6 +41,10 @@ def pytest_configure(config):
 
     Главный процесс стартует раньше воркеров, поэтому только он удаляет файлы прошлого прогона
     (логи и журнал фабрики машин): воркер стёр бы записи соседей.
+
+    Сбор без запуска (--collect-only) логи не трогает: его вызывают проверки
+    scripts/check_ci_split.py и scripts/coverage_matrix.py (в том числе хук pre-commit),
+    и они не должны стирать логи и журнал последнего настоящего прогона.
     """
     for name in NOISY_LOGGERS:
         logging.getLogger(name).setLevel(logging.WARNING)
@@ -48,6 +52,9 @@ def pytest_configure(config):
     # Живые логи в консоли включает настройка из config.py; явный --log-cli-level важнее
     if settings.enable_console_logs and config.getoption("log_cli_level") is None:
         config.option.log_cli_level = "INFO"
+
+    if config.getoption("collectonly", default=False):
+        return
 
     is_xdist_controller = not settings.is_xdist_worker and bool(config.getoption("numprocesses", default=None))
 

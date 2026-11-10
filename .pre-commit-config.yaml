@@ -55,3 +55,14 @@ repos:
         entry: python scripts/check_links.py
         language: python
         types: [markdown]
+      # Матрица трассируемости и сводка в README.md актуальны и согласованы с тегами тестов и реестрами.
+      # language: system — хуку нужны зависимости проекта (pytest собирает тесты), поэтому он идёт
+      # в текущем окружении, а не в отдельном окружении pre-commit: коммить из активированного venv
+      - id: coverage-matrix
+        name: traceability matrix is consistent and up to date
+        entry: python scripts/coverage_matrix.py --check
+        language: system
+        pass_filenames: false
+        # README.md и conftest.py — сверх tests/, data/ и docs/requirements/: в README лежит
+        # сводка, а conftest.py влияет на сбор тестов
+        files: ^(tests/|data/|docs/requirements/|scripts/coverage_matrix\.py$|conftest\.py$|README\.md$)
