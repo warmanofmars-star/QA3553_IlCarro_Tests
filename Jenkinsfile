@@ -137,16 +137,21 @@ pipeline {
 
             script {
                 collectAllureResults(['allure-results/not-selenium', 'allure-results/selenium'], 'allure-results/report')
-            }
 
-            // Как в Phonebook: плагин Allure генерирует отчёт и сам хранит историю сборок (график трендов)
-            allure([
-                includeProperties: false,
-                jdk: '',
-                properties: [],
-                reportBuildPolicy: 'ALWAYS',
-                results: [[path: 'allure-results/report']]
-            ])
+                // Секреты в результатах — отчёт не публикуется, сборка FAILURE (как в GitHub Actions)
+                if (reportHasNoSecrets('allure-results/report')) {
+                    // Как в Phonebook: плагин Allure генерирует отчёт и сам хранит историю сборок (график трендов)
+                    allure([
+                        includeProperties: false,
+                        jdk: '',
+                        properties: [],
+                        reportBuildPolicy: 'ALWAYS',
+                        results: [[path: 'allure-results/report']]
+                    ])
+                } else {
+                    currentBuild.result = 'FAILURE'
+                }
+            }
         }
     }
 }
@@ -276,6 +281,41 @@ void collectAllureResults(List<String> parts, String target) {
         'JenkinsMarker' : (params.TEST_MARKER?.trim() ?: '(все тесты)'),
     ]
     writeFile(file: "${target}/environment.properties", text: mergeProperties(texts, extra), encoding: 'UTF-8')
+}
+
+/**
+ * Проверка результатов на секреты (scripts/scan_report_secrets.py) перед публикацией отчёта.
+ * Python в контейнере Jenkins нет, поэтому сканер запускается в образе с тестами этой сборки
+ * (QA_IMAGE: в нём тот же код, что и в сборке). Bind-монтирование не годится — пути workspace
+ * внутри контейнера Jenkins и на хосте разные, — поэтому результаты копируются через docker cp,
+ * как и забираются из контейнера тестов. Нет результатов (сбой до запуска тестов) — проверять
+ * нечего. Сканер не запустился или нашёл секреты — false: публиковать нельзя.
+ */
+boolean reportHasNoSecrets(String resultsDir) {
+    int results = sh(script: "find '${resultsDir}' -name '*-result.json' | wc -l", returnStdout: true).trim() as int
+    if (results == 0) {
+        echo "Проверка на секреты: в ${resultsDir} нет результатов тестов — проверять нечего"
+        return true
+    }
+    int code = sh(returnStatus: true, script: """
+        id="\$(docker create "\$QA_IMAGE" python scripts/scan_report_secrets.py /tmp/scan)" || exit 3
+        # Код сканера — через if: Jenkins запускает sh с -e, и голый «docker start» с кодом 1
+        # оборвал бы скрипт до docker rm, оставив контейнер
+        if docker cp '${resultsDir}/.' "\$id":/tmp/scan; then
+            if docker start -a "\$id"; then code=0; else code=\$?; fi
+        else
+            code=3
+        fi
+        docker rm "\$id" > /dev/null || true
+        exit \$code
+    """)
+    if (code == 0) {
+        return true
+    }
+    echo(code == 1
+        ? 'ВНИМАНИЕ: в результатах найдены секреты (список выше) — отчёт Allure не публикуется'
+        : "ВНИМАНИЕ: проверка на секреты не выполнена (код ${code}) — отчёт Allure не публикуется")
+    return false
 }
 
 // @NonCPS: чистая обработка строк без шагов Jenkins; LinkedHashMap и его итераторы
