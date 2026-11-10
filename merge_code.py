@@ -40,7 +40,8 @@ IGNORE_FILES = {
 # Исключение — шаблон .env.example: в нём нет секретов, и ИИ полезно его видеть.
 SECRET_FILE_PATTERN = re.compile(r"^\.env(\.(?!example$).+)?$")
 
-VALID_EXTENSIONS = (".py", ".yml", ".yaml", ".md", ".ini", ".json", ".csv", ".txt", ".toml")
+# .sh — скрипты CI (scripts/send_telegram.sh): их вызывает workflow, без них ревью неполное
+VALID_EXTENSIONS = (".py", ".yml", ".yaml", ".md", ".ini", ".json", ".csv", ".txt", ".toml", ".sh")
 
 # Файлы без расширения или с нестандартным именем, которые тоже важны для ревью.
 # Раньше Jenkinsfile и Dockerfile.* не попадали в выгрузку.
