@@ -14,7 +14,9 @@ WORKDIR /app
 # Сначала только зависимости: эти слои пересобираются лишь при изменении requirements.txt,
 # правка теста их не трогает
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# pip check — сборка падает, если версии пакетов несовместимы между собой: pip install
+# о таком конфликте только предупреждает
+RUN pip install --no-cache-dir -r requirements.txt && pip check
 
 # Браузеры для Playwright
 RUN playwright install chromium

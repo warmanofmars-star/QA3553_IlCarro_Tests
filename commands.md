@@ -278,3 +278,14 @@ Prepare ─► API and Playwright ─► Selenium (Grid) ─► post: уборк
 **Обновить файл зависимостей проекта:** версии в `requirements.txt` правь вручную.
 `pip freeze` выгрузил бы и инструменты разработки (ruff, pre-commit) — им место в
 `requirements-dev.txt`; а `>` в PowerShell пишет файл в UTF-16, который git считает двоичным.
+
+**Обновить локальное окружение и проверить его** (после `git pull` или правки `requirements.txt`):
+```bash
+pip install -r requirements-dev.txt     # включает requirements.txt; приводит пакеты к зафиксированным версиям
+pip check                               # «No broken requirements found.» — конфликтов нет
+```
+`pip install` о конфликте версий только предупреждает, а `pip check` завершается с ошибкой
+и называет пакет, например `playwright 1.63.0 has requirement pyee<14,>=13, but you have pyee 14.0.0`.
+Тот же `pip check` идёт при сборке Docker-образа — с конфликтом образ не соберётся.
+Меняешь версию `playwright` или `pytest-playwright` — сверь и зафиксированные рядом `pyee`
+и `python-slugify` (комментарии в `requirements.txt`).
