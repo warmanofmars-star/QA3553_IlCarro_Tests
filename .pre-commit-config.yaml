@@ -44,3 +44,14 @@ repos:
     rev: v8.30.1                       # та же версия, что в job Lint
     hooks:
       - id: gitleaks
+
+  # Свои проверки проекта
+  - repo: local
+    hooks:
+      # Относительные ссылки в Markdown ведут на существующие файлы и заголовки.
+      # Только stdlib, поэтому language: python без зависимостей — отдельного окружения не нужно
+      - id: check-links
+        name: check relative links in Markdown
+        entry: python scripts/check_links.py
+        language: python
+        types: [markdown]

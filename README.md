@@ -212,6 +212,8 @@ Setup: [`docs/jenkins-setup.md`](docs/jenkins-setup.md) *(in Russian)*.
   `ruff-check`, `ruff-format` and **gitleaks**. Besides the built-in gitleaks rules, a custom rule in
   [`.gitleaks.toml`](.gitleaks.toml) catches `.env`-style passwords. Acknowledged historical findings
   (revoked secrets) are listed in [`.gitleaksignore`](.gitleaksignore).
+  A local hook, [`scripts/check_links.py`](scripts/check_links.py), checks that relative links in changed
+  Markdown files point to existing files and headings.
 - The same ruff and gitleaks versions run in the CI `lint` job; gitleaks there scans the whole history.
 - `pip check` runs during the Docker image build, so incompatible package versions fail the build.
 
