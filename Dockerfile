@@ -5,8 +5,10 @@
 # после выхода.
 FROM python:3.14.9-slim-trixie
 
-# Устанавливаем системные зависимости, необходимые для Playwright и Allure
-RUN apt-get update && apt-get install -y wget gnupg ffmpeg
+# Системные пакеты, нужные до установки Python-зависимостей. ffmpeg не ставим: видео Selenium пишут
+# узлы Grid (ffmpeg в их образах), а Playwright пишет видео своим ffmpeg, который скачивает
+# playwright install вместе с браузером
+RUN apt-get update && apt-get install -y wget gnupg
 
 WORKDIR /app
 
