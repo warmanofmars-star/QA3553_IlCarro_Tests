@@ -215,23 +215,35 @@ Prepare ─► API and Playwright ─► Selenium (Grid) ─► post: уборк
 или `-m` в контейнере не тот, что ожидался (`MarkerFilter`), — сборка красная.
 
 **Изоляция от Phonebook и локального стенда:**
-- у каждой сборки свой compose-проект `ilcarro-jenkins-<job>-<номер>`: свои контейнеры, сеть,
-  том с видео и образ `qa-framework`;
+- у каждой сборки свой compose-проект `ilcarro-jenkins-<job>-<номер>`: свои контейнеры, сеть
+  и том с видео;
+- образ с тестами — один на job: `ilcarro-jenkins-<job>-qa-framework` (переменная `QA_IMAGE`
+  в Jenkinsfile, метка `ilcarro.jenkins.image`). Следующая сборка берёт слои из кэша: при правке
+  тестов пересобирается только слой с кодом, при правке `requirements.txt` — зависимости и браузер;
 - `COMPOSE_FILE` подключает `docker-compose.jenkins-build.yml`: хаб не публикует порт на хост
   (4444 локального Grid и 4445 сборок Phonebook свободны), а `allure-results` не монтируется —
   результаты забирает `docker cp` из остановленного контейнера;
-- уборка в `post { always }`: `docker compose down -v --remove-orphans --rmi local` — только проект
-  этой сборки, без `prune`. Скачанные образы Selenium остаются (общий кэш).
+- уборка в `post { always }`: `docker compose down -v --remove-orphans` — только проект
+  этой сборки, без `prune`. Затем удаляются старые версии образа этого job: пересборка переносит
+  имя на новый образ, прежний остаётся безымянным (dangling) с той же меткой и удаляется по фильтру
+  `dangling=true` + `label=ilcarro.jenkins.image=<QA_IMAGE>`. На диске остаётся один образ на job.
+  Скачанные образы Selenium и базовый образ Python остаются (общий кэш).
 
 **Отчёт:** плагин Allure (как в Phonebook), ссылка **Allure Report** на странице сборки; историю
 трендов плагин хранит сам. О прогонах на `main` в Telegram сообщает GitHub Actions, Jenkins — нет.
 
 **Найти и убрать остатки упавшей сборки** (обычно не нужно — уборка в `post`):
 `docker ps -a --filter "label=com.docker.compose.project=ilcarro-jenkins-<job>-<номер>"`
-`COMPOSE_PROJECT_NAME=ilcarro-jenkins-<job>-<номер> COMPOSE_PROFILES=chrome docker compose -f docker-compose.yml -f docker-compose.jenkins-build.yml down -v --rmi local`
+`QA_IMAGE=ilcarro-jenkins-<job>-qa-framework COMPOSE_PROJECT_NAME=ilcarro-jenkins-<job>-<номер> COMPOSE_PROFILES=chrome docker compose -f docker-compose.yml -f docker-compose.jenkins-build.yml down -v`
 
-**Посмотреть, во что compose развернёт сборку** (без запуска контейнеров):
-`COMPOSE_PROJECT_NAME=ilcarro-jenkins-x-1 COMPOSE_PROFILES=firefox docker compose -f docker-compose.yml -f docker-compose.jenkins-build.yml config`
+**Образы с тестами всех job и их старые версии:**
+`docker image ls --filter "label=ilcarro.jenkins.image"`
+Удалить образ job целиком (следующая сборка соберёт его с нуля):
+`docker image rm ilcarro-jenkins-<job>-qa-framework`
+
+**Посмотреть, во что compose развернёт сборку** (без запуска контейнеров; без `QA_IMAGE` compose
+откажется — так задумано):
+`QA_IMAGE=ilcarro-jenkins-x-qa-framework COMPOSE_PROJECT_NAME=ilcarro-jenkins-x-1 COMPOSE_PROFILES=firefox docker compose -f docker-compose.yml -f docker-compose.jenkins-build.yml config`
 
 ---
 
