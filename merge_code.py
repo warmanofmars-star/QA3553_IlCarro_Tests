@@ -9,6 +9,7 @@
 
 import os
 import re
+import sys
 
 OUTPUT_FILE = "full_project_for_ai_ilcaro.txt"
 
@@ -40,7 +41,8 @@ IGNORE_FILES = {
 # Исключение — шаблон .env.example: в нём нет секретов, и ИИ полезно его видеть.
 SECRET_FILE_PATTERN = re.compile(r"^\.env(\.(?!example$).+)?$")
 
-VALID_EXTENSIONS = (".py", ".yml", ".yaml", ".md", ".ini", ".json", ".csv", ".txt", ".toml")
+# .sh — скрипты CI (scripts/send_telegram.sh): их вызывает workflow, без них ревью неполное
+VALID_EXTENSIONS = (".py", ".yml", ".yaml", ".md", ".ini", ".json", ".csv", ".txt", ".toml", ".sh")
 
 # Файлы без расширения или с нестандартным именем, которые тоже важны для ревью.
 # Раньше Jenkinsfile и Dockerfile.* не попадали в выгрузку.
@@ -82,6 +84,11 @@ def should_include(filename: str) -> bool:
 
 
 def main() -> None:
+    # Консоль Windows (и Git Bash при выводе в канал) пишет в cp1251, где нет эмодзи: print упал бы
+    # с UnicodeEncodeError уже после записи выгрузки. Символ, которого нет в кодировке консоли,
+    # заменяется на «?», а сама выгрузка всегда в UTF-8
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="replace")
     included = 0
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as outfile:

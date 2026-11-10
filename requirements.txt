@@ -10,3 +10,9 @@ requests==2.34.2
 Faker==40.39.0
 python-dotenv==1.2.3
 jsonschema==4.26.0
+
+# Транзитивные зависимости, зафиксированные явно: в локальном .venv оказались несовместимые
+# pyee 14 и python-slugify 9, а с фиксацией pip install -r приводит любое окружение к одним версиям.
+# Обновлять вместе с playwright / pytest-playwright, проверка — pip check
+pyee==13.0.1             # playwright 1.63.0 требует pyee>=13,<14
+python-slugify==8.0.4    # pytest-playwright 0.9.0 требует python-slugify>=6,<9

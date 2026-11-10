@@ -110,11 +110,11 @@ jobs:
       - name: Скачиваем код проекта
         uses: actions/checkout@v7
 
-      # Python — тот же, что в Docker-образе с тестами (Dockerfile: python:3.12-slim)
+      # Python — тот же, что в Docker-образе с тестами (Dockerfile: python:3.14.9-slim-trixie)
       - name: Ставим Python
         uses: actions/setup-python@v7
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           cache: pip
           cache-dependency-path: requirements.txt
 

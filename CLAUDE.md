@@ -1,7 +1,8 @@
 # CLAUDE.md — правила проекта для Claude Code
 
-Учебный фреймворк автотестов (UI + API) для веб-приложения IlCarro (аренда машин): Python 3.14
-локально, 3.12 в Docker; pytest, Selenium, Playwright, Allure, Docker, Selenium Grid 4, GitHub Actions,
+Учебный фреймворк автотестов (UI + API) для веб-приложения IlCarro (аренда машин): Python —
+совместимость 3.12+ (ruff `py312`), запуск на 3.14 локально и в Docker (`python:3.14.9-slim-trixie`,
+тег точный — меняется вручную); pytest, Selenium, Playwright, Allure, Docker, Selenium Grid 4, GitHub Actions,
 Jenkins. UI: https://icarro-v1.netlify.app, API: https://ilcarro-backend.herokuapp.com.
 Браузеры в Docker — через Selenium Grid 4. Подробности — в README.md.
 
@@ -118,9 +119,11 @@ Jenkins общий с Phonebook (контейнер `jenkins-master`, localhost:
 
 Изоляция: compose-проект `ilcarro-jenkins-<job>-<номер>` на сборку; `COMPOSE_FILE` добавляет
 `docker-compose.jenkins-build.yml` — порт хаба на хост не публикуется, `allure-results` не монтируется
-(результаты — `docker cp` из остановленного контейнера). Уборка в `post { always }` —
-`docker compose down -v --remove-orphans --rmi local` только этого проекта; `prune` и глобальные
-удаления в Jenkinsfile запрещены. Статус: упавшие тесты — `UNSTABLE`, сбой запуска — `FAILURE`.
+(результаты — `docker cp` из остановленного контейнера). Образ с тестами — общий для сборок job:
+`QA_IMAGE` = `ilcarro-jenkins-<job>-qa-framework` с меткой `ilcarro.jenkins.image` (кэш слоёв между
+сборками). Уборка в `post { always }` — `docker compose down -v --remove-orphans` только этого проекта
+и удаление безымянных старых версий образа по метке `ilcarro.jenkins.image=$QA_IMAGE`; `prune`
+и глобальные удаления в Jenkinsfile запрещены. Статус: упавшие тесты — `UNSTABLE`, сбой запуска — `FAILURE`.
 Отчёт — плагин Allure; Environment дополняет Jenkinsfile (`JenkinsBrowser`, `JenkinsMarker`,
 `JenkinsBuild`). Защита от «молча проигнорированного» параметра: Jenkinsfile сверяет `SeleniumBrowser`
 и `MarkerFilter` из `environment.properties` контейнера с параметрами; расхождение — `FAILURE`.
