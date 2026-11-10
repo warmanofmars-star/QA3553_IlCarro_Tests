@@ -11,6 +11,7 @@ pytestmark = pytest.mark.ui
 @allure.feature("Login Page")
 @allure.story("Positive Login")
 @allure.severity(allure.severity_level.BLOCKER)
+@allure.tag("REQ-UI-LOGIN-02")
 def test_login_success(driver, temp_user):
     login_page = LoginPage(driver)
     login_page.open()
@@ -28,6 +29,7 @@ def test_login_success(driver, temp_user):
 @allure.feature("Login Page")
 @allure.story("Negative Login - Frontend Validation")
 @allure.severity(allure.severity_level.NORMAL)
+@allure.tag("REQ-UI-LOGIN-01")
 @pytest.mark.parametrize(
     "email, pass_condition, expected_error, scenario",
     [

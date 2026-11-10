@@ -24,8 +24,9 @@ pytestmark = [pytest.mark.api, pytest.mark.security]
             "Пустой токен (Отсутствует заголовок)",
             marks=[known_bug("NO_AUTH_403"), allure.tag("REQ-SEC-01")],
         ),
-        ("invalid", 401, "Невалидный токен (Мусорная строка)"),
-        ("wrong_scheme", 401, "Неверная схема (Basic вместо Bearer)"),
+        pytest.param("invalid", 401, "Невалидный токен (Мусорная строка)", marks=allure.tag("REQ-SEC-02")),
+        # Строка после Basic для сервера — тот же невалидный токен: он разбирает её как JWT (Q-API-09)
+        pytest.param("wrong_scheme", 401, "Неверная схема (Basic вместо Bearer)", marks=allure.tag("REQ-SEC-02")),
     ],
 )
 def test_api_security_auth_tokens(auth_case, expected_status, scenario):

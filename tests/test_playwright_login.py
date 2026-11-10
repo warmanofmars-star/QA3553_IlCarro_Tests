@@ -12,6 +12,7 @@ pytestmark = pytest.mark.ui
 @allure.feature("Login")
 @allure.story("Positive Login (POM)")
 @allure.title("Успешная авторизация (Playwright + POM)")
+@allure.tag("REQ-UI-LOGIN-02")
 def test_pw_login_success(page: Page, temp_user):
     pw_login_page = PwLoginPage(page)
     pw_login_page.open()
@@ -29,6 +30,7 @@ def test_pw_login_success(page: Page, temp_user):
 @allure.feature("Login")
 @allure.story("Negative Login - Frontend")
 @allure.title("Ошибки валидации формы логина (Playwright)")
+@allure.tag("REQ-UI-LOGIN-01")
 @pytest.mark.parametrize(
     "email, password, expected_error, scenario",
     [

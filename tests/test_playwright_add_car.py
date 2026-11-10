@@ -18,6 +18,7 @@ pytestmark = pytest.mark.ui
 @allure.feature("Cars Management")
 @allure.story("Real E2E Car Addition")
 @allure.title("Реальное добавление машины (E2E Playwright)")
+@allure.tag("REQ-UI-CAR-02")
 def test_real_add_car_success(page: Page, temp_user, car_cleanup):  # <-- Добавили temp_user
     car = CarGenerator.get_random_car()
     # Машина создаётся через UI — номер регистрируем, чтобы фабрика удалила её после теста
@@ -48,6 +49,7 @@ def test_real_add_car_success(page: Page, temp_user, car_cleanup):  # <-- Доб
 @allure.feature("Playwright: Cars Management")
 @allure.story("API Setup -> UI Duplicate Check (Negative)")
 @allure.title("Создание дубликата машины (Playwright + API)")
+@allure.tag("REQ-UI-CAR-02")
 def test_pw_add_car_duplicate(page: Page, temp_user, create_car):  # <-- Заменили auth_api на temp_user
     user = temp_user.user  # <-- Достаем UI-креды песочницы (create_car создаёт машину у него же)
 

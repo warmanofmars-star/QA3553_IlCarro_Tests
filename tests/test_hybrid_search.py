@@ -16,7 +16,8 @@ pytestmark = pytest.mark.ui
 @allure.feature("Search functionality")
 @allure.story("API Setup -> UI Search -> API Teardown")
 @allure.severity(allure.severity_level.BLOCKER)
-@allure.tag("REQ-UI-SEARCH-04", "REQ-UI-SEARCH-05")
+# REQ-UI-SEARCH-04 здесь не тег: size в URL — способ показать всю выдачу, а не проверка пагинации
+@allure.tag("REQ-UI-SEARCH-05")
 def test_hybrid_car_search(driver, auth_api, create_car):
     target_city = SearchDataGenerator.SMALL_CITY
     start_date, end_date = SearchDataGenerator.get_safe_future_dates()

@@ -16,6 +16,7 @@ pytestmark = pytest.mark.ui
 @allure.feature("Add Car Page (Let the car work)")
 @allure.story("Positive Add Car")
 @allure.severity(allure.severity_level.CRITICAL)
+@allure.tag("REQ-UI-CAR-02")
 @pytest.mark.parametrize(
     "fuel_type, car_class, scenario",
     [
@@ -58,6 +59,7 @@ def test_add_car_success(authenticated_driver, car_cleanup, fuel_type, car_class
 @allure.feature("Add Car Page (Let the car work)")
 @allure.story("Negative Add Car - Duplicate Serial Number")
 @allure.severity(allure.severity_level.CRITICAL)
+@allure.tag("REQ-UI-CAR-02")
 def test_add_car_duplicate(authenticated_driver, create_car):
     with allure.step("API PRECONDITION: Создаем машину через бэкенд"):
         car = create_car()
