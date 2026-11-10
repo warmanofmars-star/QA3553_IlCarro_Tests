@@ -1,6 +1,7 @@
 import logging
 import os
 import platform
+import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -337,6 +338,28 @@ def pytest_make_parametrize_id(val):
     if callable(val):
         return "lambda_mutation"
     return str(val)
+
+
+# Параметры теста с такими именами — секреты (пароли, токены). Правило то же, что у сканера
+# отчёта scripts/scan_report_secrets.py: меняешь здесь — меняй и там
+SECRET_PARAM_NAME = re.compile(r"password|token|secret", re.IGNORECASE)
+SECRET_PLACEHOLDER = "********"
+
+
+@pytest.fixture(autouse=True)
+def _mask_secret_params(request):
+    """Маскирует в Allure параметры параметризации, имя которых похоже на секрет.
+
+    allure-pytest записывает значения параметров pytest в result.json после setup, но только
+    тех, чьего имени ещё нет среди параметров теста. Фикстура срабатывает в setup раньше: параметр
+    с заглушкой и режимом MASKED уже есть, и настоящее значение в файл не попадает.
+    Один режим MASKED не помог бы: он скрывает значение только на экране отчёта, а в result.json
+    оно остаётся (и при повторном вызове allure.dynamic.parameter режим не обновляется).
+    """
+    callspec = getattr(request.node, "callspec", None)
+    for name in callspec.params if callspec else ():
+        if SECRET_PARAM_NAME.search(name):
+            allure.dynamic.parameter(name, SECRET_PLACEHOLDER, mode=allure.parameter_mode.MASKED)
 
 
 @pytest.fixture
