@@ -1,7 +1,7 @@
 # Дополнение к docker-compose.yml для сборок Jenkins (подключает Jenkinsfile через COMPOSE_FILE).
 # Вручную его запускать не нужно.
 #
-# Jenkins живёт в контейнере и управляет Docker хоста через docker.sock. Отсюда две правки:
+# Jenkins живёт в контейнере и управляет Docker хоста через docker.sock. Отсюда первые две правки:
 #
 # 1. Хаб Grid не публикует порт на хост. Тесты ходят к нему внутри compose-сети
 #    (selenium-hub:4444), смотреть в Grid UI во время сборки некому. Опубликованный порт только
@@ -20,5 +20,15 @@ services:
     ports: !reset []
 
   qa-framework:
+    # 3. Образ с тестами — с постоянным именем на job (QA_IMAGE задаёт Jenkinsfile), а не
+    #    <проект>-qa-framework: проект у каждой сборки свой, и образ собирался бы с нуля.
+    #    pull_policy: build — образ всегда собирается (из кэша), его не ищут на Docker Hub.
+    #    Метка нужна уборке в Jenkinsfile: старые версии образа без имени находятся по ней
+    image: "${QA_IMAGE:?QA_IMAGE задаёт Jenkinsfile}"
+    pull_policy: build
+    build:
+      context: .
+      labels:
+        ilcarro.jenkins.image: "${QA_IMAGE:?QA_IMAGE задаёт Jenkinsfile}"
     volumes: !override
       - "video-data:/app/video"      # общий с узлами том с видео остаётся: по нему тесты находят ролики

@@ -32,11 +32,16 @@ pipeline {
         // Узлы какого браузера поднимает compose (у каждого узла свой профиль). Задано здесь,
         // а не в стадии: docker compose down в post тоже должен видеть узлы этого профиля
         COMPOSE_PROFILES = "${params.BROWSER ?: 'chrome'}"
-        // Уникальный compose-проект на каждую сборку: свои контейнеры, сеть, том с видео и образ.
+        // Уникальный compose-проект на каждую сборку: свои контейнеры, сеть и том с видео.
         // Не пересекается ни с локальным стендом (ilcarro-tests), ни с Phonebook, ни с другой
         // сборкой; down в post удаляет только этот проект. Имя проекта compose допускает только
         // строчные буквы, цифры, «-» и «_» — имя job приводится к этому виду
         COMPOSE_PROJECT_NAME = "ilcarro-jenkins-${env.JOB_NAME.toLowerCase().replaceAll('[^a-z0-9]+', '-')}-${env.BUILD_NUMBER}"
+        // Образ с тестами — общий для всех сборок job (без номера сборки): следующая сборка
+        // берёт его слои из кэша и пересобирает только изменившееся (обычно — слой с кодом).
+        // Им пользуется docker-compose.jenkins-build.yml; там же образ получает метку
+        // ilcarro.jenkins.image=<это имя>, по которой post удаляет старые версии образа этого job
+        QA_IMAGE = "ilcarro-jenkins-${env.JOB_NAME.toLowerCase().replaceAll('[^a-z0-9]+', '-')}-qa-framework"
         // Второй файл убирает публикацию порта хаба и bind-монтирование allure-results
         // (почему — в его шапке). Через переменную его видят все команды, включая down в post
         COMPOSE_FILE = 'docker-compose.yml:docker-compose.jenkins-build.yml'
@@ -61,6 +66,7 @@ pipeline {
                     echo "Узлы Grid (COMPOSE_PROFILES): $COMPOSE_PROFILES"
                     echo "Маркер (TEST_MARKER):        ${TEST_MARKER:-<пусто — все тесты>}"
                     echo "Compose-проект сборки:       $COMPOSE_PROJECT_NAME"
+                    echo "Образ с тестами (кэш job):   $QA_IMAGE"
                     echo "=================================================="
                     docker compose version
                 '''
@@ -101,15 +107,31 @@ pipeline {
         always {
             // Сначала уборка, потом отчёт: результаты уже в workspace, а сбой генерации отчёта
             // не должен оставить контейнеры висеть. Только проект этой сборки: down -v удаляет
-            // его контейнеры, сеть и тома, --rmi local — собранный для него образ qa-framework
-            // (скачанные образы Selenium не трогаются). Никаких prune: они глобальны.
+            // его контейнеры, сеть и тома. Образ QA_IMAGE остаётся — это кэш для следующей
+            // сборки (--rmi не нужен). Никаких prune: они глобальны.
             // Проверка имени — страховка: пустое имя означало бы проект ilcarro-tests
             // из docker-compose.yml, то есть локальный стенд
             sh '''
                 case "$COMPOSE_PROJECT_NAME" in
-                    ilcarro-jenkins-*) docker compose down -v --remove-orphans --rmi local \
+                    ilcarro-jenkins-*) docker compose down -v --remove-orphans \
                         || echo "ВНИМАНИЕ: уборка проекта $COMPOSE_PROJECT_NAME не удалась — проверь docker ps -a" ;;
                     *) echo "ВНИМАНИЕ: неожиданное имя compose-проекта '$COMPOSE_PROJECT_NAME' — уборка пропущена" ;;
+                esac
+            '''
+            // Старые версии образа этого job. Пересборка переносит имя QA_IMAGE на новый образ,
+            // прежний остаётся без имени (dangling), но с меткой ilcarro.jenkins.image — по ней
+            // и удаляем. Сам QA_IMAGE (у него есть имя) и чужие образы фильтр не выбирает.
+            // Образ, который ещё держит контейнер, docker image rm без -f не удалит — это не ошибка
+            sh '''
+                case "$QA_IMAGE" in
+                    ilcarro-jenkins-*)
+                        old="$(docker image ls -q --filter dangling=true --filter "label=ilcarro.jenkins.image=$QA_IMAGE")"
+                        if [ -n "$old" ]; then
+                            echo "Удаляем старые версии образа $QA_IMAGE: $old"
+                            docker image rm $old || echo "ВНИМАНИЕ: часть старых версий $QA_IMAGE удалить не удалось"
+                        fi
+                        docker image ls --filter "label=ilcarro.jenkins.image=$QA_IMAGE" ;;
+                    *) echo "ВНИМАНИЕ: неожиданное имя образа '$QA_IMAGE' — уборка старых версий пропущена" ;;
                 esac
             '''
 
