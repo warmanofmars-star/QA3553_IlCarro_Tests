@@ -16,7 +16,7 @@ pytestmark = [pytest.mark.api, pytest.mark.security]
 @allure.story("Authentication (Tokens)")
 @allure.severity(allure.severity_level.BLOCKER)
 @pytest.mark.parametrize(
-    "token_strategy, expected_status, scenario",
+    "auth_case, expected_status, scenario",
     [
         pytest.param(
             "empty",
@@ -28,7 +28,7 @@ pytestmark = [pytest.mark.api, pytest.mark.security]
         ("wrong_scheme", 401, "Неверная схема (Basic вместо Bearer)"),
     ],
 )
-def test_api_security_auth_tokens(token_strategy, expected_status, scenario):
+def test_api_security_auth_tokens(auth_case, expected_status, scenario):
     """
     Проверка того, как сервер отбивает неавторизованные запросы
     с разными проблемами в заголовке Authorization.
@@ -36,9 +36,9 @@ def test_api_security_auth_tokens(token_strategy, expected_status, scenario):
     # Сценарий "empty": клиент без заголовка Authorization — настраивать нечего
     api = IlCarroAPI()
 
-    if token_strategy == "invalid":
+    if auth_case == "invalid":
         api.session.headers.update({"Authorization": "Bearer fake_invalid_token_123"})
-    elif token_strategy == "wrong_scheme":
+    elif auth_case == "wrong_scheme":
         temp_user = UserGenerator.get_random_user()
         res = api.register(temp_user.email, temp_user.password)
         require(res.status_code == 200, f"Не удалось зарегистрировать пользователя для сценария: {res.text}")

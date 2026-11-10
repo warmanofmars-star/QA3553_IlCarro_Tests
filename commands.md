@@ -139,6 +139,11 @@ ruff format .              # отформатировать
 `pre-commit run gitleaks --all-files` — только изменения для коммита; вся история — бинарником
 gitleaks: `gitleaks git --redact -v .`
 
+**Проверить результаты Allure на секреты (как CI перед публикацией отчёта):**
+`python scripts/scan_report_secrets.py allure-results` — JWT и незамаскированные параметры
+с `password`/`token`/`secret` в имени; печатает только файл, поле и количество. Код 0 — чисто,
+1 — найдено, 2 — нет результатов.
+
 **Обновить версии хуков (осознанно, затем выровнять версии в requirements-dev.txt и job lint):**
 `pre-commit autoupdate`
 
@@ -162,7 +167,8 @@ selenium [chrome,        │      │
 - `split-check` — собирает тесты без запуска и проверяет, что разбиение дополняющее.
 - `api-and-playwright` — `-m "not selenium"`, один раз, в Docker без Grid.
 - `selenium` — `-m "selenium"`, матрица из трёх браузеров через Selenium Grid.
-- `report` — склеивает результаты, подтягивает историю с опубликованного отчёта, генерирует отчёт
+- `report` — склеивает результаты, проверяет их на секреты (`scripts/scan_report_secrets.py`: находка —
+  job красный, отчёт не генерируется и не публикуется), подтягивает историю с опубликованного отчёта, генерирует отчёт
   и сохраняет его артефактом `allure-report` (для PR — единственный способ его посмотреть:
   скачать, распаковать, `allure open allure-report`). Собирается и при упавших тестах.
 - `deploy` — публикует отчёт на GitHub Pages; только из `main` (push или ручной запуск).
@@ -241,7 +247,9 @@ Prepare ─► API and Playwright ─► Selenium (Grid) ─► post: уборк
   `dangling=true` + `label=ilcarro.jenkins.image=<QA_IMAGE>`. На диске остаётся один образ на job.
   Скачанные образы Selenium и базовый образ Python остаются (общий кэш).
 
-**Отчёт:** плагин Allure (как в Phonebook), ссылка **Allure Report** на странице сборки; историю
+**Отчёт:** перед публикацией — проверка на секреты (`scripts/scan_report_secrets.py`, запускается в образе
+с тестами: Python в образ Jenkins не ставится); находка — сборка `FAILURE`, отчёт не публикуется.
+Плагин Allure (как в Phonebook), ссылка **Allure Report** на странице сборки; историю
 трендов плагин хранит сам. О прогонах на `main` в Telegram сообщает GitHub Actions, Jenkins — нет.
 
 **Найти и убрать остатки упавшей сборки** (обычно не нужно — уборка в `post`):

@@ -185,7 +185,7 @@ and manually (`workflow_dispatch` with an optional `test_marker`). Jobs:
 | `split-check` | [`scripts/check_ci_split.py`](scripts/check_ci_split.py): the `selenium` and `not selenium` selections are non-empty, do not overlap and together cover all tests (27 + 25 = 52) |
 | `api-and-playwright` | `-m "not selenium"` once, in Docker without the Grid |
 | `selenium` | `-m "selenium"`, matrix chrome / firefox / edge, each in Docker Compose with the Grid |
-| `report` | merges the results ([`scripts/merge_allure_results.py`](scripts/merge_allure_results.py)), takes the trend history from the published report, generates the Allure report and keeps it as an artifact |
+| `report` | merges the results ([`scripts/merge_allure_results.py`](scripts/merge_allure_results.py)), checks them for secrets ([`scripts/scan_report_secrets.py`](scripts/scan_report_secrets.py); a finding fails the job and nothing is generated or published), takes the trend history from the published report, generates the Allure report and keeps it as an artifact |
 | `deploy` | publishes the report to GitHub Pages — only from `main` |
 | `notify-report` / `notify-failure` | Telegram message after a successful deploy, or when any job failed — only for `main` |
 
@@ -199,7 +199,8 @@ runs on `main` wait in a queue.
 [`Jenkinsfile`](Jenkinsfile): parameters `BROWSER` (chrome / firefox / edge) and `TEST_MARKER`; stages
 `Prepare` → `API and Playwright` → `Selenium (Grid)`, the same split as in GitHub Actions. Each build gets
 its own Docker Compose project and is cleaned up afterwards. Failed tests mark the build `UNSTABLE`,
-infrastructure errors `FAILURE`; the report is published by the Allure plugin. The build also fails if the
+infrastructure errors `FAILURE`; the report is published by the Allure plugin after the same secrets check
+(a finding marks the build `FAILURE` and the report is not published). The build also fails if the
 browser or marker that actually reached pytest differs from the build parameters. Triggered by a GitHub
 webhook (through ngrok) on push to `main` or by **Build with Parameters**.
 Setup: [`docs/jenkins-setup.md`](docs/jenkins-setup.md) *(in Russian)*.
@@ -216,6 +217,11 @@ Setup: [`docs/jenkins-setup.md`](docs/jenkins-setup.md) *(in Russian)*.
   Markdown files point to existing files and headings.
 - The same ruff and gitleaks versions run in the CI `lint` job; gitleaks there scans the whole history.
 - `pip check` runs during the Docker image build, so incompatible package versions fail the build.
+- **No secrets in the public report.** Steps that handle a password do not take it as an `@allure.step`
+  argument, `User.password` is excluded from `repr` (tracebacks), and parametrize arguments named like
+  `password`, `token` or `secret` are masked by an autouse fixture in [`conftest.py`](conftest.py).
+  [`scripts/scan_report_secrets.py`](scripts/scan_report_secrets.py) checks the results for JWTs and
+  unmasked secret parameters before the report is published in GitHub Actions and Jenkins.
 
 ```bash
 pre-commit install            # once after cloning

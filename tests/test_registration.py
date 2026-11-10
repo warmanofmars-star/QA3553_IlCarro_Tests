@@ -84,13 +84,13 @@ def test_registration_negative_fields(driver, field_name, invalid_value, expecte
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.tag("REQ-AUTH-04", "REQ-UI-REG-03")
 @pytest.mark.parametrize(
-    "password_strategy, scenario",
+    "registration_case, scenario",
     [
         ("same_password", "Занятый email + Тот же пароль"),
         ("new_valid_password", "Занятый email + Другой пароль (валидный и для фронта, и для API)"),
     ],
 )
-def test_registration_existing_user(driver, temp_user, password_strategy, scenario):
+def test_registration_existing_user(driver, temp_user, registration_case, scenario):
     """
     Повторная регистрация занятого email отклоняется (REQ-AUTH-04), окно «Registration failed»
     показывает текст ошибки сервера (REQ-UI-REG-03). Пароль проходит правила и фронта, и API
@@ -103,7 +103,7 @@ def test_registration_existing_user(driver, temp_user, password_strategy, scenar
         existing_user = temp_user.user
 
         # 2. Определяем пароль для попытки повторной регистрации
-        if password_strategy == "same_password":
+        if registration_case == "same_password":
             actual_password = existing_user.password
         else:
             actual_password = UserGenerator.generate_valid_password()
