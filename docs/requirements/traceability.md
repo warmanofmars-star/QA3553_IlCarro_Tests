@@ -142,7 +142,7 @@
 | REQ-UI-SEARCH-04 | Пагинация выдачи — на стороне клиента: `page` и `size` в URL, 10, 20 или 50 карточек на странице. | — | — | 🕓 запланирован (PR 6.3) |
 | REQ-UI-SEARCH-05 | Цена на карточке показывается с одним знаком после запятой. | `test_playwright_mocking.py::test_mock_search_results`<br>`test_search.py::test_search_form_dynamic` | — | ✅ покрыт |
 | REQ-UI-SEARCH-06 | Поле дат только для чтения: даты выбираются в календаре, который открывается кликом по полю и закрывается кликом вне календаря. | `test_calendar.py::test_calendar_ui_and_close`<br>`test_search.py::test_search_dates_readonly_protection` | — | ✅ покрыт |
-| REQ-UI-SEARCH-07 | Календарь листается по месяцам вперёд и назад кнопками со стрелками. | `test_calendar.py::test_calendar_month_navigation` | — | ✅ покрыт |
+| REQ-UI-SEARCH-07 | Календарь поиска показывает стандартный интерфейс react-date-range: месяцы листаются кнопками со стрелками в пределах `minDate`…`maxDate` (REQ-UI-SEARCH-02), сегодняшний день отмечен (класс `rdrDayToday`). | `test_calendar.py::test_calendar_ui_and_close`<br>`test_calendar.py::test_calendar_month_navigation` | — | ✅ покрыт |
 
 ### 2.5 Страница машины (UI-CARPAGE)
 
