@@ -14,6 +14,7 @@
 ЧТО проверяет набор тестов, а не результат последнего прогона. Браузер, Grid и сеть не нужны.
 
 Несогласованные данные — ошибка в любом режиме (код 2), все находки печатаются разом:
+  * тест без единого тега требования;
   * тег с ID, которого нет в requirements.md;
   * ID без теста и без записи в исключениях;
   * ID и с тестом, и с записью в исключениях любой категории, кроме partial;
@@ -219,6 +220,13 @@ def build_rows(tests: list[CollectedTest]) -> tuple[list[Row], list[str]]:
     problems: list[str] = []
 
     for test in tests:
+        # Тест без тега не виден в матрице: непонятно, ради какого пункта он существует
+        if not test.tags:
+            problems.append(
+                f"{test.name}: нет ни одного тега REQ-…/DISC-…/OBS-…. Поставь @allure.tag с ID пункта, который "
+                "проверяет assert теста; подходящего пункта нет — сначала его добавляют в requirements.md "
+                "(решает пользователь)"
+            )
         if test.foreign_xfail:
             problems.append(
                 f"{test.name}: xfail не из реестров. Ожидаемое падение оформляется только через "
@@ -367,7 +375,6 @@ class Renderer:
     # ---------- разделы ----------
     def summary(self) -> list[str]:
         categories, planned, partial = count_exceptions(self.rows)
-        tagged = sum(1 for test in self.tests if test.tags)
         lines = [
             "## Сводка",
             "",
@@ -384,8 +391,7 @@ class Renderer:
             + ".",
             f"- **Известные баги:** {len(KNOWN_BUGS)} в реестре `data/known_bugs.py`; "
             f"**наблюдения:** {len(OBSERVATIONS)} в реестре `data/observations.py`.",
-            f"- **Автотесты:** собрано {len(self.tests)}, из них с тегами требований — {tagged}, "
-            f"без тегов — {len(self.tests) - tagged} (список — в конце документа).",
+            f"- **Автотесты:** {len(self.tests)}, у каждого есть тег хотя бы одного пункта.",
         ]
         return lines
 
@@ -440,19 +446,6 @@ class Renderer:
                 lines.append(f"| {row.item.id} | {_cell(row.exception.reason)} | {row.exception.pr} |")
         return lines
 
-    def untagged_section(self) -> list[str]:
-        untagged = [test for test in self.tests if not test.tags]
-        lines = [
-            "## Тесты без тегов требований",
-            "",
-            "Эти тесты проверяют поведение, для которого в `requirements.md` нет пункта. ID для них",
-            "не придумывают: нужен пункт — его сначала добавляют в `requirements.md`.",
-            "",
-        ]
-        cell = self.tests_cell(untagged)
-        lines += [f"- {line}" for line in cell.split("<br>")] if untagged else ["Таких тестов нет."]
-        return lines
-
     def render(self) -> str:
         lines = [
             "# Матрица трассируемости требований",
@@ -488,8 +481,6 @@ class Renderer:
             *self.requirement_sections(),
             "",
             *self.exceptions_section(),
-            "",
-            *self.untagged_section(),
         ]
         return "\n".join(lines) + "\n"
 
@@ -499,7 +490,6 @@ class Renderer:
 # ==========================================
 def render_readme_block(rows: list[Row], tests: list[CollectedTest]) -> str:
     categories, planned, partial = count_exceptions(rows)
-    tagged = sum(1 for test in tests if test.tags)
     exceptions = "; ".join(f"{CATEGORY_TITLES_EN[category]} — {n}" for category, n in categories.items())
     plans = ", ".join(f"{n} in step {pr} ({PLANNED_PRS_EN[pr]})" for pr, n in planned.items())
     partly = ", ".join(f"{n} in step {pr}" for pr, n in partial.items())
@@ -507,7 +497,7 @@ def render_readme_block(rows: list[Row], tests: list[CollectedTest]) -> str:
         *_summary_table(rows, "Status", STATUS_TITLES_EN, "Total"),
         "",
         f"Exceptions: {exceptions}. Planned: {plans}. The rest of the partly covered items: {partly}.",
-        f"{tagged} of {len(tests)} tests reference at least one ID.",
+        f"All {len(tests)} tests reference at least one ID (a test without one fails the check).",
     ]
     return "\n".join(lines)
 

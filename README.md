@@ -114,7 +114,7 @@ The table is generated — do not edit it by hand:
 | **Total** | 53 | 8 | 11 | 72 |
 
 Exceptions: the check would harm the shared backend — 1; blocked by another defect — 1; the feature is unreachable — 2. Planned: 17 in step 6.2 (API), 22 in step 6.3 (UI and observations). The rest of the partly covered items: 2 in step 6.2, 5 in step 6.3.
-51 of 51 tests reference at least one ID.
+All 51 tests reference at least one ID (a test without one fails the check).
 <!-- coverage:end -->
 
 The full matrix — every ID with its tests, registry key and status, plus the list of exceptions and
@@ -126,8 +126,8 @@ python scripts/coverage_matrix.py           # regenerate the matrix and the tabl
 python scripts/coverage_matrix.py --check   # what CI and the pre-commit hook run
 ```
 
-`--check` fails if the matrix or the table above is out of date, if a test references an ID that does
-not exist, if an ID has neither a test nor an exception (or has both), and if a test marked as a known
+`--check` fails if the matrix or the table above is out of date, if a test has no requirement ID or
+references an ID that does not exist, if an ID has neither a test nor an exception (or has both), and if a test marked as a known
 bug or an observation does not carry exactly the IDs of its registry entry.
 
 ## Tech stack
