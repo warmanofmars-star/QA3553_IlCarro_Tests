@@ -1,3 +1,5 @@
+import base64
+
 import allure
 import pytest
 
@@ -53,6 +55,43 @@ def test_api_security_auth_tokens(auth_case, expected_status, scenario):
         assert response.status_code == expected_status, (
             f"УЯЗВИМОСТЬ: Ожидался статус {expected_status}, получен {response.status_code}"
         )
+
+
+# Признаки деталей реализации в тексте ошибки: имя технологии и тексты её парсера (Q-API-09)
+IMPLEMENTATION_DETAILS = ("jwt", "malformed", "period characters", "exception", "io.jsonwebtoken")
+
+
+@pytest.mark.regression
+@allure.epic("API Testing")
+@allure.feature("Security")
+@allure.story("Error Messages Disclosure")
+@allure.severity(allure.severity_level.NORMAL)
+@known_bug("JWT_DETAILS_IN_ERROR")
+@allure.tag("REQ-SEC-03")
+@pytest.mark.parametrize(
+    "auth_case, authorization",
+    [
+        pytest.param("garbage_bearer", "Bearer garbage.token.value", id="garbage_bearer"),
+        # base64 строки без точек: для парсера JWT — «строка без двух точек» (Q-API-09)
+        pytest.param("basic_scheme", f"Basic {base64.b64encode(b'probe:probe').decode()}", id="basic_scheme"),
+    ],
+)
+def test_api_security_invalid_token_error_text(auth_case, authorization):
+    """Текст ошибки на невалидный токен не раскрывает, чем и как сервер разбирает токен (OWASP API8:2023)."""
+    api = IlCarroAPI()
+    api.session.headers.update({"Authorization": authorization})
+
+    with allure.step(f"Сценарий {auth_case}: запрос списка своих машин"):
+        response = api.get_my_cars()
+
+    with allure.step("Предусловие: сервер отклонил токен с 401"):
+        # Код ответа — отдельное требование REQ-SEC-02; без отказа проверять текст ошибки нечего
+        require(response.status_code == 401, f"Ожидался отказ 401, получен {response.status_code} {response.text}")
+
+    with allure.step("Проверка: в тексте ошибки нет деталей реализации"):
+        text = response.text.lower()
+        found = [marker for marker in IMPLEMENTATION_DETAILS if marker in text]
+        assert not found, f"Текст ошибки раскрывает детали реализации {found}: {response.text}"
 
 
 @pytest.mark.smoke

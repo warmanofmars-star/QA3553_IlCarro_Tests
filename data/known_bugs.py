@@ -78,6 +78,27 @@ KNOWN_BUGS: dict[str, KnownBug] = {
             'а окно ошибки показывает "[object Object]"'
         ),
     ),
+    "LOGIN_BODY_NOT_VALIDATED": KnownBug(
+        refs=("REQ-AUTH-07",),
+        description=(
+            "Вход с телом не по контракту (пустой объект {}, пароль не по шаблону) отвечает 401 "
+            '"Login or Password incorrect" вместо 400 (Q-API-07)'
+        ),
+    ),
+    "LOGIN_EMAIL_CASE_SENSITIVE": KnownBug(
+        refs=("DISC-03",),
+        description=(
+            "Регистрация приводит email к нижнему регистру, вход — нет: вход тем же email с заглавными "
+            "буквами, с которым прошла регистрация, отвечает 401 (Q-API-06)"
+        ),
+    ),
+    "JWT_DETAILS_IN_ERROR": KnownBug(
+        refs=("REQ-SEC-03",),
+        description=(
+            'Ответ на невалидный токен раскрывает тексты парсера JWT: "Malformed JWT JSON…", '
+            '"JWT strings must contain exactly 2 period characters" (Q-API-09)'
+        ),
+    ),
 }
 
 _ALLOWED_PREFIXES = ("REQ-", "DISC-")

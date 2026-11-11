@@ -101,10 +101,6 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
         ),
     ),
     # ---------- Покрыто частично: тест есть, остальное доберёт шаг плана ----------
-    "REQ-AUTH-04": _partial(
-        "6.2",
-        "Код 400. UI-тест test_registration_existing_user проверяет только текст «User already exists» в окне",
-    ),
     "REQ-CAR-02": _partial(
         "6.2",
         "Обязательность serialNumber, year, fuel, seats, pricePerDay и city: тест мутаций проверяет "
@@ -126,18 +122,6 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
     ),
     "REQ-UI-SEARCH-02": _partial("6.3", "Верхняя граница: дни позже «сегодня + 365 дней» недоступны"),
     # ---------- Запланировано: 6.2 (API) ----------
-    "REQ-AUTH-01": _planned(
-        "6.2",
-        "Регистрация: 200 и accessToken. Сейчас это только предусловие фикстуры temp_user (require), а не проверка",
-    ),
-    "REQ-AUTH-02": _planned("6.2", "Регистрация без обязательных полей и с пустыми значениями: 400"),
-    "REQ-AUTH-03": _planned("6.2", "Регистрация с паролем не по шаблону Swagger: 400"),
-    "REQ-AUTH-05": _planned("6.2", "Вход с верными данными: 200 и accessToken"),
-    "REQ-AUTH-06": _planned("6.2", "Вход с неверным паролем и несуществующим пользователем: 401"),
-    "REQ-AUTH-07": _planned(
-        "6.2",
-        "Вход с телом не по контракту: 400. Требование нарушается (401, Q-API-07) — нужна запись в known_bugs.py",
-    ),
     "REQ-CAR-05": _planned(
         "6.2",
         "Повтор serialNumber: 400. UI-тесты дубликата видят только общий текст «Failed to submit car» (OBS-07), "
@@ -160,16 +144,6 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
         "6.2",
         "Список городов без токена: 200, элементы {city, lat, lng}. Сейчас запрос городов — только предусловие "
         "теста словарей",
-    ),
-    "REQ-SEC-03": _planned(
-        "6.2",
-        "Текст ошибки при невалидном токене не содержит текстов парсера JWT. Требование нарушается (Q-API-09) — "
-        "нужна запись в known_bugs.py. Стоп-слова assert_secure_error это нарушение не ловят",
-    ),
-    "DISC-03": _planned(
-        "6.2",
-        "Вход через API тем же email с заглавными буквами, с которым прошла регистрация. Расхождение "
-        "подтверждено (Q-API-06) — нужна запись в known_bugs.py",
     ),
     "DISC-08": _planned(
         "6.2",
