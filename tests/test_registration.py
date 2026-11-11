@@ -18,6 +18,7 @@ pytestmark = pytest.mark.ui
 @allure.feature("Registration Page")
 @allure.story("Navigation")
 @allure.severity(allure.severity_level.NORMAL)
+@allure.tag("REQ-UI-REG-04")
 def test_navigation_to_registration(driver):
     registration_page = RegistrationPage(driver)
     registration_page.open_main_page()

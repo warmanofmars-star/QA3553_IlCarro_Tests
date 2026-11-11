@@ -29,19 +29,19 @@
 
 | Статус | REQ | DISC | OBS | Всего |
 |---|---:|---:|---:|---:|
-| ✅ покрыт | 9 | 0 | 0 | 9 |
+| ✅ покрыт | 12 | 0 | 0 | 12 |
 | 🟡 частично | 7 | 0 | 0 | 7 |
 | 🐞 покрыт как известный баг | 7 | 2 | 0 | 9 |
 | 👁 покрыт как наблюдение | 0 | 0 | 1 | 1 |
 | ⚪ исключение | 3 | 1 | 0 | 4 |
 | 🕓 запланирован | 24 | 5 | 10 | 39 |
-| **Всего** | 50 | 8 | 11 | 69 |
+| **Всего** | 53 | 8 | 11 | 72 |
 
 - **Исключения по категориям:** вредит общему бэкенду — 1; заблокировано другим дефектом — 1; функциональность недостижима — 2.
 - **Запланировано:** PR 6.2 (API) — 17; PR 6.3 (UI и наблюдения) — 22.
 - **Покрыто частично, доработка:** PR 6.2 (API) — 2; PR 6.3 (UI и наблюдения) — 5.
 - **Известные баги:** 8 в реестре `data/known_bugs.py`; **наблюдения:** 1 в реестре `data/observations.py`.
-- **Автотесты:** собрано 51, из них с тегами требований — 47, без тегов — 4 (список — в конце документа).
+- **Автотесты:** собрано 51, из них с тегами требований — 51, без тегов — 0 (список — в конце документа).
 
 ## Требования и тесты
 
@@ -113,6 +113,7 @@
 | REQ-UI-REG-01 | Поля проверяются до отправки: Name, Last name, Email (формат), Password (не короче 6, буква и цифра), согласие с условиями. | `test_registration.py::test_registration_negative_fields`<br>`test_registration.py::test_registration_without_check_box` | — | ✅ покрыт |
 | REQ-UI-REG-02 | После успешной регистрации — окно «Registered» / «You are logged in success»; пользователь залогинен. | `test_registration.py::test_registration_success` | — | 🟡 частично — не покрыто: Что пользователь после регистрации залогинен (токен, «Log out» в навигации): тест проверяет только тексты окна (PR 6.3) |
 | REQ-UI-REG-03 | При ответе 400 окно «Registration failed» показывает текст ошибки сервера. | `test_registration.py::test_registration_existing_user`<br>`test_registration.py::test_registration_password_rejected_by_api` | `PASSWORD_RULES_MISMATCH` | 🐞 покрыт как известный баг |
+| REQ-UI-REG-04 | Гость видит в навигации ссылку «Sign up»; она ведёт на форму регистрации `/register`. | `test_registration.py::test_navigation_to_registration` | — | ✅ покрыт |
 
 ### 2.2 Вход (UI-LOGIN)
 
@@ -140,6 +141,8 @@
 | REQ-UI-SEARCH-03 | Подсказка города показывает до 8 вариантов из списка фронтенда; город можно ввести вручную. | — | — | 🕓 запланирован (PR 6.3) |
 | REQ-UI-SEARCH-04 | Пагинация выдачи — на стороне клиента: `page` и `size` в URL, 10, 20 или 50 карточек на странице. | — | — | 🕓 запланирован (PR 6.3) |
 | REQ-UI-SEARCH-05 | Цена на карточке показывается с одним знаком после запятой. | `test_playwright_mocking.py::test_mock_search_results`<br>`test_search.py::test_search_form_dynamic` | — | ✅ покрыт |
+| REQ-UI-SEARCH-06 | Поле дат только для чтения: даты выбираются в календаре, который открывается кликом по полю и закрывается кликом вне календаря. | `test_calendar.py::test_calendar_ui_and_close`<br>`test_search.py::test_search_dates_readonly_protection` | — | ✅ покрыт |
+| REQ-UI-SEARCH-07 | Календарь листается по месяцам вперёд и назад кнопками со стрелками. | `test_calendar.py::test_calendar_month_navigation` | — | ✅ покрыт |
 
 ### 2.5 Страница машины (UI-CARPAGE)
 
@@ -265,7 +268,4 @@
 Эти тесты проверяют поведение, для которого в `requirements.md` нет пункта. ID для них
 не придумывают: нужен пункт — его сначала добавляют в `requirements.md`.
 
-- `test_calendar.py::test_calendar_ui_and_close`
-- `test_calendar.py::test_calendar_month_navigation`
-- `test_registration.py::test_navigation_to_registration`
-- `test_search.py::test_search_dates_readonly_protection`
+Таких тестов нет.

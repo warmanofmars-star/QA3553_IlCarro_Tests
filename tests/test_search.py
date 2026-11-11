@@ -90,6 +90,7 @@ def test_search_empty_city_validation(driver):
 @allure.feature("Search Page")
 @allure.story("Negative Search - Dates Manual Input Blocked")
 @allure.severity(allure.severity_level.NORMAL)
+@allure.tag("REQ-UI-SEARCH-06")
 def test_search_dates_readonly_protection(driver):
     search_page = SearchPage(driver)
     search_page.open()

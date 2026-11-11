@@ -98,23 +98,23 @@ at the time of writing; the published Allure report shows the latest run on `mai
 
 ## Requirements traceability
 
-Each of the 69 items in `requirements.md` (50 `REQ`, 8 `DISC`, 11 `OBS`) is either referenced by a test
+Each of the 72 items in `requirements.md` (53 `REQ`, 8 `DISC`, 11 `OBS`) is either referenced by a test
 or listed in [`data/coverage_exceptions.py`](data/coverage_exceptions.py) with a category and a reason.
 The table is generated — do not edit it by hand:
 
 <!-- coverage:start -->
 | Status | REQ | DISC | OBS | Total |
 |---|---:|---:|---:|---:|
-| ✅ Covered by a passing test | 9 | 0 | 0 | 9 |
+| ✅ Covered by a passing test | 12 | 0 | 0 | 12 |
 | 🟡 Partly covered by a passing test, the rest is planned | 7 | 0 | 0 | 7 |
 | 🐞 Covered, the test hits a known bug (strict xfail) | 7 | 2 | 0 | 9 |
 | 👁 Covered as an observation (strict xfail) | 0 | 0 | 1 | 1 |
 | ⚪ No test — exception with a recorded reason | 3 | 1 | 0 | 4 |
 | 🕓 No test yet — planned | 24 | 5 | 10 | 39 |
-| **Total** | 50 | 8 | 11 | 69 |
+| **Total** | 53 | 8 | 11 | 72 |
 
 Exceptions: the check would harm the shared backend — 1; blocked by another defect — 1; the feature is unreachable — 2. Planned: 17 in step 6.2 (API), 22 in step 6.3 (UI and observations). The rest of the partly covered items: 2 in step 6.2, 5 in step 6.3.
-47 of 51 tests reference at least one ID.
+51 of 51 tests reference at least one ID.
 <!-- coverage:end -->
 
 The full matrix — every ID with its tests, registry key and status, plus the list of exceptions and
