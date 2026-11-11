@@ -12,7 +12,7 @@
 
 | Файл | Что делает |
 |------|-----------|
-| `explore_api.py` | Вопросы Q-API-01 … Q-API-12: запросы к бэкенду через `requests` |
+| `explore_api.py` | Вопросы Q-API-01 … Q-API-17: запросы к бэкенду через `requests` |
 | `explore_ui.py` | Вопросы Q-UI-01 … Q-UI-14: Playwright (sync API, headless) |
 | `common.py` | Общие функции: запросы, временные пользователи, маскирование токенов, чистка |
 | `evidence/` | Логи прогонов и скриншоты. В git не хранятся (`.gitignore`), создаются скриптами |
@@ -29,6 +29,7 @@ python research/explore_api.py --run 1
 python research/explore_ui.py  --run 1
 ```
 
+- `--only Q-API-13,Q-API-14` — выполнить только перечисленные вопросы (пробы нового шага без повтора старых).
 - `--run N` — номер прогона; лог пишется в `research/evidence/explore_<api|ui>_run<N>.log`.
   Чтобы сравнить два прогона: `diff research/evidence/explore_api_run1.log research/evidence/explore_api_run2.log`.
 - Базовые адреса берутся из `API_BASE_URL` и `UI_BASE_URL` (по умолчанию как в тестах проекта).
