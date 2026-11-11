@@ -14,7 +14,10 @@ logger = logging.getLogger(__name__)
 pytestmark = pytest.mark.ui
 
 
+# Гибридный: машина создаётся через API, поиск идёт в UI. Отдельный test_hybrid_car_search проверял
+# то же самое без проверки кнопки и слит с этим тестом
 @pytest.mark.smoke
+@pytest.mark.hybrid
 @allure.epic("UI Testing")
 @allure.feature("Search Page")
 @allure.story("Search Cars Dynamic Flow")

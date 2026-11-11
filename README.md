@@ -4,7 +4,7 @@
 **Live Allure report:** [warmanofmars-star.github.io/QA3553_IlCarro_Tests](https://warmanofmars-star.github.io/QA3553_IlCarro_Tests/)
 
 UI and API test automation for **IlCarro**, a training car-rental web application:
-**52 tests** (19 API, 33 UI) in Python + pytest, Selenium and Playwright. They run locally,
+**51 tests** (19 API, 32 UI) in Python + pytest, Selenium and Playwright. They run locally,
 in Docker with Selenium Grid 4 (Chrome, Firefox, Edge), in GitHub Actions and in a self-hosted Jenkins.
 
 - UI: <https://icarro-v1.netlify.app>
@@ -23,11 +23,11 @@ Project documentation other than this README is written in Russian; such links a
 |---|---|---:|
 | **API** | registration and login, adding and deleting cars, booking, dictionaries (cities) | 19 (`-m api`) |
 | **API security** | missing / invalid token, BOLA (deleting another user's car), mass assignment of `owner` and `bookedPeriods`, unsupported method and content type | 15 (`-m security`, some UI form checks included) |
-| **UI (Selenium)** | registration, login, adding a car, search, the date picker | 27 (`-m selenium`) |
+| **UI (Selenium)** | registration, login, adding a car, search, the date picker | 26 (`-m selenium`) |
 | **UI (Playwright)** | login, adding a car, search with a mocked backend response (`page.route`) | 6 (`-m playwright`) |
 | **Hybrid** | data prepared via API (a user, a car), the scenario runs in the UI | 3 (`-m hybrid`) |
 
-Counts come from `pytest --collect-only -q -m <marker>`; areas overlap, so the column does not add up to 52.
+Counts come from `pytest --collect-only -q -m <marker>`; areas overlap, so the column does not add up to 51.
 The `selenium` and `playwright` markers are set automatically by a hook in [`conftest.py`](conftest.py)
 from the fixtures a test uses (`driver` / `authenticated_driver` and `page`), not by hand.
 
@@ -79,8 +79,8 @@ The application is not maintained, so defects stay. A selection — full lists a
 ## Current results
 
 ```bash
-pytest --collect-only -q                                                          # 52 tests collected
-USE_GRID=false ENABLE_CONSOLE_LOGS=false pytest tests/ -n 2 --browser_name=chrome # 41 passed, 11 xfailed
+pytest --collect-only -q                                                          # 51 tests collected
+USE_GRID=false ENABLE_CONSOLE_LOGS=false pytest tests/ -n 2 --browser_name=chrome # 40 passed, 11 xfailed
 ```
 
 **xfail in this project means "a documented defect is still there"**, not "a flaky or unfinished test".
@@ -114,7 +114,7 @@ The table is generated — do not edit it by hand:
 | **Total** | 50 | 8 | 11 | 69 |
 
 Exceptions: the check would harm the shared backend — 1; blocked by another defect — 1; the feature is unreachable — 2. Planned: 17 in step 6.2 (API), 22 in step 6.3 (UI and observations). The rest of the partly covered items: 2 in step 6.2, 5 in step 6.3.
-48 of 52 tests reference at least one ID.
+47 of 51 tests reference at least one ID.
 <!-- coverage:end -->
 
 The full matrix — every ID with its tests, registry key and status, plus the list of exceptions and
@@ -221,15 +221,15 @@ and manually (`workflow_dispatch` with an optional `test_marker`). Jobs:
 | Job | What it does |
 |---|---|
 | `lint` | `ruff check`, `ruff format --check`, gitleaks over the whole git history, and [`scripts/coverage_matrix.py --check`](scripts/coverage_matrix.py): the traceability matrix is consistent and up to date; runs in parallel with the tests |
-| `split-check` | [`scripts/check_ci_split.py`](scripts/check_ci_split.py): the `selenium` and `not selenium` selections are non-empty, do not overlap and together cover all tests (27 + 25 = 52) |
+| `split-check` | [`scripts/check_ci_split.py`](scripts/check_ci_split.py): the `selenium` and `not selenium` selections are non-empty, do not overlap and together cover all tests (26 + 25 = 51) |
 | `api-and-playwright` | `-m "not selenium"` once, in Docker without the Grid |
 | `selenium` | `-m "selenium"`, matrix chrome / firefox / edge, each in Docker Compose with the Grid |
 | `report` | merges the results ([`scripts/merge_allure_results.py`](scripts/merge_allure_results.py)), checks them for secrets ([`scripts/scan_report_secrets.py`](scripts/scan_report_secrets.py); a finding fails the job and nothing is generated or published), takes the trend history from the published report, generates the Allure report and keeps it as an artifact |
 | `deploy` | publishes the report to GitHub Pages — only from `main` |
 | `notify-report` / `notify-failure` | Telegram message after a successful deploy, or when any job failed — only for `main` |
 
-So every test runs in exactly one job: 25 once plus 27 × 3 browsers = 106 test runs per pipeline
-instead of 52 × 3 = 156. An empty selection fails the job (except for a manual run with a marker);
+So every test runs in exactly one job: 25 once plus 26 × 3 browsers = 103 test runs per pipeline
+instead of 51 × 3 = 153. An empty selection fails the job (except for a manual run with a marker);
 a failed test fails the job, `continue-on-error` is not used. A new run of a pull request cancels the previous one;
 runs on `main` wait in a queue.
 
