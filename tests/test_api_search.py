@@ -53,9 +53,9 @@ def test_api_search_without_token():
 @allure.story("Search by city")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.tag("REQ-SEARCH-02")
-def test_api_search_only_requested_city(create_car):
+def test_api_search_only_requested_city(shared_create_car):
     # Своя машина в городе: без неё пустая выдача прошла бы проверку «все машины из города» впустую
-    car = create_car(city=CITY)
+    car = shared_create_car(city=CITY)
 
     cars = _found_cars(IlCarroAPI().search_cars(CITY, *_dates()))
     require(car.reg_number in {found.get("serialNumber") for found in cars}, "Созданная машина не найдена поиском")
@@ -72,10 +72,10 @@ def test_api_search_only_requested_city(create_car):
 @allure.severity(allure.severity_level.NORMAL)
 @known_bug("SEARCH_PAGINATION_IGNORED")
 @allure.tag("DISC-08")
-def test_api_search_page_size(create_car):
+def test_api_search_page_size(shared_create_car):
     """Фронт передаёт в поиск page и size; с size=1 в ответе должна быть одна машина."""
     # Две свои машины: в выдаче города гарантированно больше одной машины
-    own = {create_car(city=CITY).reg_number, create_car(city=CITY).reg_number}
+    own = {shared_create_car(city=CITY).reg_number, shared_create_car(city=CITY).reg_number}
     start_date, end_date = _dates()
     api = IlCarroAPI()
 

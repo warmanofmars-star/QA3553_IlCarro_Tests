@@ -109,14 +109,13 @@ CAR_REQUIRED_FIELDS = {
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.tag("REQ-CAR-02")
 @pytest.mark.parametrize("field", CAR_REQUIRED_FIELDS)
-def test_api_car_required_field(auth_api, car_cleanup, field):
+def test_api_car_required_field(shared_api, shared_car_cleanup, field):
     """Без обязательного поля или с пустым значением машина не создаётся, ответ — 400.
 
-    Оба варианта — в одном тесте: так на поле нужен один временный пользователь, а не два.
-    Проблемы обоих вариантов собираются и выводятся вместе.
+    Пользователь общий (shared_user): тесту нужен только токен. Проблемы обоих вариантов
+    собираются и выводятся вместе.
     """
     problems = []
-    already_saved: set = set()  # машины, сохранённые предыдущим вариантом: чтобы не сообщать о них дважды
     empty_value = CAR_REQUIRED_FIELDS[field]
     for mode, mutate in (
         ("поле отсутствует", lambda payload: payload.pop(field)),
@@ -126,14 +125,14 @@ def test_api_car_required_field(auth_api, car_cleanup, field):
             payload = CarGenerator.get_random_car().to_api_payload()
             serial_number = payload["serialNumber"]
             # Машина не должна создаться; если создастся — очистка её уберёт
-            car_cleanup.register(serial_number)
+            shared_car_cleanup.register(serial_number)
             mutate(payload)
-            response = auth_api.add_car(payload)
+            before = set(my_cars(shared_api))
+            response = shared_api.add_car(payload)
 
-            # Пользователь новый, своих машин у него нет. Проверяем весь список, а не номер:
-            # машину без serialNumber по номеру не найти
-            saved = set(my_cars(auth_api)) - already_saved
-            already_saved |= saved
+            # Сравниваем список машин до и после запроса, а не ищем номер: машину без serialNumber
+            # по номеру не найти. Тесты воркера идут последовательно — чужих изменений в списке нет
+            saved = set(my_cars(shared_api)) - before
             if saved:
                 problems.append(
                     f"{mode}: машина сохранилась {sorted(map(str, saved))} ({response.status_code} {response.text})"

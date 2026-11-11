@@ -9,6 +9,7 @@ from jsonschema.exceptions import ValidationError
 from api.car_api import IlCarroAPI
 from data.data_generator import CarGenerator, SearchDataGenerator
 from data.known_bugs import known_bug
+from models.car import Car
 from schemas.car_schemas import GET_CARS_RESPONSE_SCHEMA, MESSAGE_RESPONSE_SCHEMA
 from utils.car_state import my_cars
 from utils.preconditions import require
@@ -91,16 +92,28 @@ def test_api_car_lifecycle(auth_api, car_cleanup):
         assert "Car deleted" in response_delete.json().get("message", ""), "Неверное сообщение при удалении"
 
 
+def _create_car_for(member, role: str) -> Car:
+    """Машина пользователя из user_pair; номер регистрируется в его очистке до запроса."""
+    car = CarGenerator.get_random_car()
+    member.cleanup.register(car.reg_number)
+    with allure.step(f"Setup: {role} создаёт машину {car.reg_number}"):
+        response = member.api.add_car(car.to_api_payload())
+        require(response.status_code == 200, f"Машина ({role}) не создана: {response.status_code} {response.text}")
+    member.cleanup.mark_created(car.reg_number)
+    return car
+
+
 @pytest.mark.regression
 @allure.epic("API Testing")
 @allure.feature("Car Controller")
 @allure.story("Unique serialNumber")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.tag("REQ-CAR-05")
-def test_api_car_duplicate_serial(auth_api, create_car, second_user):
+def test_api_car_duplicate_serial(user_pair):
     """serialNumber уникален во всей системе: повтор другим пользователем отклоняется с 400,
     исходная машина не меняется, у второго пользователя машина не появляется."""
-    car = create_car()
+    owner, second_user = user_pair
+    car = _create_car_for(owner, "владелец")
     # Если повтор примут, машина с этим номером окажется у второго пользователя — её уберёт его очистка
     second_user.cleanup.register(car.reg_number)
     duplicate = CarGenerator.get_random_car(reg_number=car.reg_number, model=f"Dup{car.model}")
@@ -109,7 +122,7 @@ def test_api_car_duplicate_serial(auth_api, create_car, second_user):
         response = second_user.api.add_car(duplicate.to_api_payload())
 
     with allure.step("Состояние: машина владельца не изменилась, у второго пользователя её нет"):
-        owner_cars = my_cars(auth_api)
+        owner_cars = my_cars(owner.api)
         require(car.reg_number in owner_cars, f"Машина {car.reg_number} пропала у владельца")
         assert owner_cars[car.reg_number].get("model") == car.model, (
             f"Повтор serialNumber перезаписал машину владельца: model={owner_cars[car.reg_number].get('model')!r}"
@@ -130,22 +143,22 @@ def test_api_car_duplicate_serial(auth_api, create_car, second_user):
 @allure.story("Supported cities")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.tag("REQ-CAR-06")
-def test_api_car_unsupported_city(auth_api, car_cleanup):
+def test_api_car_unsupported_city(shared_api, shared_car_cleanup):
     # Город есть в подсказке фронтенда, но не в /v1/cars/cities (Q-API-03)
     city = "Acre"
-    response_cities = auth_api.get_cities()
+    response_cities = shared_api.get_cities()
     require(response_cities.status_code == 200, f"Список городов недоступен: {response_cities.text}")
     api_cities = {item.get("city") for item in response_cities.json().get("cities", [])}
     require(city not in api_cities, f"Город {city} появился в /v1/cars/cities: нужен другой город не из списка")
 
     car = CarGenerator.get_random_car(city=city)
-    car_cleanup.register(car.reg_number)
+    shared_car_cleanup.register(car.reg_number)
 
     with allure.step(f"Создаём машину в городе {city}"):
-        response = auth_api.add_car(car.to_api_payload())
+        response = shared_api.add_car(car.to_api_payload())
 
     with allure.step("Состояние: машина не создана"):
-        assert car.reg_number not in my_cars(auth_api), (
+        assert car.reg_number not in my_cars(shared_api), (
             f"Машина в городе не из списка сохранилась. Ответ: {response.status_code} {response.text}"
         )
 
@@ -162,18 +175,14 @@ def test_api_car_unsupported_city(auth_api, car_cleanup):
 @allure.story("Get User cars")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.tag("REQ-CAR-07")
-def test_api_my_cars_only_own(auth_api, create_car, temp_user, second_user):
+def test_api_my_cars_only_own(user_pair):
     """У двух пользователей по машине: /v1/cars/my каждого отдаёт только его машины."""
-    own_car = create_car()
-    other_car = CarGenerator.get_random_car()
-    second_user.cleanup.register(other_car.reg_number)
-    with allure.step(f"Setup: второй пользователь создаёт машину {other_car.reg_number}"):
-        response = second_user.api.add_car(other_car.to_api_payload())
-        require(response.status_code == 200, f"Машина второго пользователя не создана: {response.text}")
-    second_user.cleanup.mark_created(other_car.reg_number)
+    owner, second_user = user_pair
+    own_car = _create_car_for(owner, "первый пользователь")
+    other_car = _create_car_for(second_user, "второй пользователь")
 
     for title, api, email, mine, foreign in (
-        ("владельца", auth_api, temp_user.user.email, own_car, other_car),
+        ("первого пользователя", owner.api, owner.user.email, own_car, other_car),
         ("второго пользователя", second_user.api, second_user.user.email, other_car, own_car),
     ):
         with allure.step(f"Проверка: /v1/cars/my {title} — только его машины"):
@@ -255,10 +264,10 @@ def _missing_serial() -> str:
 @allure.severity(allure.severity_level.NORMAL)
 @known_bug("BOOKING_UNKNOWN_CAR_200")
 @allure.tag("REQ-BOOK-02")
-def test_api_book_nonexistent_car(auth_api):
+def test_api_book_nonexistent_car(shared_api):
     start_date, end_date = SearchDataGenerator.get_safe_future_dates()
 
-    response = auth_api.book_car(_missing_serial(), start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
+    response = shared_api.book_car(_missing_serial(), start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
 
     with allure.step("Проверка: 404"):
         assert response.status_code == 404, (

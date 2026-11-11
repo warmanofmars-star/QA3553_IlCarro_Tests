@@ -295,20 +295,80 @@ def create_car(temp_user, car_cleanup):
     Все созданные машины удаляются после теста (см. car_cleanup). Ответ, отличный от 200, —
     сбой предусловия (require), а не найденный дефект.
     """
-    api = temp_user.api
+    return car_factory(temp_user.api, car_cleanup)
+
+
+@pytest.fixture(scope="session")
+def shared_user() -> TempUser:
+    """Один пользователь на процесс pytest (на воркер xdist) для тестов, которым нужен только токен.
+
+    Пользователей API удалить не умеет: каждый temp_user навсегда остаётся на общем бэкенде.
+    Тест, который находит свои данные по serialNumber и не судит о пользователе целиком (сколько
+    у него машин, его профиль, вход), берёт этого пользователя. Тесты одного воркера идут
+    последовательно, а свои машины каждый тест удаляет сам (shared_car_cleanup), поэтому
+    к началу теста у пользователя машин нет.
+    """
+    return _register_temp_user("общего пользователя")
+
+
+@pytest.fixture(scope="module")
+def _module_user_pair() -> tuple[TempUser, TempUser]:
+    """Два пользователя на модуль: регистрируются один раз, а не в каждом тесте (см. user_pair)."""
+    return _register_temp_user("первого пользователя пары"), _register_temp_user("второго пользователя пары")
+
+
+@pytest.fixture
+def user_pair(_module_user_pair, request) -> tuple[SecondUser, SecondUser]:
+    """Пара пользователей модуля для проверок «свой — чужой» (повтор serialNumber, /v1/cars/my).
+
+    Пользователи общие для тестов модуля, очистка машин — своя у каждого теста: к началу
+    следующего теста машин у пары нет.
+    """
+    test_name = request.node.nodeid
+    pair = tuple(
+        SecondUser(user=member.user, api=member.api, cleanup=CarCleanup(member.api, member.user.email, test_name))
+        for member in _module_user_pair
+    )
+    yield pair
+    for member in pair:
+        member.cleanup.run()
+
+
+@pytest.fixture
+def shared_api(shared_user) -> IlCarroAPI:
+    """API-клиент общего пользователя (см. shared_user)."""
+    return shared_user.api
+
+
+@pytest.fixture
+def shared_car_cleanup(shared_user, request):
+    """Очистка машин общего пользователя после теста — как car_cleanup у temp_user."""
+    cleanup = CarCleanup(shared_user.api, shared_user.user.email, request.node.nodeid)
+    yield cleanup
+    cleanup.run()
+
+
+@pytest.fixture
+def shared_create_car(shared_user, shared_car_cleanup):
+    """Фабрика машин общего пользователя — как create_car; машины удаляются после теста."""
+    return car_factory(shared_user.api, shared_car_cleanup)
+
+
+def car_factory(api: IlCarroAPI, cleanup: CarCleanup):
+    """Функция create_car для клиента api: машина регистрируется в cleanup до запроса создания."""
 
     def _create(*, extra_fields: dict | None = None, **overrides) -> Car:
         car = CarGenerator.get_random_car(**overrides)
         payload = car.to_api_payload() | (extra_fields or {})
         # Регистрируем до запроса: если ответ потеряется, а машина создастся, её всё равно удалят
-        car_cleanup.register(car.reg_number)
+        cleanup.register(car.reg_number)
         with allure.step(f"Setup: создание машины {car.reg_number} через API ({car.city})"):
             response = api.add_car(payload)
             require(
                 response.status_code == 200,
                 f"Предусловие: машина {car.reg_number} не создана: {response.status_code} {response.text}",
             )
-        car_cleanup.mark_created(car.reg_number)
+        cleanup.mark_created(car.reg_number)
         return car
 
     return _create
