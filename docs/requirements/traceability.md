@@ -29,19 +29,19 @@
 
 | Статус | REQ | DISC | OBS | Всего |
 |---|---:|---:|---:|---:|
-| ✅ покрыт | 18 | 0 | 0 | 18 |
-| 🟡 частично | 6 | 0 | 0 | 6 |
+| ✅ покрыт | 22 | 0 | 0 | 22 |
+| 🟡 частично | 5 | 0 | 0 | 5 |
 | 🐞 покрыт как известный баг | 9 | 3 | 0 | 12 |
 | 👁 покрыт как наблюдение | 0 | 0 | 1 | 1 |
 | ⚪ исключение | 3 | 1 | 0 | 4 |
-| 🕓 запланирован | 17 | 4 | 10 | 31 |
+| 🕓 запланирован | 14 | 4 | 10 | 28 |
 | **Всего** | 53 | 8 | 11 | 72 |
 
 - **Исключения по категориям:** вредит общему бэкенду — 1; заблокировано другим дефектом — 1; функциональность недостижима — 2.
-- **Запланировано:** PR 6.2 (API) — 9; PR 6.3 (UI и наблюдения) — 22.
-- **Покрыто частично, доработка:** PR 6.2 (API) — 1; PR 6.3 (UI и наблюдения) — 5.
+- **Запланировано:** PR 6.2 (API) — 6; PR 6.3 (UI и наблюдения) — 22.
+- **Покрыто частично, доработка:** PR 6.2 (API) — 0; PR 6.3 (UI и наблюдения) — 5.
 - **Известные баги:** 11 в реестре `data/known_bugs.py`; **наблюдения:** 1 в реестре `data/observations.py`.
-- **Автотесты:** 74, у каждого есть тег хотя бы одного пункта.
+- **Автотесты:** 86, у каждого есть тег хотя бы одного пункта.
 
 ## Требования и тесты
 
@@ -62,12 +62,12 @@
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
 | REQ-CAR-01 | Авторизованный пользователь добавляет машину: 200 и `message`; машина появляется в `/v1/cars/my` владельца. | `test_api_car.py::test_api_add_car_success`<br>`test_api_car.py::test_api_car_lifecycle` | — | ✅ покрыт |
-| REQ-CAR-02 | Обязательные поля `CarDto` (`serialNumber`, `manufacture`, `model`, `year`, `fuel`, `seats`, `carClass`, `pricePerDay`, `city`): без них или с пустым значением — 400. | `test_api_mutations.py::test_api_car_mutations` — `[lambda_mutation-400-Удаление обязательного поля (manufacture)-False]`; `[lambda_mutation-400-Пустая строка вместо значения (model)-False]`; `[lambda_mutation-400-Null вместо строки (carClass)-False]` | — | 🟡 частично — не покрыто: Обязательность serialNumber, year, fuel, seats, pricePerDay и city: тест мутаций проверяет manufacture, model и carClass (PR 6.2) |
+| REQ-CAR-02 | Обязательные поля `CarDto` (`serialNumber`, `manufacture`, `model`, `year`, `fuel`, `seats`, `carClass`, `pricePerDay`, `city`): без них или с пустым значением — 400. | `test_api_mutations.py::test_api_car_mutations` — `[lambda_mutation-400-Удаление обязательного поля (manufacture)-False]`; `[lambda_mutation-400-Пустая строка вместо значения (model)-False]`; `[lambda_mutation-400-Null вместо строки (carClass)-False]`<br>`test_api_mutations.py::test_api_car_required_field` | — | ✅ покрыт |
 | REQ-CAR-03 | Значение неверного типа (например, `seats` строкой) — 400, а не ошибка сервера. | `test_api_mutations.py::test_api_car_mutations` — `[lambda_mutation-400-Строка вместо числа (seats)-True]` | `WRONG_TYPE_500` | 🐞 покрыт как известный баг |
 | REQ-CAR-04 | Владелец машины определяется по токену; `owner` и `bookedPeriods` из тела запроса игнорируются. | `test_api_mutations.py::test_api_car_mass_assignment` | — | ✅ покрыт |
-| REQ-CAR-05 | `serialNumber` уникален во всей системе: повтор — 400. | — | — | 🕓 запланирован (PR 6.2) |
-| REQ-CAR-06 | Город машины должен быть в списке `/v1/cars/cities`; иначе — 400. | — | — | 🕓 запланирован (PR 6.2) |
-| REQ-CAR-07 | `/v1/cars/my` возвращает только машины владельца токена. | — | — | 🕓 запланирован (PR 6.2) |
+| REQ-CAR-05 | `serialNumber` уникален во всей системе: повтор — 400. | `test_api_car.py::test_api_car_duplicate_serial` | — | ✅ покрыт |
+| REQ-CAR-06 | Город машины должен быть в списке `/v1/cars/cities`; иначе — 400. | `test_api_car.py::test_api_car_unsupported_city` | — | ✅ покрыт |
+| REQ-CAR-07 | `/v1/cars/my` возвращает только машины владельца токена. | `test_api_car.py::test_api_my_cars_only_own` | — | ✅ покрыт |
 | REQ-CAR-08 | Владелец удаляет свою машину: 200; после этого машины нет в `/v1/cars/my`. | `test_api_car.py::test_api_car_lifecycle` | — | ✅ покрыт |
 | REQ-CAR-09 | Чужую машину удалить нельзя: машина остаётся у владельца. | `test_api_security.py::test_api_security_bola_delete` | — | ✅ покрыт |
 | REQ-CAR-10 | Несуществующая или чужая машина при удалении — 404. | `test_api_security.py::test_api_security_bola_delete_status`<br>`test_api_security.py::test_api_idempotency_delete` | `NOT_FOUND_400` | 🐞 покрыт как известный баг |
@@ -206,9 +206,6 @@
 
 | ID | Что проверит тест |
 |---|---|
-| REQ-CAR-05 | Повтор serialNumber: 400. UI-тесты дубликата видят только общий текст «Failed to submit car» (OBS-07), код ответа они не проверяют |
-| REQ-CAR-06 | Машина с городом не из /v1/cars/cities: 400, машина не создана |
-| REQ-CAR-07 | У двух пользователей свои машины: /v1/cars/my каждого отдаёт только его машины |
 | REQ-SEARCH-01 | Поиск без токена: 200. Сейчас поиск вызывается только в предусловиях и с токеном |
 | REQ-SEARCH-02 | У всех машин выдачи city равен искомому (город с малым числом машин) |
 | REQ-BOOK-02 | Бронирование несуществующей машины: 404. Требование нарушается (200, Q-API-01) — нужна запись в known_bugs.py |
@@ -247,7 +244,6 @@
 
 | ID | Что не покрыто | PR |
 |---|---|---|
-| REQ-CAR-02 | Обязательность serialNumber, year, fuel, seats, pricePerDay и city: тест мутаций проверяет manufacture, model и carClass | 6.2 |
 | REQ-UI-REG-02 | Что пользователь после регистрации залогинен (токен, «Log out» в навигации): тест проверяет только тексты окна | 6.3 |
 | REQ-UI-LOGIN-01 | Приведение email к нижнему регистру перед отправкой (перехват запроса) | 6.3 |
 | REQ-UI-LOGIN-03 | Ветка «любая другая ошибка» (500, 400, обрыв сети) — «Login failed. Try again». Нарушается (Q-UI-10) — нужна запись в known_bugs.py. Проверена только ветка 401 | 6.3 |

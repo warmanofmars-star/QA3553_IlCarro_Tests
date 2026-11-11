@@ -91,6 +91,99 @@ def test_api_car_lifecycle(auth_api, car_cleanup):
 
 
 @pytest.mark.regression
+@allure.epic("API Testing")
+@allure.feature("Car Controller")
+@allure.story("Unique serialNumber")
+@allure.severity(allure.severity_level.CRITICAL)
+@allure.tag("REQ-CAR-05")
+def test_api_car_duplicate_serial(auth_api, create_car, second_user):
+    """serialNumber уникален во всей системе: повтор другим пользователем отклоняется с 400,
+    исходная машина не меняется, у второго пользователя машина не появляется."""
+    car = create_car()
+    # Если повтор примут, машина с этим номером окажется у второго пользователя — её уберёт его очистка
+    second_user.cleanup.register(car.reg_number)
+    duplicate = CarGenerator.get_random_car(reg_number=car.reg_number, model=f"Dup{car.model}")
+
+    with allure.step(f"Второй пользователь создаёт машину с тем же serialNumber {car.reg_number}"):
+        response = second_user.api.add_car(duplicate.to_api_payload())
+
+    with allure.step("Состояние: машина владельца не изменилась, у второго пользователя её нет"):
+        owner_cars = my_cars(auth_api)
+        require(car.reg_number in owner_cars, f"Машина {car.reg_number} пропала у владельца")
+        assert owner_cars[car.reg_number].get("model") == car.model, (
+            f"Повтор serialNumber перезаписал машину владельца: model={owner_cars[car.reg_number].get('model')!r}"
+        )
+        assert car.reg_number not in my_cars(second_user.api), (
+            f"Машина с повторным serialNumber {car.reg_number} создана у второго пользователя"
+        )
+
+    with allure.step("Проверка: повтор отклонён с 400"):
+        assert response.status_code == 400, (
+            f"Повтор serialNumber: ожидали 400, получили {response.status_code} {response.text}"
+        )
+
+
+@pytest.mark.regression
+@allure.epic("API Testing")
+@allure.feature("Car Controller")
+@allure.story("Supported cities")
+@allure.severity(allure.severity_level.CRITICAL)
+@allure.tag("REQ-CAR-06")
+def test_api_car_unsupported_city(auth_api, car_cleanup):
+    # Город есть в подсказке фронтенда, но не в /v1/cars/cities (Q-API-03)
+    city = "Acre"
+    response_cities = auth_api.get_cities()
+    require(response_cities.status_code == 200, f"Список городов недоступен: {response_cities.text}")
+    api_cities = {item.get("city") for item in response_cities.json().get("cities", [])}
+    require(city not in api_cities, f"Город {city} появился в /v1/cars/cities: нужен другой город не из списка")
+
+    car = CarGenerator.get_random_car(city=city)
+    car_cleanup.register(car.reg_number)
+
+    with allure.step(f"Создаём машину в городе {city}"):
+        response = auth_api.add_car(car.to_api_payload())
+
+    with allure.step("Состояние: машина не создана"):
+        assert car.reg_number not in my_cars(auth_api), (
+            f"Машина в городе не из списка сохранилась. Ответ: {response.status_code} {response.text}"
+        )
+
+    with allure.step("Проверка: 400"):
+        assert response.status_code == 400, (
+            f"Город {city} не из списка: ожидали 400, получили {response.status_code} {response.text}"
+        )
+
+
+@pytest.mark.regression
+@pytest.mark.security
+@allure.epic("API Testing")
+@allure.feature("Car Controller")
+@allure.story("Get User cars")
+@allure.severity(allure.severity_level.CRITICAL)
+@allure.tag("REQ-CAR-07")
+def test_api_my_cars_only_own(auth_api, create_car, temp_user, second_user):
+    """У двух пользователей по машине: /v1/cars/my каждого отдаёт только его машины."""
+    own_car = create_car()
+    other_car = CarGenerator.get_random_car()
+    second_user.cleanup.register(other_car.reg_number)
+    with allure.step(f"Setup: второй пользователь создаёт машину {other_car.reg_number}"):
+        response = second_user.api.add_car(other_car.to_api_payload())
+        require(response.status_code == 200, f"Машина второго пользователя не создана: {response.text}")
+    second_user.cleanup.mark_created(other_car.reg_number)
+
+    for title, api, email, mine, foreign in (
+        ("владельца", auth_api, temp_user.user.email, own_car, other_car),
+        ("второго пользователя", second_user.api, second_user.user.email, other_car, own_car),
+    ):
+        with allure.step(f"Проверка: /v1/cars/my {title} — только его машины"):
+            cars = my_cars(api)
+            require(mine.reg_number in cars, f"Своей машины {mine.reg_number} нет в /v1/cars/my {title}")
+            assert foreign.reg_number not in cars, f"В /v1/cars/my {title} чужая машина {foreign.reg_number}"
+            foreign_owners = {serial: car.get("owner") for serial, car in cars.items() if car.get("owner") != email}
+            assert not foreign_owners, f"В /v1/cars/my {title} машины других владельцев: {foreign_owners}"
+
+
+@pytest.mark.regression
 @pytest.mark.security
 @allure.epic("API Testing")
 @allure.feature("Car Controller")
