@@ -1,20 +1,24 @@
 """
-Реестр пунктов requirements.md, для которых автотеста нет.
+Реестр исключений покрытия: пункты requirements.md без автотеста или с неполным покрытием.
 
 Матрица трассируемости (docs/requirements/traceability.md, scripts/coverage_matrix.py) собирается
 из тегов тестов. Пункт без единого теста обязан быть записан здесь — с категорией и причиной:
-«теста нет» должно быть решением, а не забытой строкой. Проверка `coverage_matrix.py --check` падает,
-если у ID нет ни теста, ни записи здесь, а также если запись есть, а тест уже появился
-(запись надо убрать).
+«теста нет» должно быть решением, а не забытой строкой.
 
-Категории:
+Категории пунктов БЕЗ теста:
   * harms_shared_env — проверка вредит общему внешнему бэкенду (объём данных, нагрузка);
   * blocked          — проверку блокирует другой дефект; в blocked_by — его ID;
   * unreachable      — функциональность недостижима: до неё не добраться ни через UI, ни через API;
   * planned          — тест будет написан; в pr — шаг плана: «6.2» (API) или «6.3» (UI и наблюдения).
-
 Первые три — исключения: теста не будет, пока не изменится приложение. planned — долг: запись
 убирается тем же PR, который добавляет тест.
+
+Категория пункта С тестом — одна:
+  * partial          — тест есть, но его assert проверяет не весь пункт; в reason — что НЕ покрыто,
+                       в pr — шаг плана, который доберёт остальное.
+
+Проверка `coverage_matrix.py --check` падает, если у ID нет ни теста, ни записи; если у ID есть тест
+и запись любой категории, кроме partial (запись надо убрать); если partial записан на ID без теста.
 
 ID сверяются с requirements.md при импорте модуля, как в реестрах known_bugs.py и observations.py.
 """
@@ -27,6 +31,7 @@ HARMS_SHARED_ENV = "harms_shared_env"
 BLOCKED = "blocked"
 UNREACHABLE = "unreachable"
 PLANNED = "planned"
+PARTIAL = "partial"
 
 # Категория -> как она называется в матрице
 CATEGORY_TITLES: dict[str, str] = {
@@ -34,7 +39,11 @@ CATEGORY_TITLES: dict[str, str] = {
     BLOCKED: "заблокировано другим дефектом",
     UNREACHABLE: "функциональность недостижима",
     PLANNED: "запланировано",
+    PARTIAL: "покрыто частично",
 }
+
+# Категории, у которых указывается шаг плана (pr)
+CATEGORIES_WITH_PR = frozenset({PLANNED, PARTIAL})
 
 # Шаги плана, в которых пишутся запланированные тесты
 PLANNED_PRS: dict[str, str] = {
@@ -46,13 +55,18 @@ PLANNED_PRS: dict[str, str] = {
 @dataclass(frozen=True)
 class CoverageException:
     category: str  # одна из CATEGORY_TITLES
-    reason: str  # почему теста нет; для planned — что именно проверит будущий тест
+    # почему теста нет; для planned — что проверит будущий тест; для partial — что из пункта НЕ покрыто
+    reason: str
     blocked_by: tuple[str, ...] = ()  # только для blocked: ID дефектов, которые мешают проверке
-    pr: str | None = None  # только для planned: шаг плана из PLANNED_PRS
+    pr: str | None = None  # только для planned и partial: шаг плана из PLANNED_PRS
 
 
 def _planned(pr: str, reason: str) -> CoverageException:
     return CoverageException(category=PLANNED, reason=reason, pr=pr)
+
+
+def _partial(pr: str, not_covered: str) -> CoverageException:
+    return CoverageException(category=PARTIAL, reason=not_covered, pr=pr)
 
 
 COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
@@ -86,6 +100,31 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
             "которая не открывается (REQ-UI-CARPAGE-01). Сторону API проверяют REQ-BOOK-01 и REQ-BOOK-02"
         ),
     ),
+    # ---------- Покрыто частично: тест есть, остальное доберёт шаг плана ----------
+    "REQ-AUTH-04": _partial(
+        "6.2",
+        "Код 400. UI-тест test_registration_existing_user проверяет только текст «User already exists» в окне",
+    ),
+    "REQ-CAR-02": _partial(
+        "6.2",
+        "Обязательность serialNumber, year, fuel, seats, pricePerDay и city: тест мутаций проверяет "
+        "manufacture, model и carClass",
+    ),
+    "REQ-UI-REG-02": _partial(
+        "6.3",
+        "Что пользователь после регистрации залогинен (токен, «Log out» в навигации): тест проверяет только "
+        "тексты окна",
+    ),
+    "REQ-UI-LOGIN-01": _partial("6.3", "Приведение email к нижнему регистру перед отправкой (перехват запроса)"),
+    "REQ-UI-LOGIN-03": _partial(
+        "6.3",
+        "Ветка «любая другая ошибка» (500, 400, обрыв сети) — «Login failed. Try again». Нарушается (Q-UI-10) — "
+        "нужна запись в known_bugs.py. Проверена только ветка 401",
+    ),
+    "REQ-UI-CAR-02": _partial(
+        "6.3", "Текст «Car submitted successfully»: тесты успешной отправки проверяют только очистку формы"
+    ),
+    "REQ-UI-SEARCH-02": _partial("6.3", "Верхняя граница: дни позже «сегодня + 365 дней» недоступны"),
     # ---------- Запланировано: 6.2 (API) ----------
     "REQ-AUTH-01": _planned(
         "6.2",
@@ -134,8 +173,10 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
     ),
     "DISC-08": _planned(
         "6.2",
-        "Поиск через API с page и size: параметры игнорируются (Q-API-02). Что считать ожидаемым результатом "
-        "при расхождении фронтенда и Swagger — решить до написания теста",
+        "Известный баг: поиск через API с size=1 должен вернуть одну машину — основание DISC-08 (фронт "
+        "передаёт page и size, API их игнорирует, Q-API-02). Только город с малым числом машин: в нём заранее "
+        "создаются две свои машины, а ответ по крупному городу весит десятки мегабайт. Нужна запись "
+        "в known_bugs.py с refs DISC-08",
     ),
     # ---------- Запланировано: 6.3 (UI и наблюдения) ----------
     "REQ-SEC-06": _planned(
@@ -157,8 +198,8 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
     "REQ-UI-SEARCH-03": _planned("6.3", "Подсказка города: не больше 8 вариантов; город, введённый вручную"),
     "REQ-UI-SEARCH-04": _planned(
         "6.3",
-        "Клиентская пагинация: page и size в URL, 10, 20 и 50 карточек на странице. Тесты поиска только "
-        "пользуются size=50, но число карточек не проверяют",
+        "Клиентская пагинация: page и size в URL, 10, 20 и 50 карточек на странице. Тест поиска только "
+        "пользуется size=50, но число карточек не проверяет",
     ),
     "REQ-UI-CARPAGE-01": _planned(
         "6.3",
@@ -225,8 +266,10 @@ def _validate_registry() -> None:
             if blocker == item_id:
                 raise ValueError(f"Исключение покрытия {item_id!r}: пункт не может блокировать сам себя.")
 
-        if (entry.category == PLANNED) != (entry.pr is not None):
-            raise ValueError(f"Исключение покрытия {item_id!r}: pr указывается для категории planned и только для неё.")
+        if (entry.category in CATEGORIES_WITH_PR) != (entry.pr is not None):
+            raise ValueError(
+                f"Исключение покрытия {item_id!r}: pr указывается для категорий planned и partial и только для них."
+            )
         if entry.pr is not None and entry.pr not in PLANNED_PRS:
             raise ValueError(
                 f"Исключение покрытия {item_id!r}: неизвестный шаг плана {entry.pr!r}. "

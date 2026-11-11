@@ -12,6 +12,9 @@
 Статусы:
 
 - ✅ **покрыт** — на пункт есть тест, и он проходит;
+- 🟡 **частично** — тест есть и проходит, но проверяет не весь пункт:
+  что не покрыто и в каком PR это появится — в колонке «Статус» (реестр
+  `data/coverage_exceptions.py`, категория `partial`);
 - 🐞 **покрыт как известный баг** — тест есть и упирается в дефект из `data/known_bugs.py`
   (строгий xfail); ключ записи — в колонке «Реестр»;
 - 👁 **покрыт как наблюдение** — тест фиксирует поведение из `data/observations.py`
@@ -19,14 +22,15 @@
 - ⚪ **исключение** — теста нет и не будет, пока не изменится приложение;
 - 🕓 **запланирован** — теста пока нет, указан PR, в котором он появится.
 
-«Покрыт» значит, что assert хотя бы одного теста проверяет пункт, но не обязательно весь:
-у составных пунктов может быть проверена часть.
+«Покрыт» значит, что assert хотя бы одного теста проверяет пункт так, как он записан
+в `requirements.md`; если проверена только часть, пункт записан как частично покрытый.
 
 ## Сводка
 
 | Статус | REQ | DISC | OBS | Всего |
 |---|---:|---:|---:|---:|
-| ✅ покрыт | 16 | 0 | 0 | 16 |
+| ✅ покрыт | 9 | 0 | 0 | 9 |
+| 🟡 частично | 7 | 0 | 0 | 7 |
 | 🐞 покрыт как известный баг | 7 | 2 | 0 | 9 |
 | 👁 покрыт как наблюдение | 0 | 0 | 1 | 1 |
 | ⚪ исключение | 3 | 1 | 0 | 4 |
@@ -35,6 +39,7 @@
 
 - **Исключения по категориям:** вредит общему бэкенду — 1; заблокировано другим дефектом — 1; функциональность недостижима — 2.
 - **Запланировано:** PR 6.2 (API) — 17; PR 6.3 (UI и наблюдения) — 22.
+- **Покрыто частично, доработка:** PR 6.2 (API) — 2; PR 6.3 (UI и наблюдения) — 5.
 - **Известные баги:** 8 в реестре `data/known_bugs.py`; **наблюдения:** 1 в реестре `data/observations.py`.
 - **Автотесты:** собрано 52, из них с тегами требований — 48, без тегов — 4 (список — в конце документа).
 
@@ -47,7 +52,7 @@
 | REQ-AUTH-01 | Регистрация с корректными данными возвращает 200 и `accessToken`. | — | — | 🕓 запланирован (PR 6.2) |
 | REQ-AUTH-02 | Поля `username`, `password`, `firstName`, `lastName` обязательны: без них или с пустыми значениями — 400. | — | — | 🕓 запланирован (PR 6.2) |
 | REQ-AUTH-03 | Пароль при регистрации: не короче 8 символов, есть цифра, строчная и заглавная латинские буквы и спецсимвол из `@$#^&*!`; иначе 400. | — | — | 🕓 запланирован (PR 6.2) |
-| REQ-AUTH-04 | Повторная регистрация того же `username` отклоняется с 400. | `test_registration.py::test_registration_existing_user` | — | ✅ покрыт |
+| REQ-AUTH-04 | Повторная регистрация того же `username` отклоняется с 400. | `test_registration.py::test_registration_existing_user` | — | 🟡 частично — не покрыто: Код 400. UI-тест test_registration_existing_user проверяет только текст «User already exists» в окне (PR 6.2) |
 | REQ-AUTH-05 | Вход с верными данными возвращает 200 и `accessToken`. | — | — | 🕓 запланирован (PR 6.2) |
 | REQ-AUTH-06 | Вход с неверным паролем или несуществующим пользователем — 401. | — | — | 🕓 запланирован (PR 6.2) |
 | REQ-AUTH-07 | Тело входа проверяется по контракту: без обязательных полей или с паролем не по шаблону — 400. | — | — | 🕓 запланирован (PR 6.2) |
@@ -57,7 +62,7 @@
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
 | REQ-CAR-01 | Авторизованный пользователь добавляет машину: 200 и `message`; машина появляется в `/v1/cars/my` владельца. | `test_api_car.py::test_api_add_car_success`<br>`test_api_car.py::test_api_car_lifecycle` | — | ✅ покрыт |
-| REQ-CAR-02 | Обязательные поля `CarDto` (`serialNumber`, `manufacture`, `model`, `year`, `fuel`, `seats`, `carClass`, `pricePerDay`, `city`): без них или с пустым значением — 400. | `test_api_mutations.py::test_api_car_mutations` — `[lambda_mutation-400-Удаление обязательного поля (manufacture)-False]`; `[lambda_mutation-400-Пустая строка вместо значения (model)-False]`; `[lambda_mutation-400-Null вместо строки (carClass)-False]` | — | ✅ покрыт |
+| REQ-CAR-02 | Обязательные поля `CarDto` (`serialNumber`, `manufacture`, `model`, `year`, `fuel`, `seats`, `carClass`, `pricePerDay`, `city`): без них или с пустым значением — 400. | `test_api_mutations.py::test_api_car_mutations` — `[lambda_mutation-400-Удаление обязательного поля (manufacture)-False]`; `[lambda_mutation-400-Пустая строка вместо значения (model)-False]`; `[lambda_mutation-400-Null вместо строки (carClass)-False]` | — | 🟡 частично — не покрыто: Обязательность serialNumber, year, fuel, seats, pricePerDay и city: тест мутаций проверяет manufacture, model и carClass (PR 6.2) |
 | REQ-CAR-03 | Значение неверного типа (например, `seats` строкой) — 400, а не ошибка сервера. | `test_api_mutations.py::test_api_car_mutations` — `[lambda_mutation-400-Строка вместо числа (seats)-True]` | `WRONG_TYPE_500` | 🐞 покрыт как известный баг |
 | REQ-CAR-04 | Владелец машины определяется по токену; `owner` и `bookedPeriods` из тела запроса игнорируются. | `test_api_mutations.py::test_api_car_mass_assignment` | — | ✅ покрыт |
 | REQ-CAR-05 | `serialNumber` уникален во всей системе: повтор — 400. | — | — | 🕓 запланирован (PR 6.2) |
@@ -106,23 +111,23 @@
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
 | REQ-UI-REG-01 | Поля проверяются до отправки: Name, Last name, Email (формат), Password (не короче 6, буква и цифра), согласие с условиями. | `test_registration.py::test_registration_negative_fields`<br>`test_registration.py::test_registration_without_check_box` | — | ✅ покрыт |
-| REQ-UI-REG-02 | После успешной регистрации — окно «Registered» / «You are logged in success»; пользователь залогинен. | `test_registration.py::test_registration_success` | — | ✅ покрыт |
+| REQ-UI-REG-02 | После успешной регистрации — окно «Registered» / «You are logged in success»; пользователь залогинен. | `test_registration.py::test_registration_success` | — | 🟡 частично — не покрыто: Что пользователь после регистрации залогинен (токен, «Log out» в навигации): тест проверяет только тексты окна (PR 6.3) |
 | REQ-UI-REG-03 | При ответе 400 окно «Registration failed» показывает текст ошибки сервера. | `test_registration.py::test_registration_existing_user`<br>`test_registration.py::test_registration_password_rejected_by_api` | `PASSWORD_RULES_MISMATCH` | 🐞 покрыт как известный баг |
 
 ### 2.2 Вход (UI-LOGIN)
 
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
-| REQ-UI-LOGIN-01 | Email обязателен и проверяется по формату, пароль обязателен; перед отправкой email приводится к нижнему регистру. | `test_login.py::test_login_negative_frontend`<br>`test_playwright_login.py::test_pw_login_negative` | — | ✅ покрыт |
+| REQ-UI-LOGIN-01 | Email обязателен и проверяется по формату, пароль обязателен; перед отправкой email приводится к нижнему регистру. | `test_login.py::test_login_negative_frontend`<br>`test_playwright_login.py::test_pw_login_negative` | — | 🟡 частично — не покрыто: Приведение email к нижнему регистру перед отправкой (перехват запроса) (PR 6.3) |
 | REQ-UI-LOGIN-02 | После входа — окно «You are logged in success», в навигации «Log out». | `test_login.py::test_login_success`<br>`test_playwright_login.py::test_pw_login_success` | — | ✅ покрыт |
-| REQ-UI-LOGIN-03 | При 401 — окно «Login failed» с текстом «Login or Password incorrect»; при любой другой ошибке — «Login failed. Try again». | `test_login.py::test_login_negative_backend` | — | ✅ покрыт |
+| REQ-UI-LOGIN-03 | При 401 — окно «Login failed» с текстом «Login or Password incorrect»; при любой другой ошибке — «Login failed. Try again». | `test_login.py::test_login_negative_backend` | — | 🟡 частично — не покрыто: Ветка «любая другая ошибка» (500, 400, обрыв сети) — «Login failed. Try again». Нарушается (Q-UI-10) — нужна запись в known_bugs.py. Проверена только ветка 401 (PR 6.3) |
 
 ### 2.3 Добавление машины (UI-CAR)
 
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
 | REQ-UI-CAR-01 | Поля, отмеченные `*`, проверяются до отправки: City, Make, Model, Year, Fuel, Seats (≥ 1), Car class, Car registration number, Price (≥ 1). | — | — | 🕓 запланирован (PR 6.3) |
-| REQ-UI-CAR-02 | Успешная отправка — «Car submitted successfully» и очистка формы; ошибка — «Failed to submit car». | `test_add_car.py::test_add_car_success`<br>`test_add_car.py::test_add_car_duplicate`<br>`test_playwright_add_car.py::test_real_add_car_success`<br>`test_playwright_add_car.py::test_pw_add_car_duplicate` | — | ✅ покрыт |
+| REQ-UI-CAR-02 | Успешная отправка — «Car submitted successfully» и очистка формы; ошибка — «Failed to submit car». | `test_add_car.py::test_add_car_success`<br>`test_add_car.py::test_add_car_duplicate`<br>`test_playwright_add_car.py::test_real_add_car_success`<br>`test_playwright_add_car.py::test_pw_add_car_duplicate` | — | 🟡 частично — не покрыто: Текст «Car submitted successfully»: тесты успешной отправки проверяют только очистку формы (PR 6.3) |
 | REQ-UI-CAR-03 | Значение Fuel уходит в API строчными: `petrol`, `diesel`, `hybrid`, `electric`. | — | — | 🕓 запланирован (PR 6.3) |
 | REQ-UI-CAR-04 | Фото — ссылкой или файлом; файл отправляется в поле `image` как data URL (base64). | — | — | 🕓 запланирован (PR 6.3) |
 
@@ -131,7 +136,7 @@
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
 | REQ-UI-SEARCH-01 | «Yalla!» доступна, только когда заполнены город и обе даты. | `test_search.py::test_search_form_dynamic`<br>`test_search.py::test_search_empty_city_validation` | — | ✅ покрыт |
-| REQ-UI-SEARCH-02 | В календаре недоступны дни раньше сегодняшнего и позже «сегодня + 365 дней». | `test_calendar.py::test_calendar_past_navigation_blocked` | — | ✅ покрыт |
+| REQ-UI-SEARCH-02 | В календаре недоступны дни раньше сегодняшнего и позже «сегодня + 365 дней». | `test_calendar.py::test_calendar_past_navigation_blocked` | — | 🟡 частично — не покрыто: Верхняя граница: дни позже «сегодня + 365 дней» недоступны (PR 6.3) |
 | REQ-UI-SEARCH-03 | Подсказка города показывает до 8 вариантов из списка фронтенда; город можно ввести вручную. | — | — | 🕓 запланирован (PR 6.3) |
 | REQ-UI-SEARCH-04 | Пагинация выдачи — на стороне клиента: `page` и `size` в URL, 10, 20 или 50 карточек на странице. | — | — | 🕓 запланирован (PR 6.3) |
 | REQ-UI-SEARCH-05 | Цена на карточке показывается с одним знаком после запятой. | `test_hybrid_search.py::test_hybrid_car_search`<br>`test_playwright_mocking.py::test_mock_search_results`<br>`test_search.py::test_search_form_dynamic` | — | ✅ покрыт |
@@ -179,10 +184,11 @@
 | OBS-10 | Кнопка «предыдущий месяц» в календаре доступна, но ничего не делает. | — | — | 🕓 запланирован (PR 6.3) |
 | OBS-11 | Интерфейс на английском, но страницы машины и профиля показывают русские тексты: «Не удалось загрузить машину», «Загрузка...», «Мой профиль». | — | — | 🕓 запланирован (PR 6.3) |
 
-## Пункты без автотеста
+## Реестр исключений покрытия
 
 Реестр — `data/coverage_exceptions.py`. Исключения: теста не будет, пока не изменится приложение.
-Запланированные: запись убирает тот PR, который добавляет тест.
+Запланированные: запись убирает тот PR, который добавляет тест. Частично покрытые: тест есть,
+в таблице — что из пункта он не проверяет; запись убирает тот PR, который доберёт остальное.
 
 ### Исключения
 
@@ -213,7 +219,7 @@
 | REQ-CITY-01 | Список городов без токена: 200, элементы {city, lat, lng}. Сейчас запрос городов — только предусловие теста словарей |
 | REQ-SEC-03 | Текст ошибки при невалидном токене не содержит текстов парсера JWT. Требование нарушается (Q-API-09) — нужна запись в known_bugs.py. Стоп-слова assert_secure_error это нарушение не ловят |
 | DISC-03 | Вход через API тем же email с заглавными буквами, с которым прошла регистрация. Расхождение подтверждено (Q-API-06) — нужна запись в known_bugs.py |
-| DISC-08 | Поиск через API с page и size: параметры игнорируются (Q-API-02). Что считать ожидаемым результатом при расхождении фронтенда и Swagger — решить до написания теста |
+| DISC-08 | Известный баг: поиск через API с size=1 должен вернуть одну машину — основание DISC-08 (фронт передаёт page и size, API их игнорирует, Q-API-02). Только город с малым числом машин: в нём заранее создаются две свои машины, а ответ по крупному городу весит десятки мегабайт. Нужна запись в known_bugs.py с refs DISC-08 |
 
 ### Запланировано: PR 6.3 (UI и наблюдения)
 
@@ -224,7 +230,7 @@
 | REQ-UI-CAR-03 | Значение Fuel в запросе POST /v1/cars — строчными (перехват запроса) |
 | REQ-UI-CAR-04 | Файл фото уходит в поле image как data URL. Только с перехватом запроса, без сохранения на бэкенде: иначе тест копит изображения на общем сервере (REQ-SEC-07) |
 | REQ-UI-SEARCH-03 | Подсказка города: не больше 8 вариантов; город, введённый вручную |
-| REQ-UI-SEARCH-04 | Клиентская пагинация: page и size в URL, 10, 20 и 50 карточек на странице. Тесты поиска только пользуются size=50, но число карточек не проверяют |
+| REQ-UI-SEARCH-04 | Клиентская пагинация: page и size в URL, 10, 20 и 50 карточек на странице. Тест поиска только пользуется size=50, но число карточек не проверяет |
 | REQ-UI-CARPAGE-01 | Клик по карточке открывает страницу машины с её данными. Требование нарушается (Q-UI-01) — нужна запись в known_bugs.py |
 | REQ-UI-SESSION-01 | Ответ 401: фронт удаляет token и запоминает postLoginRedirect |
 | REQ-UI-SESSION-02 | «Log out» удаляет токен и переводит на /search |
@@ -241,6 +247,18 @@
 | OBS-09 | После регистрации URL меняется с /register |
 | OBS-10 | Кнопка «предыдущий месяц» в текущем месяце недоступна |
 | OBS-11 | Тексты страницы машины и профиля — на английском, как остальной интерфейс |
+
+### Покрыто частично
+
+| ID | Что не покрыто | PR |
+|---|---|---|
+| REQ-AUTH-04 | Код 400. UI-тест test_registration_existing_user проверяет только текст «User already exists» в окне | 6.2 |
+| REQ-CAR-02 | Обязательность serialNumber, year, fuel, seats, pricePerDay и city: тест мутаций проверяет manufacture, model и carClass | 6.2 |
+| REQ-UI-REG-02 | Что пользователь после регистрации залогинен (токен, «Log out» в навигации): тест проверяет только тексты окна | 6.3 |
+| REQ-UI-LOGIN-01 | Приведение email к нижнему регистру перед отправкой (перехват запроса) | 6.3 |
+| REQ-UI-LOGIN-03 | Ветка «любая другая ошибка» (500, 400, обрыв сети) — «Login failed. Try again». Нарушается (Q-UI-10) — нужна запись в known_bugs.py. Проверена только ветка 401 | 6.3 |
+| REQ-UI-CAR-02 | Текст «Car submitted successfully»: тесты успешной отправки проверяют только очистку формы | 6.3 |
+| REQ-UI-SEARCH-02 | Верхняя граница: дни позже «сегодня + 365 дней» недоступны | 6.3 |
 
 ## Тесты без тегов требований
 

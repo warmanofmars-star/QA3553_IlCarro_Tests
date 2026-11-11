@@ -16,7 +16,8 @@
 Несогласованные данные — ошибка в любом режиме (код 2), все находки печатаются разом:
   * тег с ID, которого нет в requirements.md;
   * ID без теста и без записи в исключениях;
-  * ID и с тестом, и с записью в исключениях;
+  * ID и с тестом, и с записью в исключениях любой категории, кроме partial;
+  * запись partial на ID без теста;
   * тест под known_bug / observation без тега своих refs или с тегом сверх них;
   * xfail не из реестров.
 В режиме --check дополнительно (код 1): traceability.md или сводка в README.md устарели.
@@ -40,7 +41,13 @@ README_PATH = ROOT / "README.md"
 TESTS_DIR = "tests"
 
 sys.path.insert(0, str(ROOT))  # реестры импортируются так же, как их импортируют тесты
-from data.coverage_exceptions import CATEGORY_TITLES, COVERAGE_EXCEPTIONS, PLANNED, PLANNED_PRS  # noqa: E402
+from data.coverage_exceptions import (  # noqa: E402
+    CATEGORY_TITLES,
+    COVERAGE_EXCEPTIONS,
+    PARTIAL,
+    PLANNED,
+    PLANNED_PRS,
+)
 from data.known_bugs import KNOWN_BUGS  # noqa: E402
 from data.observations import OBSERVATIONS  # noqa: E402
 from data.requirement_ids import RequirementItem, requirement_items  # noqa: E402
@@ -57,14 +64,16 @@ SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-ZА-ЯЁ«`])")
 PREFIXES = ("REQ", "DISC", "OBS")
 
 COVERED = "covered"
+PARTIAL_STATUS = "partial"
 BUG = "bug"
 OBSERVED = "observed"
 EXCEPTION = "exception"
 PLANNED_STATUS = "planned"
 
-ICONS = {COVERED: "✅", BUG: "🐞", OBSERVED: "👁", EXCEPTION: "⚪", PLANNED_STATUS: "🕓"}
+ICONS = {COVERED: "✅", PARTIAL_STATUS: "🟡", BUG: "🐞", OBSERVED: "👁", EXCEPTION: "⚪", PLANNED_STATUS: "🕓"}
 STATUS_TITLES = {
     COVERED: "покрыт",
+    PARTIAL_STATUS: "частично",
     BUG: "покрыт как известный баг",
     OBSERVED: "покрыт как наблюдение",
     EXCEPTION: "исключение",
@@ -73,6 +82,7 @@ STATUS_TITLES = {
 # Сводка в README.md — на английском, как весь README
 STATUS_TITLES_EN = {
     COVERED: "Covered by a passing test",
+    PARTIAL_STATUS: "Partly covered by a passing test, the rest is planned",
     BUG: "Covered, the test hits a known bug (strict xfail)",
     OBSERVED: "Covered as an observation (strict xfail)",
     EXCEPTION: "No test — exception with a recorded reason",
@@ -187,13 +197,17 @@ class Row:
         return COVERAGE_EXCEPTIONS.get(self.item.id)
 
     @property
+    def is_partial(self) -> bool:
+        return self.exception is not None and self.exception.category == PARTIAL
+
+    @property
     def status(self) -> str:
         if self.bugs:
             return BUG
         if self.observations:
             return OBSERVED
         if self.tests:
-            return COVERED
+            return PARTIAL_STATUS if self.is_partial else COVERED
         if self.exception is not None and self.exception.category == PLANNED:
             return PLANNED_STATUS
         return EXCEPTION
@@ -230,10 +244,16 @@ def build_rows(tests: list[CollectedTest]) -> tuple[list[Row], list[str]]:
                     )
 
     for row in rows.values():
-        if row.tests and row.exception is not None:
+        if row.tests and row.exception is not None and not row.is_partial:
             problems.append(
                 f"{row.item.id}: есть и тест ({row.tests[0].name}), и запись в data/coverage_exceptions.py "
-                f"({row.exception.category}). Убери запись из реестра исключений"
+                f"({row.exception.category}). Убери запись из реестра исключений "
+                "(или замени на partial, если тест покрывает пункт не целиком)"
+            )
+        elif not row.tests and row.is_partial:
+            problems.append(
+                f"{row.item.id}: запись partial в data/coverage_exceptions.py, но теста с таким тегом нет. "
+                "partial — только вместе с тестом; без теста это planned"
             )
         elif not row.tests and row.exception is None:
             problems.append(
@@ -254,16 +274,19 @@ def count_statuses(rows: list[Row]) -> dict[str, dict[str, int]]:
     return counts
 
 
-def count_exceptions(rows: list[Row]) -> tuple[dict[str, int], dict[str, int]]:
-    """Исключения по категориям и запланированные по шагам плана — только для пунктов без тестов."""
-    categories = dict.fromkeys((c for c in CATEGORY_TITLES if c != PLANNED), 0)
+def count_exceptions(rows: list[Row]) -> tuple[dict[str, int], dict[str, int], dict[str, int]]:
+    """Исключения по категориям; запланированные и частично покрытые — по шагам плана."""
+    categories = dict.fromkeys((c for c in CATEGORY_TITLES if c not in (PLANNED, PARTIAL)), 0)
     planned = dict.fromkeys(PLANNED_PRS, 0)
+    partial = dict.fromkeys(PLANNED_PRS, 0)
     for row in rows:
         if row.status == EXCEPTION:
             categories[row.exception.category] += 1
         elif row.status == PLANNED_STATUS:
             planned[row.exception.pr] += 1
-    return categories, planned
+        elif row.is_partial and row.tests:
+            partial[row.exception.pr] += 1
+    return categories, planned, partial
 
 
 def _summary_table(rows: list[Row], header: str, titles: dict[str, str], total_title: str) -> list[str]:
@@ -331,6 +354,10 @@ class Renderer:
         text = f"{ICONS[status]} {STATUS_TITLES[status]}"
         if status == PLANNED_STATUS:
             return f"{text} (PR {row.exception.pr})"
+        if row.is_partial:
+            # Известный баг или наблюдение важнее «частично», но неполнота покрытия не теряется
+            separator = " — " if status == PARTIAL_STATUS else "; "
+            return f"{text}{separator}не покрыто: {_cell(row.exception.reason)} (PR {row.exception.pr})"
         if status == EXCEPTION:
             text += f": {CATEGORY_TITLES[row.exception.category]}"
             if row.exception.blocked_by:
@@ -339,7 +366,7 @@ class Renderer:
 
     # ---------- разделы ----------
     def summary(self) -> list[str]:
-        categories, planned = count_exceptions(self.rows)
+        categories, planned, partial = count_exceptions(self.rows)
         tagged = sum(1 for test in self.tests if test.tags)
         lines = [
             "## Сводка",
@@ -351,6 +378,9 @@ class Renderer:
             + ".",
             "- **Запланировано:** "
             + "; ".join(f"PR {pr} ({PLANNED_PRS[pr]}) — {n}" for pr, n in planned.items())
+            + ".",
+            "- **Покрыто частично, доработка:** "
+            + "; ".join(f"PR {pr} ({PLANNED_PRS[pr]}) — {n}" for pr, n in partial.items())
             + ".",
             f"- **Известные баги:** {len(KNOWN_BUGS)} в реестре `data/known_bugs.py`; "
             f"**наблюдения:** {len(OBSERVATIONS)} в реестре `data/observations.py`.",
@@ -380,10 +410,11 @@ class Renderer:
 
     def exceptions_section(self) -> list[str]:
         lines = [
-            "## Пункты без автотеста",
+            "## Реестр исключений покрытия",
             "",
             "Реестр — `data/coverage_exceptions.py`. Исключения: теста не будет, пока не изменится приложение.",
-            "Запланированные: запись убирает тот PR, который добавляет тест.",
+            "Запланированные: запись убирает тот PR, который добавляет тест. Частично покрытые: тест есть,",
+            "в таблице — что из пункта он не проверяет; запись убирает тот PR, который доберёт остальное.",
             "",
             "### Исключения",
             "",
@@ -402,6 +433,11 @@ class Renderer:
             for row in self.rows:
                 if row.status == PLANNED_STATUS and row.exception.pr == pr:
                     lines.append(f"| {row.item.id} | {_cell(row.exception.reason)} |")
+
+        lines += ["", "### Покрыто частично", "", "| ID | Что не покрыто | PR |", "|---|---|---|"]
+        for row in self.rows:
+            if row.is_partial and row.tests:
+                lines.append(f"| {row.item.id} | {_cell(row.exception.reason)} | {row.exception.pr} |")
         return lines
 
     def untagged_section(self) -> list[str]:
@@ -433,6 +469,9 @@ class Renderer:
             "Статусы:",
             "",
             f"- {ICONS[COVERED]} **покрыт** — на пункт есть тест, и он проходит;",
+            f"- {ICONS[PARTIAL_STATUS]} **частично** — тест есть и проходит, но проверяет не весь пункт:",
+            "  что не покрыто и в каком PR это появится — в колонке «Статус» (реестр",
+            "  `data/coverage_exceptions.py`, категория `partial`);",
             f"- {ICONS[BUG]} **покрыт как известный баг** — тест есть и упирается в дефект из `data/known_bugs.py`",
             "  (строгий xfail); ключ записи — в колонке «Реестр»;",
             f"- {ICONS[OBSERVED]} **покрыт как наблюдение** — тест фиксирует поведение из `data/observations.py`",
@@ -440,8 +479,8 @@ class Renderer:
             f"- {ICONS[EXCEPTION]} **исключение** — теста нет и не будет, пока не изменится приложение;",
             f"- {ICONS[PLANNED_STATUS]} **запланирован** — теста пока нет, указан PR, в котором он появится.",
             "",
-            "«Покрыт» значит, что assert хотя бы одного теста проверяет пункт, но не обязательно весь:",
-            "у составных пунктов может быть проверена часть.",
+            "«Покрыт» значит, что assert хотя бы одного теста проверяет пункт так, как он записан",
+            "в `requirements.md`; если проверена только часть, пункт записан как частично покрытый.",
             "",
             *self.summary(),
             "",
@@ -459,14 +498,15 @@ class Renderer:
 # Markdown: сводка в README.md
 # ==========================================
 def render_readme_block(rows: list[Row], tests: list[CollectedTest]) -> str:
-    categories, planned = count_exceptions(rows)
+    categories, planned, partial = count_exceptions(rows)
     tagged = sum(1 for test in tests if test.tags)
     exceptions = "; ".join(f"{CATEGORY_TITLES_EN[category]} — {n}" for category, n in categories.items())
     plans = ", ".join(f"{n} in step {pr} ({PLANNED_PRS_EN[pr]})" for pr, n in planned.items())
+    partly = ", ".join(f"{n} in step {pr}" for pr, n in partial.items())
     lines = [
         *_summary_table(rows, "Status", STATUS_TITLES_EN, "Total"),
         "",
-        f"Exceptions: {exceptions}. Planned: {plans}.",
+        f"Exceptions: {exceptions}. Planned: {plans}. The rest of the partly covered items: {partly}.",
         f"{tagged} of {len(tests)} tests reference at least one ID.",
     ]
     return "\n".join(lines)

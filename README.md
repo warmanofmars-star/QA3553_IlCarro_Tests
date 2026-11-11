@@ -105,14 +105,15 @@ The table is generated — do not edit it by hand:
 <!-- coverage:start -->
 | Status | REQ | DISC | OBS | Total |
 |---|---:|---:|---:|---:|
-| ✅ Covered by a passing test | 16 | 0 | 0 | 16 |
+| ✅ Covered by a passing test | 9 | 0 | 0 | 9 |
+| 🟡 Partly covered by a passing test, the rest is planned | 7 | 0 | 0 | 7 |
 | 🐞 Covered, the test hits a known bug (strict xfail) | 7 | 2 | 0 | 9 |
 | 👁 Covered as an observation (strict xfail) | 0 | 0 | 1 | 1 |
 | ⚪ No test — exception with a recorded reason | 3 | 1 | 0 | 4 |
 | 🕓 No test yet — planned | 24 | 5 | 10 | 39 |
 | **Total** | 50 | 8 | 11 | 69 |
 
-Exceptions: the check would harm the shared backend — 1; blocked by another defect — 1; the feature is unreachable — 2. Planned: 17 in step 6.2 (API), 22 in step 6.3 (UI and observations).
+Exceptions: the check would harm the shared backend — 1; blocked by another defect — 1; the feature is unreachable — 2. Planned: 17 in step 6.2 (API), 22 in step 6.3 (UI and observations). The rest of the partly covered items: 2 in step 6.2, 5 in step 6.3.
 48 of 52 tests reference at least one ID.
 <!-- coverage:end -->
 
