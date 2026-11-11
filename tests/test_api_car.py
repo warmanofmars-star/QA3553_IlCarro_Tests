@@ -1,4 +1,5 @@
 import datetime
+import uuid
 
 import allure
 import pytest
@@ -6,7 +7,7 @@ from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
 from api.car_api import IlCarroAPI
-from data.data_generator import CarGenerator
+from data.data_generator import CarGenerator, SearchDataGenerator
 from data.known_bugs import known_bug
 from schemas.car_schemas import GET_CARS_RESPONSE_SCHEMA, MESSAGE_RESPONSE_SCHEMA
 from utils.car_state import my_cars
@@ -239,4 +240,48 @@ def test_api_car_booking_flow(auth_api, create_car, second_user):
         expected_period = {"email": booker.email, "startDate": start_date, "endDate": end_date}
         assert any({key: period.get(key) for key in expected_period} == expected_period for period in booked_periods), (
             f"Бронь не сохранилась: ожидали период {expected_period} в bookedPeriods, получили {booked_periods}"
+        )
+
+
+def _missing_serial() -> str:
+    """Номер машины, которой нет: префикс, как у генератора, и случайный хвост."""
+    return f"IL-NOSUCH-{uuid.uuid4().hex[:8].upper()}"
+
+
+@pytest.mark.regression
+@allure.epic("API Testing")
+@allure.feature("Car Booking Flow")
+@allure.story("Booking a nonexistent car")
+@allure.severity(allure.severity_level.NORMAL)
+@known_bug("BOOKING_UNKNOWN_CAR_200")
+@allure.tag("REQ-BOOK-02")
+def test_api_book_nonexistent_car(auth_api):
+    start_date, end_date = SearchDataGenerator.get_safe_future_dates()
+
+    response = auth_api.book_car(_missing_serial(), start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
+
+    with allure.step("Проверка: 404"):
+        assert response.status_code == 404, (
+            f"Бронирование несуществующей машины: ожидали 404, получили {response.status_code} {response.text}"
+        )
+
+
+@pytest.mark.regression
+@pytest.mark.security
+@allure.epic("API Testing")
+@allure.feature("Car Booking Flow")
+@allure.story("Negative - Unauthorized Access")
+@allure.severity(allure.severity_level.CRITICAL)
+@allure.tag("REQ-BOOK-03")
+def test_api_book_without_token():
+    """Бронирование без токена отклоняется. Какой именно код — отдельное требование REQ-SEC-01
+    (известный баг NO_AUTH_403), поэтому здесь принимаются оба кода отказа в авторизации."""
+    api = IlCarroAPI()  # клиент без заголовка Authorization
+    start_date, end_date = SearchDataGenerator.get_safe_future_dates()
+
+    response = api.book_car(_missing_serial(), start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
+
+    with allure.step("Проверка: запрос без токена отклонён (401 или 403)"):
+        assert response.status_code in (401, 403), (
+            f"Бронирование без токена: ожидали отказ 401/403, получили {response.status_code} {response.text}"
         )

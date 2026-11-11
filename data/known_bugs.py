@@ -99,6 +99,17 @@ KNOWN_BUGS: dict[str, KnownBug] = {
             '"JWT strings must contain exactly 2 period characters" (Q-API-09)'
         ),
     ),
+    "BOOKING_UNKNOWN_CAR_200": KnownBug(
+        refs=("REQ-BOOK-02",),
+        description='Бронирование несуществующей машины отвечает 200 "Car booked successfully!" вместо 404 (Q-API-01)',
+    ),
+    "SEARCH_PAGINATION_IGNORED": KnownBug(
+        refs=("DISC-08",),
+        description=(
+            "Поиск игнорирует query-параметры page и size, которые передаёт фронт: при size=1 приходят все машины "
+            "города (Q-API-02, Q-API-14)"
+        ),
+    ),
 }
 
 _ALLOWED_PREFIXES = ("REQ-", "DISC-")
