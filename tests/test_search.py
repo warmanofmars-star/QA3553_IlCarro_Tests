@@ -14,12 +14,16 @@ logger = logging.getLogger(__name__)
 pytestmark = pytest.mark.ui
 
 
+# Гибридный: машина создаётся через API, поиск идёт в UI. Отдельный test_hybrid_car_search проверял
+# то же самое без проверки кнопки и слит с этим тестом
 @pytest.mark.smoke
+@pytest.mark.hybrid
 @allure.epic("UI Testing")
 @allure.feature("Search Page")
 @allure.story("Search Cars Dynamic Flow")
 @allure.severity(allure.severity_level.CRITICAL)
-@allure.tag("REQ-UI-SEARCH-01", "REQ-UI-SEARCH-04", "REQ-UI-SEARCH-05")
+# REQ-UI-SEARCH-04 здесь не тег: size в URL — способ показать всю выдачу, а не проверка пагинации
+@allure.tag("REQ-UI-SEARCH-01", "REQ-UI-SEARCH-05")
 def test_search_form_dynamic(driver, auth_api, create_car):
     search_page = SearchPage(driver)
     results_page = ResultsPage(driver)
@@ -67,6 +71,7 @@ def test_search_form_dynamic(driver, auth_api, create_car):
 @allure.feature("Search Page")
 @allure.story("Negative Search - Empty City Validation")
 @allure.severity(allure.severity_level.NORMAL)
+@allure.tag("REQ-UI-SEARCH-01")
 def test_search_empty_city_validation(driver):
     search_page = SearchPage(driver)
     search_page.open()
@@ -85,6 +90,7 @@ def test_search_empty_city_validation(driver):
 @allure.feature("Search Page")
 @allure.story("Negative Search - Dates Manual Input Blocked")
 @allure.severity(allure.severity_level.NORMAL)
+@allure.tag("REQ-UI-SEARCH-06")
 def test_search_dates_readonly_protection(driver):
     search_page = SearchPage(driver)
     search_page.open()

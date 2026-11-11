@@ -5,7 +5,7 @@
 в команде: `USE_GRID=false pytest ...` (переменные окружения перекрывают `.env`).
 
 **Сколько тестов собирается (без запуска):**
-`pytest --collect-only -q` → `52 tests collected`
+`pytest --collect-only -q` → `51 tests collected`
 
 **Полный прогон без Grid (как проверяют изменения перед PR):**
 `USE_GRID=false ENABLE_CONSOLE_LOGS=false pytest tests/ -n 2 --browser_name=chrome -rfEsxX`
@@ -25,7 +25,7 @@
 - `pytest -m "api" -v` — все API-тесты без запуска браузеров (19 тестов)
 - `pytest -m "ui" -n 3` — все браузерные тесты Selenium и Playwright (33 теста)
 - `pytest -m "playwright" -v` — только тесты на Playwright (6 тестов; маркер ставится автоматически по фикстуре `page`)
-- `pytest -m "selenium" -n 3` — только тесты на Selenium (27 тестов; маркер ставится автоматически по фикстуре `driver`/`authenticated_driver`)
+- `pytest -m "selenium" -n 3` — только тесты на Selenium (26 тестов; маркер ставится автоматически по фикстуре `driver`/`authenticated_driver`)
 - `pytest -m "hybrid" -v` — гибридные тесты API + UI (3 теста)
 - `pytest -m "security" -v` — проверки безопасности, BOLA и защит форм (15 тестов)
 - `pytest -m "contract" -v` — валидация JSON Schema и словарей (3 теста)
@@ -123,8 +123,19 @@ pre-commit install                      # хуки в .git/hooks: запуска
 
 Хуки: гигиена файлов (пробелы в конце строк, перевод строки в конце файла, синтаксис YAML/TOML,
 маркеры конфликтов, большие файлы), ruff, ruff-format, gitleaks и проверка относительных ссылок в изменённых `*.md`
-(`scripts/check_links.py`: файл и заголовок `#…` существуют). Если хук исправил файл, коммит
+(`scripts/check_links.py`: файл и заголовок `#…` существуют), а при изменениях в `tests/`, `data/`,
+`docs/requirements/` и `README.md` — проверка матрицы трассируемости (см. ниже). Если хук исправил файл, коммит
 не создаётся: проверь изменения, `git add`, повтори коммит. `git commit --no-verify` — запрещён.
+
+**Матрица трассируемости требований** (`docs/requirements/traceability.md` и сводка в `README.md`
+генерируются из тегов тестов и реестров, руками не правятся):
+```bash
+python scripts/coverage_matrix.py           # пересобрать после изменения тегов, реестров, requirements.md
+python scripts/coverage_matrix.py --check   # то, что запускают хук pre-commit и job Lint
+```
+Код 2 — данные не согласованы (тег с несуществующим ID; ID без теста и без записи
+в `data/coverage_exceptions.py` или сразу с тем и другим; тест под `known_bug` / `observation`
+без тега своих refs), код 1 — файлы устарели. Тесты только собираются, браузер и Grid не нужны.
 
 **Линтер и форматтер по отдельности:**
 ```bash
@@ -181,7 +192,7 @@ selenium [chrome,        │      │
 
 **Маркер selenium** ставится автоматически (хук в `conftest.py`) каждому тесту с фикстурой
 `driver` или `authenticated_driver`. Проверить разбиение локально:
-`python scripts/check_ci_split.py` → `27 + 25 = 52`
+`python scripts/check_ci_split.py` → `26 + 25 = 51`
 
 **Пустой отбор валит job** (pytest возвращает 5). Исключение — ручной запуск с маркером:
 например, `test_marker=api` законно не оставляет тестов матрице Selenium.

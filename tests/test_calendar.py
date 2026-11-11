@@ -13,6 +13,7 @@ pytestmark = [pytest.mark.ui, pytest.mark.regression]
 @allure.feature("Calendar Component")
 @allure.story("Calendar UI and Dismissal")
 @allure.severity(allure.severity_level.NORMAL)
+@allure.tag("REQ-UI-SEARCH-06", "REQ-UI-SEARCH-07")
 def test_calendar_ui_and_close(driver):
     search_page = SearchPage(driver)
     search_page.open()
@@ -68,6 +69,7 @@ def test_calendar_past_navigation_blocked(driver):
 @allure.feature("Calendar Component")
 @allure.story("Calendar Navigation")
 @allure.severity(allure.severity_level.NORMAL)
+@allure.tag("REQ-UI-SEARCH-07")
 def test_calendar_month_navigation(driver):
     search_page = SearchPage(driver)
     search_page.open()

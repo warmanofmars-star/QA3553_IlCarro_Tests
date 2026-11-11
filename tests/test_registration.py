@@ -18,6 +18,7 @@ pytestmark = pytest.mark.ui
 @allure.feature("Registration Page")
 @allure.story("Navigation")
 @allure.severity(allure.severity_level.NORMAL)
+@allure.tag("REQ-UI-REG-04")
 def test_navigation_to_registration(driver):
     registration_page = RegistrationPage(driver)
     registration_page.open_main_page()
@@ -30,6 +31,7 @@ def test_navigation_to_registration(driver):
 @allure.feature("Registration Page")
 @allure.story("Positive Registration")
 @allure.severity(allure.severity_level.BLOCKER)
+@allure.tag("REQ-UI-REG-02")
 def test_registration_success(driver):
     registration_page = RegistrationPage(driver)
     user = UserGenerator.get_random_user()
@@ -49,6 +51,7 @@ def test_registration_success(driver):
 @allure.feature("Registration Page")
 @allure.story("Negative Registration - Frontend")
 @allure.severity(allure.severity_level.CRITICAL)
+@allure.tag("REQ-UI-REG-01")
 @pytest.mark.parametrize(
     "field_name, invalid_value, expected_error, scenario",
     [
@@ -171,6 +174,7 @@ def test_registration_password_rejected_by_api(driver):
 @allure.feature("Registration Page")
 @allure.story("Negative Registration - Checkbox")
 @allure.severity(allure.severity_level.NORMAL)
+@allure.tag("REQ-UI-REG-01")
 def test_registration_without_check_box(driver):
     registration_page = RegistrationPage(driver)
     user = UserGenerator.get_random_user()
