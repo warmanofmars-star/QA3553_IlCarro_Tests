@@ -9,7 +9,7 @@ API регистрации и входа: REQ-AUTH-01 … REQ-AUTH-07 и рас�
 """
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import allure
 import pytest
@@ -31,9 +31,11 @@ REGISTRATION_FIELDS = ("username", "password", "firstName", "lastName")
 
 @dataclass
 class RegisteredUser:
-    """Пользователь, зарегистрированный фикстурой, и ответ на его регистрацию."""
+    """Пользователь, зарегистрированный фикстурой, тело запроса регистрации и ответ на него."""
 
     user: User
+    # repr=False: в теле пароль, а repr аргументов теста попадает в трассу отчёта
+    payload: dict = field(repr=False)
     response: requests.Response
 
 
@@ -48,9 +50,11 @@ def registered_user() -> RegisteredUser:
     """
     email = f"User_{uuid.uuid4().hex[:10]}@Example.COM"
     user = UserGenerator.get_random_user(email=email)
+    # Тело сохраняется: тест REQ-AUTH-04 повторяет ровно его
+    payload = user.to_api_payload()
     with allure.step(f"Setup Fixture: регистрация пользователя модуля {email}"):
-        response = IlCarroAPI().register(user.email, user.password)
-    return RegisteredUser(user=user, response=response)
+        response = _post(REGISTRATION_URL, payload)
+    return RegisteredUser(user=user, payload=payload, response=response)
 
 
 def _require_registered(registered: RegisteredUser) -> None:
@@ -105,21 +109,18 @@ def test_api_registration_success(registered_user):
 def test_api_registration_existing_user(registered_user):
     """Повторная регистрация того же username — 400.
 
-    Текст «User already exists» отличает отказ из-за повтора от отказа валидации (тоже 400): иначе
-    тест прошёл бы, даже если повтор приняли бы, а отклонили, например, пароль.
+    Повторяется РОВНО то тело, которое только что прошло регистрацию (200, require). Раз то же тело
+    было валидным, отказ валидации исключён, и 400 может означать только повтор username. Поэтому
+    достаточно кода: сверять текст message не нужно, а требование задаёт именно код.
     """
     _require_registered(registered_user)
-    user = registered_user.user
 
-    with allure.step(f"Повторная регистрация {user.email}"):
-        response = IlCarroAPI().register(user.email, user.password)
+    with allure.step(f"Повторная регистрация тем же телом ({registered_user.user.email})"):
+        response = _post(REGISTRATION_URL, registered_user.payload)
 
-    with allure.step("Проверка: 400 и сообщение о том, что пользователь уже есть"):
+    with allure.step("Проверка: 400"):
         assert response.status_code == 400, (
             f"Повторная регистрация: ожидали 400, получили {response.status_code} {response.text}"
-        )
-        assert response.json().get("message") == "User already exists", (
-            f"Отказ не из-за повтора username: {response.text}"
         )
 
 

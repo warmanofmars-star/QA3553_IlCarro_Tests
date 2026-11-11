@@ -52,7 +52,7 @@
 | REQ-AUTH-01 | Регистрация с корректными данными возвращает 200 и `accessToken`. | `test_api_auth.py::test_api_registration_success` | — | ✅ покрыт |
 | REQ-AUTH-02 | Поля `username`, `password`, `firstName`, `lastName` обязательны: без них или с пустыми значениями — 400. | `test_api_auth.py::test_api_registration_required_fields` | — | ✅ покрыт |
 | REQ-AUTH-03 | Пароль при регистрации: не короче 8 символов, есть цифра, строчная и заглавная латинские буквы и спецсимвол из `@$#^&*!`; иначе 400. | `test_api_auth.py::test_api_registration_password_pattern` | — | ✅ покрыт |
-| REQ-AUTH-04 | Повторная регистрация того же `username` отклоняется с 400. | `test_api_auth.py::test_api_registration_existing_user`<br>`test_registration.py::test_registration_existing_user` | — | ✅ покрыт |
+| REQ-AUTH-04 | Повторная регистрация того же `username` отклоняется с 400. | `test_api_auth.py::test_api_registration_existing_user` | — | ✅ покрыт |
 | REQ-AUTH-05 | Вход с верными данными возвращает 200 и `accessToken`. | `test_api_auth.py::test_api_login_success` | — | ✅ покрыт |
 | REQ-AUTH-06 | Вход с неверным паролем или несуществующим пользователем — 401. | `test_api_auth.py::test_api_login_rejected` | — | ✅ покрыт |
 | REQ-AUTH-07 | Тело входа проверяется по контракту: без обязательных полей или с паролем не по шаблону — 400. | `test_api_auth.py::test_api_login_body_not_by_contract` | `LOGIN_BODY_NOT_VALIDATED` | 🐞 покрыт как известный баг |
