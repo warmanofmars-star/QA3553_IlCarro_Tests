@@ -85,7 +85,7 @@ def test_registration_negative_fields(driver, field_name, invalid_value, expecte
 @allure.feature("Registration Page")
 @allure.story("Negative Registration - Backend")
 @allure.severity(allure.severity_level.CRITICAL)
-@allure.tag("REQ-AUTH-04", "REQ-UI-REG-03")
+@allure.tag("REQ-UI-REG-03")
 @pytest.mark.parametrize(
     "registration_case, scenario",
     [
@@ -95,9 +95,9 @@ def test_registration_negative_fields(driver, field_name, invalid_value, expecte
 )
 def test_registration_existing_user(driver, temp_user, registration_case, scenario):
     """
-    Повторная регистрация занятого email отклоняется (REQ-AUTH-04), окно «Registration failed»
-    показывает текст ошибки сервера (REQ-UI-REG-03). Пароль проходит правила и фронта, и API
-    (DISC-01), поэтому сервер отказывает именно из-за занятого email.
+    Повторная регистрация занятого email: окно «Registration failed» показывает текст ошибки
+    сервера (REQ-UI-REG-03). Код ответа здесь не виден — его проверяет API-тест REQ-AUTH-04.
+    Пароль проходит правила и фронта, и API (DISC-01), поэтому сервер отказывает именно из-за занятого email.
     """
     with allure.step(f"Сценарий: {scenario}"):
         registration_page = RegistrationPage(driver)

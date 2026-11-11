@@ -1,8 +1,9 @@
 """
-Исследование фактического поведения API IlCarro (вопросы Q-API-01 … Q-API-12).
+Исследование фактического поведения API IlCarro (вопросы Q-API-01 … Q-API-17).
 
 Скрипт фиксирует факты: что отправили и что получили. Оценок в нём нет.
 Запуск: python research/explore_api.py --run 1
+Только отдельные вопросы: python research/explore_api.py --run 62 --only Q-API-13,Q-API-14
 Лог: research/evidence/explore_api_run1.log
 """
 
@@ -27,6 +28,7 @@ from common import (  # noqa: E402
     find_my_car,
     load_ui_cities,
     message_type,
+    my_cars,
     new_email,
     new_serial,
     print_stats,
@@ -422,6 +424,125 @@ def q_api_12_booked_periods_scan():
     )
 
 
+def q_api_13_duplicate_serial(city):
+    LOG.header("Q-API-13", "Повтор serialNumber: тем же владельцем и другим пользователем")
+    owner, _, tok_owner, _ = register_user()
+    other, _, tok_other, _ = register_user()
+    serial = new_serial()
+    LOG.fact(f"создание машины владельцем (город {city}): {describe(create_car(tok_owner, car_payload(city, serial)))}")
+    for title, token in (("тем же владельцем", tok_owner), ("другим пользователем", tok_other)):
+        # Отдельные model, чтобы по сохранённым данным было видно, какой запрос перезаписал машину
+        payload = car_payload(city, serial, model=f"Dup-{title.split()[0]}")
+        resp = call("POST", "/v1/cars", token=token, json=payload)
+        LOG.fact(f"повтор serialNumber {title}: {describe(resp)}")
+    car_owner = find_my_car(tok_owner, serial)
+    car_other = find_my_car(tok_other, serial)
+    LOG.fact(
+        f"в /v1/cars/my владельца: найдена={car_owner is not None}; "
+        f"model={car_owner.get('model') if car_owner else None!r}"
+    )
+    LOG.fact(f"в /v1/cars/my другого пользователя: найдена={car_other is not None}")
+    if car_other is not None:
+        # Вторая машина с тем же номером: реестр чистки хранит один токен на номер, удаляем её здесь
+        REG.cars_created += 1
+        resp = call("DELETE", f"/v1/cars/{serial}", token=tok_other)
+        if resp.status_code == 200:
+            REG.cars_deleted += 1
+        LOG.fact(f"удаление машины другим пользователем (чистка): {describe(resp)}")
+
+
+def q_api_14_search_small_city():
+    LOG.header("Q-API-14", "Поиск по городу с малым числом машин: city в выдаче, page и size")
+    city = "Sderot"
+    resp = search(city, d(10), d(14))
+    data = body_json(resp) or {}
+    cars = data.get("cars", []) if isinstance(data, dict) else []
+    cities = sorted({str(c.get("city")) for c in cars})
+    LOG.fact(f"поиск {city} без токена: HTTP {resp.status_code}; машин={len(cars)}; значения city в выдаче={cities}")
+    for params in ({"page": 0, "size": 1}, {"page": 1, "size": 1}):
+        resp = search(city, d(10), d(14), params=params)
+        data = body_json(resp) or {}
+        LOG.fact(
+            f"поиск {city} с query {params}: HTTP {resp.status_code}; "
+            f"машин={len(data.get('cars', [])) if isinstance(data, dict) else '-'}"
+        )
+
+
+def q_api_15_cities_shape():
+    LOG.header("Q-API-15", "GET /v1/cars/cities без токена: статус и поля элементов")
+    resp = call("GET", "/v1/cars/cities")
+    data = body_json(resp)
+    LOG.fact(f"HTTP {resp.status_code}; Content-Type={resp.headers.get('Content-Type', '-').split(';')[0]}")
+    if not isinstance(data, dict):
+        LOG.fact("тело не JSON-объект")
+        return
+    LOG.fact(f"ключи верхнего уровня: {sorted(data)}")
+    items = data.get("cities", [])
+    key_sets = sorted({tuple(sorted(item)) for item in items if isinstance(item, dict)})
+    types = sorted({tuple(type(item.get(k)).__name__ for k in ("city", "lat", "lng")) for item in items})
+    LOG.fact(f"элементов: {len(items)}; наборы ключей: {key_sets}; типы (city, lat, lng): {types}")
+    LOG.fact(f"первый элемент: {short(items[0]) if items else '-'}")
+
+
+def q_api_16_registration_fields():
+    LOG.header("Q-API-16", "Регистрация: обязательные поля по одному и пароль по правилам Swagger")
+    reg = "/v1/user/registration/usernamepassword"
+
+    def body(**overrides):
+        payload = {"firstName": "Probe", "lastName": "User", "username": new_email(), "password": "Probe#2026ab"}
+        payload.update(overrides)
+        return {k: v for k, v in payload.items() if v is not MISSING}
+
+    cases = []
+    for field in ("username", "password", "firstName", "lastName"):
+        cases.append((f"{field} отсутствует", body(**{field: MISSING})))
+        cases.append((f"{field} пустая строка", body(**{field: ""})))
+    for title, pwd in (
+        ("пароль 7 символов 'Ab1@xyz'", "Ab1@xyz"),
+        ("пароль без цифры 'Abcdefg@'", "Abcdefg@"),
+        ("пароль без заглавной 'abcdef1@'", "abcdef1@"),
+        ("пароль без строчной 'ABCDEF1@'", "ABCDEF1@"),
+        ("пароль без спецсимвола 'Abcdefg1'", "Abcdefg1"),
+    ):
+        cases.append((title, body(password=pwd)))
+    for title, payload in cases:
+        if payload.get("username"):
+            REG.label_user(payload["username"])
+        resp = call("POST", reg, json=payload)
+        if resp.status_code == 200:
+            REG.users_created += 1
+        LOG.fact(f"регистрация, {title}: {describe(resp)}; {message_type(resp)}")
+
+
+def q_api_17_car_required_fields(city):
+    LOG.header("Q-API-17", "Обязательные поля CarDto по одному: поле отсутствует и пустое значение")
+    owner, _, tok, _ = register_user()
+    fields = ("serialNumber", "manufacture", "model", "year", "fuel", "seats", "carClass", "pricePerDay", "city")
+    numeric = {"seats", "pricePerDay"}
+    before = len(my_cars(tok))
+    for field in fields:
+        empty = None if field in numeric else ""
+        for title, value in (("отсутствует", MISSING), (f"= {empty!r}", empty)):
+            serial = new_serial()
+            payload = car_payload(city, serial, **{field: value})
+            REG.car_owner_token[serial] = tok
+            resp = call("POST", "/v1/cars", token=tok, json=payload)
+            stored = find_my_car(tok, serial)
+            extra = ""
+            if stored:
+                REG.cars_created += 1
+                extra = f"; сохранено {field}={stored.get(field)!r}"
+            else:
+                REG.car_owner_token.pop(serial, None)
+            LOG.fact(f"{field} {title}: {describe(resp)}; машина в /v1/cars/my={stored is not None}{extra}")
+    after = my_cars(tok)
+    # Машина без serialNumber по номеру не находится — считаем все машины пользователя
+    LOG.fact(f"машин у пользователя до проб: {before}; после: {len(after)}")
+    for car in after:
+        if car.get("serialNumber") not in REG.car_owner_token:
+            LOG.fact(f"машина, не найденная по номеру: serialNumber={car.get('serialNumber')!r}")
+
+
 # ---------------------------------------------------------------- запуск
 
 
@@ -429,23 +550,31 @@ def main():
     LOG.line("# Факты: explore_api.py")
     LOG.line(f"API_BASE_URL: {__import__('common').API_BASE_URL}")
     city = None
+    # --only Q-API-13,Q-API-14 — только перечисленные вопросы (пробы для нового шага без повтора старых)
+    only = set(sys.argv[sys.argv.index("--only") + 1].split(",")) if "--only" in sys.argv else None
     try:
         city = pick_shared_city()
         LOG.fact(f"город для проб (есть и в API, и в UI_CITIES): {city}")
-        steps = [
-            lambda: q_api_01_booking_state(city),
-            lambda: q_api_02_search_and_dates(city),
-            q_api_03_cities,
-            lambda: q_api_04_extra_fields(city),
-            lambda: q_api_05_field_bounds(city),
-            q_api_06_email_case,
-            q_api_07_auth_errors,
-            lambda: q_api_08_routes_not_in_swagger(city),
-            lambda: q_api_09_auth_schemes(city),
-            lambda: q_api_10_delete(city),
-            lambda: q_api_11_text_plain(city),
-            q_api_12_booked_periods_scan,
+        all_steps = [
+            ("Q-API-01", lambda: q_api_01_booking_state(city)),
+            ("Q-API-02", lambda: q_api_02_search_and_dates(city)),
+            ("Q-API-03", q_api_03_cities),
+            ("Q-API-04", lambda: q_api_04_extra_fields(city)),
+            ("Q-API-05", lambda: q_api_05_field_bounds(city)),
+            ("Q-API-06", q_api_06_email_case),
+            ("Q-API-07", q_api_07_auth_errors),
+            ("Q-API-08", lambda: q_api_08_routes_not_in_swagger(city)),
+            ("Q-API-09", lambda: q_api_09_auth_schemes(city)),
+            ("Q-API-10", lambda: q_api_10_delete(city)),
+            ("Q-API-11", lambda: q_api_11_text_plain(city)),
+            ("Q-API-12", q_api_12_booked_periods_scan),
+            ("Q-API-13", lambda: q_api_13_duplicate_serial(city)),
+            ("Q-API-14", q_api_14_search_small_city),
+            ("Q-API-15", q_api_15_cities_shape),
+            ("Q-API-16", q_api_16_registration_fields),
+            ("Q-API-17", lambda: q_api_17_car_required_fields(city)),
         ]
+        steps = [step for qid, step in all_steps if only is None or qid in only]
         for step in steps:
             try:
                 step()

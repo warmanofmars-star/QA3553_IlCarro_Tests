@@ -105,16 +105,16 @@ The table is generated — do not edit it by hand:
 <!-- coverage:start -->
 | Status | REQ | DISC | OBS | Total |
 |---|---:|---:|---:|---:|
-| ✅ Covered by a passing test | 12 | 0 | 0 | 12 |
-| 🟡 Partly covered by a passing test, the rest is planned | 7 | 0 | 0 | 7 |
-| 🐞 Covered, the test hits a known bug (strict xfail) | 7 | 2 | 0 | 9 |
+| ✅ Covered by a passing test | 26 | 0 | 0 | 26 |
+| 🟡 Partly covered by a passing test, the rest is planned | 5 | 0 | 0 | 5 |
+| 🐞 Covered, the test hits a known bug (strict xfail) | 10 | 4 | 0 | 14 |
 | 👁 Covered as an observation (strict xfail) | 0 | 0 | 1 | 1 |
 | ⚪ No test — exception with a recorded reason | 3 | 1 | 0 | 4 |
-| 🕓 No test yet — planned | 24 | 5 | 10 | 39 |
+| 🕓 No test yet — planned | 9 | 3 | 10 | 22 |
 | **Total** | 53 | 8 | 11 | 72 |
 
-Exceptions: the check would harm the shared backend — 1; blocked by another defect — 1; the feature is unreachable — 2. Planned: 17 in step 6.2 (API), 22 in step 6.3 (UI and observations). The rest of the partly covered items: 2 in step 6.2, 5 in step 6.3.
-All 51 tests reference at least one ID (a test without one fails the check).
+Exceptions: the check would harm the shared backend — 1; blocked by another defect — 1; the feature is unreachable — 2. Planned: 0 in step 6.2 (API), 22 in step 6.3 (UI and observations). The rest of the partly covered items: 0 in step 6.2, 5 in step 6.3.
+All 92 tests reference at least one ID (a test without one fails the check).
 <!-- coverage:end -->
 
 The full matrix — every ID with its tests, registry key and status, plus the list of exceptions and

@@ -96,3 +96,39 @@ def test_frontend_backend_cities_mapping():
 
         assert not fake_frontend_cities, error_msg
         assert not unreachable_backend_cities, error_msg
+
+
+def _is_number(value) -> bool:
+    # bool в Python — подкласс int, но координатой не является
+    return isinstance(value, int | float) and not isinstance(value, bool)
+
+
+def _is_city_item(item) -> bool:
+    """Элемент CitiesDto: непустое название города и координаты-числа."""
+    return (
+        isinstance(item, dict)
+        and isinstance(item.get("city"), str)
+        and bool(item["city"])
+        and _is_number(item.get("lat"))
+        and _is_number(item.get("lng"))
+    )
+
+
+@allure.epic("API Testing")
+@allure.feature("Cross-System Dictionaries")
+@allure.title("Список городов API доступен без авторизации и состоит из {city, lat, lng}")
+@allure.tag("REQ-CITY-01")
+def test_api_cities_list():
+    api = IlCarroAPI()  # клиент без заголовка Authorization
+
+    response = api.get_cities()
+
+    with allure.step("Проверка: без токена — 200"):
+        assert response.status_code == 200, f"Список городов без токена: {response.status_code} {response.text}"
+
+    with allure.step("Проверка: непустой список элементов {city, lat, lng}"):
+        cities = response.json().get("cities")
+        assert isinstance(cities, list), f"В ответе нет списка cities: {response.text[:500]}"
+        assert cities, "Список городов пуст"
+        broken = [item for item in cities if not _is_city_item(item)]
+        assert not broken, f"Элементы не в формате {{city: строка, lat: число, lng: число}}: {broken[:5]}"

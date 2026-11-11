@@ -97,12 +97,13 @@ class IlCarroAPI:
         return response
 
     @allure.step("API: Поиск машин в городе {city}")
-    def search_cars(self, city, start_date, end_date):
+    def search_cars(self, city, start_date, end_date, params=None):
+        """params — query-параметры, как их передаёт фронт (page, size); в Swagger их нет (DISC-08)."""
         url = f"{self.BASE_URL}/v1/cars/search"
-        logger.info(f"POST {url} [Поиск: {city}, даты: {start_date} - {end_date}]")
+        logger.info(f"POST {url} [Поиск: {city}, даты: {start_date} - {end_date}, query: {params}]")
 
         payload = {"city": city, "startDate": start_date, "endDate": end_date}
-        response = self.session.post(url, json=payload)
+        response = self.session.post(url, json=payload, params=params)
 
         if response.status_code == 200:
             cars_count = len(response.json().get("cars", []))

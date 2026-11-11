@@ -57,7 +57,7 @@
 | ID | Требование | Источник | Факт |
 |---|---|---|---|
 | REQ-AUTH-01 | Регистрация с корректными данными возвращает 200 и `accessToken`. | SW: `/v1/user/registration/usernamepassword` → 200 `TokenDto` | соблюдается (Q-API-06) |
-| REQ-AUTH-02 | Поля `username`, `password`, `firstName`, `lastName` обязательны: без них или с пустыми значениями — 400. | SW: `RegistrationBodyDto.required`, ответ 400 | соблюдается (Q-API-07) |
+| REQ-AUTH-02 | Поля `username`, `password`, `firstName`, `lastName` обязательны: без них или с пустыми значениями — 400. | SW: `RegistrationBodyDto.required`, ответ 400 | соблюдается (Q-API-07, Q-API-16: каждое поле отсутствует или пустое — 400; при `password` = `""` в ответе нет поля `message`) |
 | REQ-AUTH-03 | Пароль при регистрации: не короче 8 символов, есть цифра, строчная и заглавная латинские буквы и спецсимвол из `@$#^&*!`; иначе 400. | SW: `RegistrationBodyDto.password.pattern` | соблюдается (Q-API-07: `abc123`, `Abcdefg1` отклонены) |
 | REQ-AUTH-04 | Повторная регистрация того же `username` отклоняется с 400. | SW: ответ 400 (409 в контракте не описан) | соблюдается (Q-API-06, Q-API-07) |
 | REQ-AUTH-05 | Вход с верными данными возвращает 200 и `accessToken`. | SW: `/v1/user/login/usernamepassword` → 200 `TokenDto` | соблюдается (Q-API-06) |
@@ -69,10 +69,10 @@
 | ID | Требование | Источник | Факт |
 |---|---|---|---|
 | REQ-CAR-01 | Авторизованный пользователь добавляет машину: 200 и `message`; машина появляется в `/v1/cars/my` владельца. | SW: `POST /v1/cars` → 200 `ResponseMessageDto`; «Get User cars» | соблюдается (Q-API-04, Q-API-05) |
-| REQ-CAR-02 | Обязательные поля `CarDto` (`serialNumber`, `manufacture`, `model`, `year`, `fuel`, `seats`, `carClass`, `pricePerDay`, `city`): без них или с пустым значением — 400. | SW: `CarDto.required`, ответ 400 | соблюдается для `model` и `city` (Q-API-05); остальные поля не проверены |
+| REQ-CAR-02 | Обязательные поля `CarDto` (`serialNumber`, `manufacture`, `model`, `year`, `fuel`, `seats`, `carClass`, `pricePerDay`, `city`): без них или с пустым значением — 400. | SW: `CarDto.required`, ответ 400 | соблюдается для всех девяти полей: поле отсутствует или пустое — 400, машина не создаётся (Q-API-17) |
 | REQ-CAR-03 | Значение неверного типа (например, `seats` строкой) — 400, а не ошибка сервера. | SW: типы полей `CarDto`, ответ 400; RFC 9110 §15.6 (5xx — сбой сервера) | **нарушается**: 500 (базовый прогон, тест `test_api_car_mutations[seats]`; в лог исследования не входит) |
 | REQ-CAR-04 | Владелец машины определяется по токену; `owner` и `bookedPeriods` из тела запроса игнорируются. | OWASP API3:2023 (Broken Object Property Level Authorization) | соблюдается (Q-API-04) |
-| REQ-CAR-05 | `serialNumber` уникален во всей системе: повтор — 400. | SW: `serialNumber` — идентификатор машины в путях `/v1/cars/{serialNumber}` | соблюдается (ручная проба 2а, в лог не входит) |
+| REQ-CAR-05 | `serialNumber` уникален во всей системе: повтор — 400. | SW: `serialNumber` — идентификатор машины в путях `/v1/cars/{serialNumber}` | соблюдается: повтор тем же владельцем и другим пользователем — 400, машина не перезаписана (Q-API-13) |
 | REQ-CAR-06 | Город машины должен быть в списке `/v1/cars/cities`; иначе — 400. | EXP: фиксируем поведение — SW связывает машину с городом и отдаёт список поддерживаемых городов | соблюдается (Q-API-03) |
 | REQ-CAR-07 | `/v1/cars/my` возвращает только машины владельца токена. | SW: «Get User cars»; OWASP API1:2023 | соблюдается (Q-API-04) |
 | REQ-CAR-08 | Владелец удаляет свою машину: 200; после этого машины нет в `/v1/cars/my`. | SW: `DELETE /v1/cars/{serialNumber}` → 200 | соблюдается (Q-API-10) |
@@ -84,7 +84,7 @@
 | ID | Требование | Источник | Факт |
 |---|---|---|---|
 | REQ-SEARCH-01 | Поиск доступен без авторизации. | SW: у `/v1/cars/search` нет `security` | соблюдается (Q-API-02: запросы поиска выполнялись без токена) |
-| REQ-SEARCH-02 | Поиск возвращает только машины указанного города. | SW: «Search Car by city and period» | не проверено |
+| REQ-SEARCH-02 | Поиск возвращает только машины указанного города. | SW: «Search Car by city and period» | соблюдается (Q-API-14: в выдаче Sderot у всех машин `city` = Sderot) |
 | REQ-SEARCH-03 | Машина, период бронирования которой пересекается с искомым, не возвращается. | SW: «Search Car by city and period»; `CarDto.bookedPeriods` | **не проверяемо**: бронирование не сохраняется (REQ-BOOK-01), ни у одной машины в системе `bookedPeriods` не заполнен (Q-API-12: 37 городов, 13 305 машин) |
 
 ### 1.4 Бронирование (BOOK)
@@ -99,7 +99,7 @@
 
 | ID | Требование | Источник | Факт |
 |---|---|---|---|
-| REQ-CITY-01 | `/v1/cars/cities` доступен без авторизации и возвращает список `{city, lat, lng}`. | SW: «Get All Cities», `CitiesDto` | соблюдается: список городов — Q-API-03; поля `lat` и `lng` в ответе — проба 2а |
+| REQ-CITY-01 | `/v1/cars/cities` доступен без авторизации и возвращает список `{city, lat, lng}`. | SW: «Get All Cities», `CitiesDto` | соблюдается: список городов — Q-API-03; без токена — 200, все элементы `{city, lat, lng}` — Q-API-15 |
 
 ### 1.6 Безопасность и протокол (SEC)
 

@@ -88,6 +88,62 @@ def test_api_car_mutations(auth_api, car_cleanup, mutate_func, expected_status, 
     assert_secure_error(response, expected_status)
 
 
+# Обязательные поля CarDto (Swagger, CarDto.required) и их «пустое» значение: для строк — "",
+# для чисел — null (пустой строки у числа не бывает, и это был бы уже неверный тип, REQ-CAR-03)
+CAR_REQUIRED_FIELDS = {
+    "serialNumber": "",
+    "manufacture": "",
+    "model": "",
+    "year": "",
+    "fuel": "",
+    "seats": None,
+    "carClass": "",
+    "pricePerDay": None,
+    "city": "",
+}
+
+
+@allure.epic("API Testing")
+@allure.feature("Car Controller")
+@allure.story("Required fields")
+@allure.severity(allure.severity_level.CRITICAL)
+@allure.tag("REQ-CAR-02")
+@pytest.mark.parametrize("field", CAR_REQUIRED_FIELDS)
+def test_api_car_required_field(shared_api, shared_car_cleanup, field):
+    """Без обязательного поля или с пустым значением машина не создаётся, ответ — 400.
+
+    Пользователь общий (shared_user): тесту нужен только токен. Проблемы обоих вариантов
+    собираются и выводятся вместе.
+    """
+    problems = []
+    empty_value = CAR_REQUIRED_FIELDS[field]
+    for mode, mutate in (
+        ("поле отсутствует", lambda payload: payload.pop(field)),
+        (f"значение {empty_value!r}", lambda payload: payload.update({field: empty_value})),
+    ):
+        with allure.step(f"{field}: {mode}"):
+            payload = CarGenerator.get_random_car().to_api_payload()
+            serial_number = payload["serialNumber"]
+            # Машина не должна создаться; если создастся — очистка её уберёт
+            shared_car_cleanup.register(serial_number)
+            mutate(payload)
+            before = set(my_cars(shared_api))
+            response = shared_api.add_car(payload)
+
+            # Сравниваем список машин до и после запроса, а не ищем номер: машину без serialNumber
+            # по номеру не найти. Тесты воркера идут последовательно — чужих изменений в списке нет
+            saved = set(my_cars(shared_api)) - before
+            if saved:
+                problems.append(
+                    f"{mode}: машина сохранилась {sorted(map(str, saved))} ({response.status_code} {response.text})"
+                )
+            elif response.status_code != 400:
+                problems.append(f"{mode}: ожидали 400, получили {response.status_code} {response.text}")
+
+    with allure.step("Проверка: оба варианта отклонены с 400, машина не сохранена"):
+        assert not problems, f"Обязательное поле {field}:\n" + "\n".join(problems)
+
+
 @pytest.mark.security
 @allure.epic("API Testing")
 @allure.feature("Car Controller")
