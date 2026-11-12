@@ -5,6 +5,7 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import allure
 import pytest
@@ -445,13 +446,22 @@ def backend_write_guard(page):
     Нужна тестам, которые подменяют пишущие запросы (utils/network_faults.py). Фикстура должна
     сработать ДО подмен теста: маршрут, зарегистрированный раньше, проверяется позже. Поэтому
     фикстуры и тесты с подменами запрашивают её явно, до регистрации своих маршрутов.
-    Оборванный запрос сам по себе тест не роняет — это делает require_intercepted; здесь он
-    только пишется в лог, чтобы причину было видно.
+
+    После теста оборванный запрос — ошибка теста (ERROR на teardown), а не запись в логе. Иначе защита
+    могла бы тихо оборвать запрос, который фронт начал слать после исправления бага (например, POST
+    выхода), и xfail продолжил бы показывать «известный баг»: ошибка teardown строгим xfail не
+    прячется. Запрос, ушедший мимо подмены из-за опечатки в шаблоне, роняет тест раньше —
+    в require_intercepted.
     """
     blocked = block_unhandled_writes(page)
     yield blocked
-    for request in blocked:
-        logger.warning(f"Защита перехвата оборвала запрос мимо подмен: {request.method} {request.url}")
+    if blocked:
+        aborted = "; ".join(f"{request.method} {urlsplit(request.url).path}" for request in blocked)
+        pytest.fail(
+            f"Защита перехвата оборвала запросы к API мимо подмен: {aborted}. Тест их не ждал: либо шаблон "
+            "подмены не совпал, либо фронт шлёт новый пишущий запрос — проверить, что изменилось",
+            pytrace=False,
+        )
 
 
 @pytest.fixture
