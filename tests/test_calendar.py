@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 import allure
 import pytest
@@ -7,6 +7,9 @@ from pages.search_page import SearchPage
 from utils.preconditions import require
 
 pytestmark = [pytest.mark.ui, pytest.mark.regression]
+
+# Верхняя граница календаря: maxDate = сегодня + 365 дней (FE: Search, REQ-UI-SEARCH-02)
+MAX_DAYS_AHEAD = 365
 
 
 @allure.epic("UI Testing")
@@ -63,6 +66,39 @@ def test_calendar_past_navigation_blocked(driver):
         # Верхняя граница (сегодня + 365 дней, REQ-UI-SEARCH-02) в показанном месяце не достижима
         future_blocked = sorted(str(day) for day, available in days.items() if day >= today and not available)
         assert not future_blocked, f"Недоступны дни, которые должны быть доступны: {future_blocked}"
+
+
+@allure.epic("UI Testing")
+@allure.feature("Calendar Component")
+@allure.story("Negative Calendar UI - Far Future Dates Blocked")
+@allure.severity(allure.severity_level.NORMAL)
+@allure.tag("REQ-UI-SEARCH-02")
+def test_calendar_far_future_blocked(driver):
+    """
+    Дни позже «сегодня + 365 дней» выбрать нельзя (REQ-UI-SEARCH-02: maxDate; Q-UI-11).
+
+    Календарь листается вперёд до месяца последнего доступного дня. В этом месяце дни до границы
+    включительно должны быть доступны, а дни после неё — нет: так проверяется сама граница,
+    а не то, что «что-то недоступно».
+    """
+    search_page = SearchPage(driver)
+    search_page.open()
+    search_page.click_dates_input()
+    require(search_page.is_calendar_visible(), "Календарь не открылся!")
+
+    today = date.today()
+    last_day = today + timedelta(days=MAX_DAYS_AHEAD)
+    search_page.go_to_month(last_day)
+    days = search_page.get_displayed_days_availability()
+    require(last_day in days, f"Предусловие: показан не месяц границы {last_day}, а {min(days):%B %Y}")
+
+    with allure.step(f"Проверка: дни после {last_day} недоступны"):
+        after_available = sorted(str(day) for day, available in days.items() if day > last_day and available)
+        assert not after_available, f"Можно выбрать дни позже «сегодня + {MAX_DAYS_AHEAD}»: {after_available}"
+
+    with allure.step(f"Проверка: дни месяца до {last_day} включительно доступны"):
+        before_blocked = sorted(str(day) for day, available in days.items() if day <= last_day and not available)
+        assert not before_blocked, f"Недоступны дни, которые должны быть доступны: {before_blocked}"
 
 
 @allure.epic("UI Testing")
