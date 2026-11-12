@@ -14,21 +14,23 @@
 /v1/cars/my владельца, — попытка удалить несозданную машину дала бы ложное предупреждение.
 
 Сбой очистки не роняет тест (тест уже отработал, его результат важнее), но пишется в лог
-предупреждением и попадает в журнал logs/car_factory.jsonl. По журналу главный процесс pytest
-печатает итог: сколько машин создано и сколько удалено (см. pytest_terminal_summary в conftest.py).
+предупреждением и попадает в журнал logs/car_factory_<воркер>.jsonl (свой файл у каждого процесса,
+см. utils/run_journal.py). По всем файлам журнала главный процесс pytest печатает итог: сколько машин
+создано и сколько удалено (см. pytest_sessionfinish и pytest_terminal_summary в conftest.py).
 """
 
-import json
 import logging
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 
 import allure
 
 from config import PROJECT_ROOT, settings
+from utils import run_journal
 
 logger = logging.getLogger(__name__)
 
-JOURNAL_FILE = PROJECT_ROOT / "logs" / "car_factory.jsonl"
+JOURNAL_DIR = PROJECT_ROOT / "logs"
+JOURNAL_NAME = "car_factory"
 
 
 @dataclass
@@ -126,32 +128,35 @@ class CarCleanup:
 
     @staticmethod
     def _write_journal(report: CleanupReport) -> None:
-        """Одна строка JSON на тест. Короткая запись в режиме append безопасна для воркеров xdist."""
+        """Одна строка JSON на тест в файл журнала своего процесса."""
         try:
-            JOURNAL_FILE.parent.mkdir(exist_ok=True)
             record = asdict(report) | {"worker": settings.xdist_worker_id}
-            with open(JOURNAL_FILE, "a", encoding="utf-8") as journal:
-                journal.write(json.dumps(record, ensure_ascii=False) + "\n")
+            run_journal.append_record(JOURNAL_DIR, JOURNAL_NAME, record)
         except OSError as exc:
             logger.warning(f"Не удалось записать журнал фабрики машин: {exc}")
 
 
+# Поля записи журнала: без любого из них итог по записи посчитать нельзя
+JOURNAL_FIELDS = frozenset(item.name for item in fields(CleanupReport))
+
+
 def reset_journal() -> None:
-    """Удаляет журнал прошлого прогона. Вызывается главным процессом до старта воркеров."""
-    JOURNAL_FILE.unlink(missing_ok=True)
+    """Удаляет файлы журнала прошлого прогона. Вызывается главным процессом до старта воркеров."""
+    run_journal.reset(JOURNAL_DIR, JOURNAL_NAME)
 
 
 def journal_summary() -> str | None:
-    """Итог по журналу текущего прогона одной строкой или None, если машин тесты не создавали."""
-    if not JOURNAL_FILE.is_file():
+    """Итог по журналу текущего прогона или None, если машин тесты не создавали.
+
+    Испорченная строка в любом файле журнала — run_journal.JournalError.
+    """
+    records = run_journal.read_records(JOURNAL_DIR, JOURNAL_NAME, JOURNAL_FIELDS)
+    if not records:
         return None
     totals = {"users": 0, "registered": 0, "created": 0, "deleted": 0, "deleted_by_test": 0}
     failed: list[str] = []
     left: list[str] = []
-    for line in JOURNAL_FILE.read_text(encoding="utf-8").splitlines():
-        if not line.strip():
-            continue
-        record = json.loads(line)
+    for record in records:
         totals["users"] += 1
         for key in ("registered", "created", "deleted", "deleted_by_test"):
             totals[key] += record[key]
