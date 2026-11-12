@@ -28,6 +28,8 @@ class PwAddCarPage(PwBasePage):
         self.serial_input = page.locator("[name='serialNumber']")
         self.price_input = page.locator("[name='pricePerDay']")
         self.about_input = page.locator("[name='about']")
+        self.image_input = page.locator("[name='image']")  # фото ссылкой; сюда же фронт кладёт data URL файла
+        self.photo_file_input = page.locator("#photo-file")
 
         self.submit_btn = page.locator("button[type='submit']")
 
@@ -60,6 +62,17 @@ class PwAddCarPage(PwBasePage):
         self.serial_input.fill(car.reg_number)
         self.price_input.fill(str(car.price))
         self.about_input.fill(car.about)
+
+    @allure.step("Фото ссылкой: {url}")
+    def fill_photo_link(self, url: str):
+        self.image_input.fill(url)
+
+    @allure.step("Фото файлом: {path}")
+    def attach_photo(self, path: str):
+        self.photo_file_input.set_input_files(path)
+        # Файл читается асинхронно (FileReader): ждём, пока фронт положит data URL в поле image.
+        # wait_for_function, а не expect: сбой подготовки не должен выглядеть как провал проверки
+        self.page.wait_for_function("() => document.querySelector(\"[name='image']\").value.startsWith('data:')")
 
     @allure.step("Отправка формы")
     def submit(self):

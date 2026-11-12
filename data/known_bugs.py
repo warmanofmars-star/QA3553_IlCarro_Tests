@@ -110,6 +110,13 @@ KNOWN_BUGS: dict[str, KnownBug] = {
             "города (Q-API-02, Q-API-14)"
         ),
     ),
+    "CAR_FORM_FIELDS_NOT_SENT": KnownBug(
+        refs=("DISC-04",),
+        description=(
+            "Форма машины собирает Gear, WD и Doors, но в запрос POST /v1/cars они не попадают: введённое "
+            "пользователем молча теряется (Q-UI-05, Q-UI-15)"
+        ),
+    ),
 }
 
 _ALLOWED_PREFIXES = ("REQ-", "DISC-")

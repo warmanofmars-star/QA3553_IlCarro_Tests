@@ -130,12 +130,6 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
         "Валидация обязательных полей формы машины до отправки. Для City нарушается (Q-UI-04) — нужна запись "
         "в known_bugs.py",
     ),
-    "REQ-UI-CAR-03": _planned("6.3a", "Значение Fuel в запросе POST /v1/cars — строчными (перехват запроса)"),
-    "REQ-UI-CAR-04": _planned(
-        "6.3a",
-        "Файл фото уходит в поле image как data URL. Только с перехватом запроса, без сохранения на бэкенде: "
-        "иначе тест копит изображения на общем сервере (REQ-SEC-07)",
-    ),
     "REQ-UI-SEARCH-03": _planned("6.3b", "Подсказка города: не больше 8 вариантов; город, введённый вручную"),
     "REQ-UI-SEARCH-04": _planned(
         "6.3b",
@@ -149,11 +143,6 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
     ),
     "REQ-UI-SESSION-01": _planned("6.3a", "Ответ 401: фронт удаляет token и запоминает postLoginRedirect"),
     "REQ-UI-SESSION-02": _planned("6.3a", "«Log out» удаляет токен и переводит на /search"),
-    "DISC-04": _planned(
-        "6.3a",
-        "Gear, WD и Doors из формы не попадают в запрос POST /v1/cars (перехват запроса). Расхождение "
-        "подтверждено (Q-UI-05) — нужна запись в known_bugs.py",
-    ),
     "DISC-05": _planned(
         "6.3a",
         "Запросы фронта к эндпоинтам, которых нет в Swagger и на бэкенде (страница машины, профиль). Вместе "
