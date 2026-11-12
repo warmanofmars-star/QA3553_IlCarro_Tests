@@ -113,7 +113,7 @@ The table is generated — do not edit it by hand:
 | 🕓 No test yet — planned | 9 | 3 | 10 | 22 |
 | **Total** | 53 | 8 | 11 | 72 |
 
-Exceptions: the check would harm the shared backend — 1; blocked by another defect — 1; the feature is unreachable — 2. Planned: 0 in step 6.2 (API), 22 in step 6.3 (UI and observations). The rest of the partly covered items: 0 in step 6.2, 5 in step 6.3.
+Exceptions: the check would harm the shared backend — 1; blocked by another defect — 1; the feature is unreachable — 2. Planned: 0 in step 6.2 (API), 9 in step 6.3a (UI: request interception and session), 13 in step 6.3b (UI: the rest and observations). The rest of the partly covered items: 0 in step 6.2, 1 in step 6.3a, 4 in step 6.3b.
 All 92 tests reference at least one ID (a test without one fails the check).
 <!-- coverage:end -->
 
@@ -286,7 +286,8 @@ pre-commit run --all-files    # check the whole project
 
 Not done yet:
 
-- **Step 6.2 — API tests** and **step 6.3 — UI tests and observations** for the items marked as planned in the
+- **Step 6.2 — API tests**, **step 6.3a — UI tests with request interception and the session** and
+  **step 6.3b — the rest of the UI tests and observations** for the items marked as planned in the
   [traceability matrix](docs/requirements/traceability.md) (step 6.1, the matrix itself, is done).
 - **Step 7 — UI resilience tests:** how the UI behaves when the backend fails (network interception in Playwright).
 
