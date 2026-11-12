@@ -5,6 +5,7 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import allure
 import pytest
@@ -19,7 +20,9 @@ from models.user import User
 from pages.login_page import LoginPage
 from utils.car_cleanup import CarCleanup, journal_summary, reset_journal
 from utils.listener import IlCarroListener
+from utils.network_faults import block_unhandled_writes
 from utils.preconditions import require
+from utils.user_journal import reset_user_journal, user_journal_summary
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +43,7 @@ def pytest_configure(config):
     Явно переданный --log-file имеет приоритет. Формат и уровни — в pytest.ini.
 
     Главный процесс стартует раньше воркеров, поэтому только он удаляет файлы прошлого прогона
-    (логи и журнал фабрики машин): воркер стёр бы записи соседей.
+    (логи, журнал фабрики машин и журнал пользователей): воркер стёр бы записи соседей.
 
     Сбор без запуска (--collect-only) логи не трогает: его вызывают проверки
     scripts/check_ci_split.py и scripts/coverage_matrix.py (в том числе хук pre-commit),
@@ -63,6 +66,7 @@ def pytest_configure(config):
         for old_log in LOG_DIR.glob("*.log"):
             old_log.unlink(missing_ok=True)
         reset_journal()
+        reset_user_journal()
 
     if config.option.log_file or is_xdist_controller:
         return
@@ -72,13 +76,19 @@ def pytest_configure(config):
 
 
 def pytest_terminal_summary(terminalreporter):
-    """Итог фабрики машин: сколько создано и сколько удалено. Печатает главный процесс после всех воркеров."""
-    if settings.is_xdist_worker:
+    """Что прогон оставил на общем бэкенде: машины (создано и удалено) и пользователи (удалить нельзя).
+
+    Печатает главный процесс после всех воркеров. Сбор без запуска (--collect-only) ничего
+    не регистрирует и журналы не трогает, поэтому итога у него нет.
+    """
+    if settings.is_xdist_worker or terminalreporter.config.getoption("collectonly", default=False):
         return
     summary = journal_summary()
     if summary:
         terminalreporter.write_sep("-", "очистка машин")
         terminalreporter.write_line(summary)
+    terminalreporter.write_sep("-", "пользователи")
+    terminalreporter.write_line(user_journal_summary())
 
 
 # Фикстуры, через которые тест получает браузер Selenium. authenticated_driver зависит от driver,
@@ -427,6 +437,31 @@ def _mask_secret_params(request):
     for name in callspec.params if callspec else ():
         if SECRET_PARAM_NAME.search(name):
             allure.dynamic.parameter(name, SECRET_PLACEHOLDER, mode=allure.parameter_mode.MASKED)
+
+
+@pytest.fixture
+def backend_write_guard(page):
+    """Перехват закрытый по умолчанию: не-GET запросы к API, не пойманные подменами, обрываются.
+
+    Нужна тестам, которые подменяют пишущие запросы (utils/network_faults.py). Фикстура должна
+    сработать ДО подмен теста: маршрут, зарегистрированный раньше, проверяется позже. Поэтому
+    фикстуры и тесты с подменами запрашивают её явно, до регистрации своих маршрутов.
+
+    После теста оборванный запрос — ошибка теста (ERROR на teardown), а не запись в логе. Иначе защита
+    могла бы тихо оборвать запрос, который фронт начал слать после исправления бага (например, POST
+    выхода), и xfail продолжил бы показывать «известный баг»: ошибка teardown строгим xfail не
+    прячется. Запрос, ушедший мимо подмены из-за опечатки в шаблоне, роняет тест раньше —
+    в require_intercepted.
+    """
+    blocked = block_unhandled_writes(page)
+    yield blocked
+    if blocked:
+        aborted = "; ".join(f"{request.method} {urlsplit(request.url).path}" for request in blocked)
+        pytest.fail(
+            f"Защита перехвата оборвала запросы к API мимо подмен: {aborted}. Тест их не ждал: либо шаблон "
+            "подмены не совпал, либо фронт шлёт новый пишущий запрос — проверить, что изменилось",
+            pytrace=False,
+        )
 
 
 @pytest.fixture

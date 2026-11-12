@@ -19,6 +19,10 @@ class PwLoginPage(PwBasePage):
         self.ok_btn = page.get_by_role("link", name="OK", exact=True)
         self.global_message = page.locator("h3")
         self.logout_btn = page.locator("button.navigation-link")
+        # Окно ошибки входа: role=dialog с заголовком h3 и текстом p (в окне успеха роли dialog нет)
+        self.error_dialog = page.get_by_role("dialog")
+        self.error_dialog_title = self.error_dialog.locator("h3")
+        self.error_dialog_text = self.error_dialog.locator("p")
 
     # --- ДЕЙСТВИЯ ---
     def open(self):
@@ -42,6 +46,22 @@ class PwLoginPage(PwBasePage):
         self.fill_email(email)
         self.fill_password(password)
         self.submit_login()
+
+    def login_as(self, user):
+        """Вход через форму как предусловие теста: открыть, войти, закрыть окно, дождаться «Log out».
+
+        Ожидания — через wait_for (TimeoutError), а не expect (AssertionError): сбой входа
+        не должен уйти в xfail теста под known_bug / observation.
+        """
+        with allure.step(f"Setup: вход через форму под {user.email}"):
+            self.open()
+            self.login(user.email, user.password)
+            self.click_ok_button()
+            self.logout_btn.wait_for(state="visible")
+
+    @allure.step("Клик «Log out»")
+    def click_logout(self):
+        self.logout_btn.click()
 
     # --- ПРОВЕРКИ ---
     # Переносим магию expect() прямо внутрь Page Object

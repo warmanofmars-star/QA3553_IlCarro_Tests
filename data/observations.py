@@ -37,6 +37,13 @@ OBSERVATIONS: dict[str, Observation] = {
             'year "abc", fuel "banana"'
         ),
     ),
+    "STALE_SESSION_UI_AFTER_401": Observation(
+        ref="OBS-05",
+        description=(
+            "После ответа 401 фронт удаляет токен, но оставляет пользователя на той же странице, и «Log out» "
+            "остаётся в навигации до перезагрузки (Q-UI-13, Q-UI-17)"
+        ),
+    ),
 }
 
 

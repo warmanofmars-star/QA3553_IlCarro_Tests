@@ -110,6 +110,41 @@ KNOWN_BUGS: dict[str, KnownBug] = {
             "города (Q-API-02, Q-API-14)"
         ),
     ),
+    "CAR_FORM_FIELDS_NOT_SENT": KnownBug(
+        refs=("DISC-04",),
+        description=(
+            "Форма машины собирает Gear, WD и Doors, но в запрос POST /v1/cars они не попадают: введённое "
+            "пользователем молча теряется (Q-UI-05, Q-UI-15)"
+        ),
+    ),
+    "LOGIN_ERROR_TEXT_HARDCODED": KnownBug(
+        refs=("REQ-UI-LOGIN-03",),
+        description=(
+            'При ответе 500, 400 и обрыве сети окно «Login failed» показывает "Login or Password incorrect" вместо '
+            "«Login failed. Try again»: текст зашит в окно (Q-UI-10)"
+        ),
+    ),
+    "LOGOUT_TOKEN_STILL_VALID": KnownBug(
+        refs=("REQ-SEC-06",),
+        description=(
+            "Токен после «Log out» принимается API: GET /v1/cars/my отвечает 200. Выход только удаляет токен "
+            "в браузере, серверного выхода нет (Q-UI-14)"
+        ),
+    ),
+    "CAR_PAGE_NOT_LOADED": KnownBug(
+        refs=("REQ-UI-CARPAGE-01",),
+        description=(
+            "Клик по карточке открывает /cars/{serial}, но вместо данных машины на странице «Не удалось "
+            "загрузить машину» (Q-UI-01, Q-UI-19)"
+        ),
+    ),
+    "FRONTEND_CALLS_UNDOCUMENTED_ENDPOINTS": KnownBug(
+        refs=("DISC-05",),
+        description=(
+            "Фронт обращается к операциям, которых нет в Swagger и на бэкенде: GET /v1/cars/{id} (страница машины), "
+            "GET и PUT /v1/user/profile (страница профиля) (Q-API-08, Q-UI-18, Q-UI-19)"
+        ),
+    ),
 }
 
 _ALLOWED_PREFIXES = ("REQ-", "DISC-")

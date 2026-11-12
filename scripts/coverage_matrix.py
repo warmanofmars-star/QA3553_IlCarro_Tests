@@ -94,7 +94,11 @@ CATEGORY_TITLES_EN = {
     "blocked": "blocked by another defect",
     "unreachable": "the feature is unreachable",
 }
-PLANNED_PRS_EN = {"6.2": "API", "6.3": "UI and observations"}
+PLANNED_PRS_EN = {
+    "6.2": "API",
+    "6.3a": "UI: request interception and session",
+    "6.3b": "UI: the rest and observations",
+}
 
 
 # ==========================================

@@ -7,7 +7,7 @@
 - Дата прогонов: 2026-11-05.
 - API: https://ilcarro-backend.herokuapp.com, UI: https://icarro-v1.netlify.app.
 - Скрипты: `research/explore_api.py` (функции `q_api_NN_*`), `research/explore_ui.py` (функции `q_ui_NN_*`),
-  общие функции — `research/common.py`. Описание запуска — `research/README.md`.
+  `research/explore_ui_interception.py` (Q-UI-15 … Q-UI-19, с перехватом запросов), общие функции — `research/common.py`. Описание запуска — `research/README.md`.
 - Каждый скрипт запущен дважды (`--run 1`, `--run 2`). Скриншоты лежат в `research/evidence/` (в git не хранятся,
   создаются скриптом; имена указаны в вопросах).
 - Только временные пользователи `probe_<uuid>@example.com`, созданные через API (или через форму регистрации UI в Q-UI-07…09).
@@ -376,6 +376,73 @@
 - После «Log out»: URL `/search?page=0&size=10`, кнопки «Log out» нет, в localStorage `tokenType=Bearer` (токена нет).
 - `GET /v1/cars/my` с токеном, сохранённым до выхода: HTTP 200, `{"cars":[]}`.
 
+## Пробы шага 6.3a (Q-UI-15 … Q-UI-19)
+
+Добавлены 2026-11-12 для пунктов, по которым факта в логе не было. Запуск один:
+`python research/explore_ui_interception.py --run 63` (лог — `research/evidence/explore_ui_interception_run63.log`).
+Запросы, которые меняют данные (`POST /v1/cars`, `PUT /v1/user/profile`), перехвачены через `page.route` и до бэкенда
+не дошли. Тела подменённых ответов написаны скриптом; для `POST /v1/cars` взят формат настоящего ответа
+(`200 {"message":"Car added successfully"}`, Q-UI-05). Город — Sderot. Создано: пользователей 1, машин 0.
+
+## Q-UI-15 Значение fuel для каждого варианта списка
+
+**Как проверяли:** `q_ui_15_fuel_values`. Залогиненный пользователь, форма машины; в списке Fuel по очереди выбраны
+Petrol, Diesel, Hybrid, Electric; gear = «Automatic», wheelsDrive = «AWD», doors = 4. `POST /v1/cars` перехвачен, ответ подменён на 200.
+
+| Выбрано в списке | Значение в форме | `fuel` в запросе |
+|---|---|---|
+| Petrol | `petrol` | `"petrol"` |
+| Diesel | `diesel` | `"diesel"` |
+| Hybrid | `hybrid` | `"hybrid"` |
+| Electric | `electric` | `"electric"` |
+
+- В каждом из четырёх случаев перехвачен ровно один запрос. Ключи тела:
+  `about, carClass, city, fuel, image, manufacture, model, pricePerDay, seats, serialNumber, year`.
+  Полей `gear`, `wheelsDrive`, `doors`, `features` в теле нет (в форме: `gear='auto'`, `wheelsDrive='AWD'`, `doors='4'`).
+- После ответа 200 поле Make пустое, URL остаётся `/let-car-work`; блоков `role=status` и `role=alert` на странице нет —
+  текста «Car submitted successfully» на экране нет.
+
+## Q-UI-16 Фото ссылкой и файлом JPEG
+
+**Как проверяли:** `q_ui_16_photo`. `POST /v1/cars` перехвачен, ответ подменён на 200.
+
+- Ссылка: в поле `image` (placeholder `https://...`) введено `https://example.com/probe-car.jpg`; в запросе
+  `image` = `"https://example.com/probe-car.jpg"` (как введено).
+- Файл: `assets/car.jpg` (174 268 байт) через `#photo-file`; в запросе `image` начинается с
+  `data:image/jpeg;base64,/9j/4AAQSkZJRgABA…`, длина 232 383; часть после запятой декодируется из base64 в байты файла.
+
+## Q-UI-17 Подменённый ответ 401 при настоящей сессии
+
+**Как проверяли:** `q_ui_17_substituted_401`. Вход через форму (в localStorage `token` длиной 216), форма машины,
+`POST /v1/cars` перехвачен, ответ подменён на 401 (JSON с `message` = `"mocked unauthorized"`).
+
+- Перехвачен один запрос. После ответа: URL остался `/let-car-work`; на экране «Failed to submit car»; «Log out» на месте;
+  localStorage: `postLoginRedirect=/let-car-work`, `tokenType=Bearer` (ключа `token` нет).
+- После перезагрузки страницы: URL `/let-car-work`, кнопки «Log out» нет, localStorage тот же.
+
+## Q-UI-18 Страница профиля
+
+**Как проверяли:** `q_ui_18_profile`.
+
+- Залогиненный, `/profile`: фронт отправляет `GET /v1/user/profile` с заголовком `Authorization`; запрос оборван браузером
+  (`net::ERR_FAILED`), ответа со статусом нет. На экране: «Не удалось загрузить профиль»; URL `/profile`; «Log out» на месте.
+  Для сравнения: тот же запрос через `requests` возвращает HTTP 403 с пустым телом (Q-API-08).
+- Подменённый `GET /v1/user/profile` → 200 с телом, придуманным скриптом
+  (`{"firstName":"Probe","lastName":"User","username":"probe@example.com"}`; настоящего ответа у приложения нет):
+  на экране «Мой профиль», поля `firstName`, `lastName`, `username`, кнопка «Сохранить». Клик «Сохранить»: фронт отправляет
+  `PUT /v1/user/profile` с тем же телом (перехвачен, до бэкенда не дошёл; ответ подменён на 200); диалог браузера `alert`: «Профиль обновлён».
+- Гость, `/profile`: URL становится `/login`; localStorage: `postLoginRedirect=/profile`, `tokenType=Bearer`; запросов к API нет.
+
+## Q-UI-19 Страница чужой машины из выдачи
+
+**Как проверяли:** `q_ui_19_listed_car`. Гость; поиск в UI по Sderot (даты — сегодняшний день), клик по первой карточке.
+Машину скрипт не создаёт.
+
+- Поиск: HTTP 200, 14 машин в ответе, 10 карточек на странице (`size=10` в URL).
+- Первая карточка: `href="/cars/<serial>"`, машина с таким `serialNumber` есть в ответе поиска.
+- После клика: URL `/cars/<serial>`; единственный запрос к API — `GET /v1/cars/<serial>`, оборван браузером (`net::ERR_FAILED`).
+  На экране: «Не удалось загрузить машину»; `model` и `manufacture` машины на странице нет.
+
 ## Статистика создания и удаления данных
 
 | Скрипт | Пользователей создано | Машин создано | Машин удалено |
@@ -383,7 +450,8 @@
 | `explore_api.py` (1 прогон) | 14 | 13 | 13 |
 | `explore_api.py --only Q-API-13…17` (2026-11-11) | 3 | 1 | 1 |
 | `explore_ui.py` (1 прогон) | 11 | 7 | 7 |
+| `explore_ui_interception.py` (2026-11-12) | 1 | 0 | 0 |
 
-- Эти числа одинаковы в прогонах 1 и 2. После очистки у временных пользователей машин с префиксом `RS-`/`RU-` не осталось.
+- Числа первых двух скриптов одинаковы в прогонах 1 и 2. После очистки у временных пользователей машин с префиксом `RS-`/`RU-` не осталось.
 - Пользователей API удалять не умеет, они остаются в системе.
 - Попытки создать машину гостем и с мусорным токеном (Q-UI-13, Q-API-09) завершились ответами 401/403, машины не создались.

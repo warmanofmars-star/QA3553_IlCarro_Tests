@@ -4,6 +4,7 @@ import allure
 import requests
 
 from config import settings
+from utils.user_journal import API_CLIENT, record_registration
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,8 @@ class IlCarroAPI:
                 # Сразу вшиваем токен, чтобы клиент был готов к работе
                 self.session.headers.update({"Authorization": f"Bearer {self.token}"})
                 logger.info("Регистрация успешна (Token получен и вшит в сессию)")
+                # Пользователя удалить нельзя — учитываем каждого в журнале прогона
+                record_registration(username, API_CLIENT)
             else:
                 logger.error(f"Ошибка регистрации: {response.status_code} - {response.text}")
             return response
