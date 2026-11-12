@@ -37,7 +37,9 @@ pytest --collect-only -q                     # сколько тестов со�
 
 Логи: обычный запуск → `logs/pytest.log`, воркеры xdist → `logs/pytest_gw0.log`, `pytest_gw1.log`…
 (главный процесс xdist файла не пишет; файлы прошлого прогона удаляются при старте). Журнал фабрики
-машин — `logs/car_factory.jsonl`. `ENABLE_CONSOLE_LOGS=true` включает живые логи в консоли (без `-n`).
+машин — `logs/car_factory.jsonl`, журнал зарегистрированных пользователей — `logs/registered_users.jsonl`
+(`utils/user_journal.py`; итог — одной строкой в конце прогона). `ENABLE_CONSOLE_LOGS=true` включает
+живые логи в консоли (без `-n`).
 
 Docker (Selenium Grid), подробности — в `commands.md`. Браузер задают две переменные с одинаковым
 значением: `COMPOSE_PROFILES` (какие узлы запустить) и `BROWSER` (в чём гонять тесты). Порт Grid

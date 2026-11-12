@@ -20,6 +20,7 @@ from data.data_generator import UserGenerator
 from data.known_bugs import known_bug
 from models.user import User
 from utils.preconditions import require
+from utils.user_journal import RAW_REQUEST, record_registration
 
 pytestmark = pytest.mark.api
 
@@ -76,7 +77,12 @@ def _access_token(response: requests.Response):
 
 def _post(url: str, payload: dict) -> requests.Response:
     """«Сырой» запрос с телом не по контракту. Тело в шаг не пишется: в нём бывает пароль."""
-    return requests.post(url, json=payload, timeout=60)
+    response = requests.post(url, json=payload, timeout=60)
+    if url == REGISTRATION_URL and response.status_code == 200:
+        # Запрос идёт мимо IlCarroAPI.register, поэтому созданного пользователя учитываем здесь.
+        # Сюда попадёт и аккаунт, который из-за дефекта создала негативная регистрация
+        record_registration(str(payload.get("username")), RAW_REQUEST)
+    return response
 
 
 # ---------------------------------------------------------------- регистрация

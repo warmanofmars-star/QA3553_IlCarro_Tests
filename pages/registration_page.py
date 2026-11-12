@@ -2,6 +2,7 @@ import allure
 from selenium.webdriver.common.by import By
 
 from pages.base_page import BasePage
+from utils.user_journal import UI_FORM, record_registration
 
 
 class RegistrationPage(BasePage):
@@ -42,6 +43,7 @@ class RegistrationPage(BasePage):
         self.fill(self.LAST_NAME_INPUT, last_name)
 
     def fill_email(self, email):
+        self._submitted_email = email  # для журнала пользователей, см. confirmation_text
         self.fill(self.EMAIL_INPUT, email)
 
     def fill_password(self, password):
@@ -67,7 +69,15 @@ class RegistrationPage(BasePage):
 
     # --- ПРОВЕРКИ И ЧТЕНИЕ ТЕКСТА ---
     def confirmation_text(self):
-        return self.get_text(self.CONFIRMATION_TEXT)
+        text = self.get_text(self.CONFIRMATION_TEXT)
+        # Окно «Registered» — единственный признак, что форма создала пользователя: ответ сервера
+        # Selenium не видит. Удалить пользователя нельзя, поэтому он учитывается в журнале прогона.
+        # Email сбрасывается, чтобы повторное чтение текста окна не посчитало его дважды
+        submitted_email = getattr(self, "_submitted_email", None)
+        if text == "Registered" and submitted_email:
+            record_registration(submitted_email, UI_FORM)
+            self._submitted_email = None
+        return text
 
     def confirmation_text_1(self):
         return self.get_text(self.CONFIRMATION_TEXT_1)
