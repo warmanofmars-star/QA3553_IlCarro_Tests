@@ -101,7 +101,8 @@ def test_car_form_city_required(car_form):
     ],
 )
 def test_car_form_value_below_one(car_form, field_name, label, value):
-    """Фронт требует Seats ≥ 1 и Price ≥ 1 (DISC-07; API те же значения принимает — OBS-03).
+    """Фронт требует Seats ≥ 1 и Price ≥ 1 — сторона фронта расхождения DISC-07. Что API те же значения
+    принимает, проверяет test_api_rejects_car_values_forbidden_by_form (известный баг CAR_LIMITS_MISMATCH).
 
     Текст ошибки не сверяется: это сообщение по умолчанию библиотеки валидации, а не текст приложения.
     """

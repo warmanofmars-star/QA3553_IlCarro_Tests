@@ -159,6 +159,13 @@ KNOWN_BUGS: dict[str, KnownBug] = {
             "по коду LetCarWork статус успеха ставится и тут же сбрасывается очисткой формы (Q-UI-15, Q-UI-26)"
         ),
     ),
+    "CAR_LIMITS_MISMATCH": KnownBug(
+        refs=("DISC-07",),
+        description=(
+            "Форма машины требует Seats ≥ 1 и Price ≥ 1, а API принимает машину с seats 0 и ценой 0 — "
+            "отвечает 200 и сохраняет её (Q-API-05, Q-UI-20)"
+        ),
+    ),
 }
 
 _ALLOWED_PREFIXES = ("REQ-", "DISC-")
