@@ -152,6 +152,13 @@ KNOWN_BUGS: dict[str, KnownBug] = {
             'форма уходит с city: "" и получает «Failed to submit car» (Q-UI-04, Q-UI-20)'
         ),
     ),
+    "CAR_SUCCESS_TEXT_NOT_SHOWN": KnownBug(
+        refs=("REQ-UI-CAR-02",),
+        description=(
+            "После ответа 200 форма машины очищается, но текста «Car submitted successfully» на экране нет: "
+            "по коду LetCarWork статус успеха ставится и тут же сбрасывается очисткой формы (Q-UI-15, Q-UI-26)"
+        ),
+    ),
 }
 
 _ALLOWED_PREFIXES = ("REQ-", "DISC-")

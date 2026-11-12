@@ -99,3 +99,33 @@ def test_pw_login_other_error_text(page: Page, backend_write_guard, login_failur
         assert "Login failed. Try again" in details, (
             f"При сбое {login_failure} ожидали текст «Login failed. Try again», в окне: {details}"
         )
+
+
+@pytest.mark.regression
+@allure.epic("Playwright Testing")
+@allure.feature("Login")
+@allure.story("Email case")
+@allure.title("Email уходит во вход в нижнем регистре")
+@allure.tag("REQ-UI-LOGIN-01")
+def test_pw_login_sends_email_lowercase(page: Page, backend_write_guard):
+    """
+    Фронт приводит email к нижнему регистру перед отправкой (REQ-UI-LOGIN-01, Q-UI-09). Запрос входа
+    перехвачен, ответ подменён на 401: пользователь не нужен, на бэкенд ничего не уходит.
+    """
+    user = UserGenerator.get_random_user()
+    typed_email = user.email.replace("user_", "User_").replace("@example.com", "@Example.COM")
+    require(typed_email != typed_email.lower(), f"Предусловие: в email {typed_email} нет заглавных букв")
+    pw_login_page = PwLoginPage(page)
+    pw_login_page.open()
+    sent = NetworkFaults(page).respond(LOGIN, "POST", 401)
+
+    with allure.step(f"Вход с email {typed_email}: запрос перехвачен"):
+        send_and_settle(page, "POST", LOGIN_PATH, lambda: pw_login_page.login(typed_email, user.password))
+        require_intercepted(sent, f"POST {LOGIN_PATH}")
+        body = sent[0].post_data_json
+        require(isinstance(body, dict), f"Тело запроса входа — не JSON-объект: {type(body).__name__}")
+
+    with allure.step("Проверка: username в запросе — email в нижнем регистре"):
+        assert body.get("username") == typed_email.lower(), (
+            f"Ввели {typed_email}, в запросе username={body.get('username')!r}, ожидали {typed_email.lower()!r}"
+        )

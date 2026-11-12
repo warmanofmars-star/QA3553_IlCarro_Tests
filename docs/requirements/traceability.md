@@ -29,9 +29,9 @@
 
 | Статус | REQ | DISC | OBS | Всего |
 |---|---:|---:|---:|---:|
-| ✅ покрыт | 33 | 1 | 0 | 34 |
-| 🟡 частично | 3 | 0 | 0 | 3 |
-| 🐞 покрыт как известный баг | 14 | 6 | 0 | 20 |
+| ✅ покрыт | 35 | 1 | 0 | 36 |
+| 🟡 частично | 0 | 0 | 0 | 0 |
+| 🐞 покрыт как известный баг | 15 | 6 | 0 | 21 |
 | 👁 покрыт как наблюдение | 0 | 0 | 11 | 11 |
 | ⚪ исключение | 3 | 2 | 0 | 5 |
 | 🕓 запланирован | 0 | 0 | 0 | 0 |
@@ -39,9 +39,9 @@
 
 - **Исключения по категориям:** вредит общему бэкенду — 1; заблокировано другим дефектом — 2; функциональность недостижима — 2.
 - **Запланировано:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 0.
-- **Покрыто частично, доработка:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 3.
-- **Известные баги:** 19 в реестре `data/known_bugs.py`; **наблюдения:** 11 в реестре `data/observations.py`.
-- **Автотесты:** 147, у каждого есть тег хотя бы одного пункта.
+- **Покрыто частично, доработка:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 0.
+- **Известные баги:** 20 в реестре `data/known_bugs.py`; **наблюдения:** 11 в реестре `data/observations.py`.
+- **Автотесты:** 149, у каждого есть тег хотя бы одного пункта.
 
 ## Требования и тесты
 
@@ -111,7 +111,7 @@
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
 | REQ-UI-REG-01 | Поля проверяются до отправки: Name, Last name, Email (формат), Password (не короче 6, буква и цифра), согласие с условиями. | `test_registration.py::test_registration_negative_fields`<br>`test_registration.py::test_registration_without_check_box` | — | ✅ покрыт |
-| REQ-UI-REG-02 | После успешной регистрации — окно «Registered» / «You are logged in success»; пользователь залогинен. | `test_registration.py::test_registration_success` | — | 🟡 частично — не покрыто: Что пользователь после регистрации залогинен (токен, «Log out» в навигации): тест проверяет только тексты окна (PR 6.3b) |
+| REQ-UI-REG-02 | После успешной регистрации — окно «Registered» / «You are logged in success»; пользователь залогинен. | `test_registration.py::test_registration_success` | — | ✅ покрыт |
 | REQ-UI-REG-03 | При ответе 400 окно «Registration failed» показывает текст ошибки сервера. | `test_registration.py::test_registration_existing_user`<br>`test_registration.py::test_registration_password_rejected_by_api` | `PASSWORD_RULES_MISMATCH` | 🐞 покрыт как известный баг |
 | REQ-UI-REG-04 | Гость видит в навигации ссылку «Sign up»; она ведёт на форму регистрации `/register`. | `test_registration.py::test_navigation_to_registration` | — | ✅ покрыт |
 
@@ -119,7 +119,7 @@
 
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
-| REQ-UI-LOGIN-01 | Email обязателен и проверяется по формату, пароль обязателен; перед отправкой email приводится к нижнему регистру. | `test_login.py::test_login_negative_frontend`<br>`test_playwright_login.py::test_pw_login_negative` | — | 🟡 частично — не покрыто: Приведение email к нижнему регистру перед отправкой (перехват запроса) (PR 6.3b) |
+| REQ-UI-LOGIN-01 | Email обязателен и проверяется по формату, пароль обязателен; перед отправкой email приводится к нижнему регистру. | `test_login.py::test_login_negative_frontend`<br>`test_playwright_login.py::test_pw_login_negative`<br>`test_playwright_login.py::test_pw_login_sends_email_lowercase` | — | ✅ покрыт |
 | REQ-UI-LOGIN-02 | После входа — окно «You are logged in success», в навигации «Log out». | `test_login.py::test_login_success`<br>`test_playwright_login.py::test_pw_login_success` | — | ✅ покрыт |
 | REQ-UI-LOGIN-03 | При 401 — окно «Login failed» с текстом «Login or Password incorrect»; при любой другой ошибке — «Login failed. Try again». | `test_login.py::test_login_negative_backend`<br>`test_playwright_login.py::test_pw_login_other_error_text` | `LOGIN_ERROR_TEXT_HARDCODED` | 🐞 покрыт как известный баг |
 
@@ -128,7 +128,7 @@
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
 | REQ-UI-CAR-01 | Поля, отмеченные `*`, проверяются до отправки: City, Make, Model, Year, Fuel, Seats (≥ 1), Car class, Car registration number, Price (≥ 1). | `test_car_form_validation.py::test_car_form_required_field`<br>`test_car_form_validation.py::test_car_form_city_required` | `CAR_FORM_CITY_NOT_VALIDATED` | 🐞 покрыт как известный баг |
-| REQ-UI-CAR-02 | Успешная отправка — «Car submitted successfully» и очистка формы; ошибка — «Failed to submit car». | `test_add_car.py::test_add_car_success`<br>`test_add_car.py::test_add_car_duplicate`<br>`test_playwright_add_car.py::test_real_add_car_success`<br>`test_playwright_add_car.py::test_pw_add_car_duplicate` | — | 🟡 частично — не покрыто: Текст «Car submitted successfully»: тесты успешной отправки проверяют только очистку формы (PR 6.3b) |
+| REQ-UI-CAR-02 | Успешная отправка — «Car submitted successfully» и очистка формы; ошибка — «Failed to submit car». | `test_add_car.py::test_add_car_success`<br>`test_add_car.py::test_add_car_duplicate`<br>`test_playwright_add_car.py::test_real_add_car_success`<br>`test_playwright_add_car.py::test_pw_add_car_duplicate`<br>`test_playwright_car_form.py::test_pw_car_form_success_text` | `CAR_SUCCESS_TEXT_NOT_SHOWN` | 🐞 покрыт как известный баг |
 | REQ-UI-CAR-03 | Значение Fuel уходит в API строчными: `petrol`, `diesel`, `hybrid`, `electric`. | `test_playwright_car_form.py::test_pw_car_form_sends_fuel_lowercase` | — | ✅ покрыт |
 | REQ-UI-CAR-04 | Фото — ссылкой или файлом; файл отправляется в поле `image` как data URL (base64). | `test_playwright_car_form.py::test_pw_car_form_sends_photo_file_as_data_url`<br>`test_playwright_car_form.py::test_pw_car_form_sends_photo_link` | — | ✅ покрыт |
 
@@ -223,6 +223,3 @@
 
 | ID | Что не покрыто | PR |
 |---|---|---|
-| REQ-UI-REG-02 | Что пользователь после регистрации залогинен (токен, «Log out» в навигации): тест проверяет только тексты окна | 6.3b |
-| REQ-UI-LOGIN-01 | Приведение email к нижнему регистру перед отправкой (перехват запроса) | 6.3b |
-| REQ-UI-CAR-02 | Текст «Car submitted successfully»: тесты успешной отправки проверяют только очистку формы | 6.3b |
