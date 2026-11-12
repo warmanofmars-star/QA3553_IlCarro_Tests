@@ -1,5 +1,5 @@
 """
-Исследование фактического поведения API IlCarro (вопросы Q-API-01 … Q-API-17).
+Исследование фактического поведения API IlCarro (вопросы Q-API-01 … Q-API-18).
 
 Скрипт фиксирует факты: что отправили и что получили. Оценок в нём нет.
 Запуск: python research/explore_api.py --run 1
@@ -546,6 +546,34 @@ def q_api_17_car_required_fields(city):
 # ---------------------------------------------------------------- запуск
 
 
+def q_api_18_dates_own_car_small_city():
+    LOG.header("Q-API-18", "Даты поиска и бронирования: своя машина, малый город, владелец бронирует сам")
+    city = "Sderot"
+    email, _password, token, resp = register_user()
+    LOG.fact(f"владелец {REG.label_user(email)}: регистрация HTTP {resp.status_code}")
+    payload = car_payload(city)
+    serial = payload["serialNumber"]
+    resp = create_car(token, payload)
+    LOG.fact(f"создание машины {REG.label_car(serial)} в {city}: HTTP {resp.status_code}")
+    cases = [
+        ("прошедшие даты", d(-10), d(-6)),
+        ("конец раньше начала", d(25), d(20)),
+        ("будущие даты (для сравнения)", d(20), d(25)),
+    ]
+    for label, start, end in cases:
+        resp = search(city, start, end)
+        found = serial in search_serials(city, start, end)
+        data = body_json(resp)
+        count = len(data.get("cars", [])) if isinstance(data, dict) else "-"
+        LOG.fact(f"поиск {city}, {label} {start}..{end}: HTTP {resp.status_code}; машин={count}; своя в выдаче={found}")
+    for label, start, end in cases:
+        resp = call("POST", f"/v1/cars/{serial}/booking", token=token, json={"startDate": start, "endDate": end})
+        LOG.fact(
+            f"владелец бронирует свою машину, {label} {start}..{end}: {describe(resp)}; "
+            f"bookedPeriods после={booked(token, serial)}"
+        )
+
+
 def main():
     LOG.line("# Факты: explore_api.py")
     LOG.line(f"API_BASE_URL: {__import__('common').API_BASE_URL}")
@@ -573,6 +601,7 @@ def main():
             ("Q-API-15", q_api_15_cities_shape),
             ("Q-API-16", q_api_16_registration_fields),
             ("Q-API-17", lambda: q_api_17_car_required_fields(city)),
+            ("Q-API-18", q_api_18_dates_own_car_small_city),
         ]
         steps = [step for qid, step in all_steps if only is None or qid in only]
         for step in steps:
