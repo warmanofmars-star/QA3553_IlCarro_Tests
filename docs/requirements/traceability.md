@@ -177,7 +177,7 @@
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
 | OBS-01 | Поиск чувствителен к регистру города: `tel aviv` — 0 машин. | `test_playwright_search.py::test_pw_search_city_case_insensitive` | `SEARCH_CITY_CASE_SENSITIVE` | 👁 покрыт как наблюдение |
-| OBS-02 | Поиск и бронирование принимают прошедшие даты, конец раньше начала, отсутствие дат. | `test_api_dates.py::test_api_meaningless_dates_rejected` | `INVALID_DATES_ACCEPTED` | 👁 покрыт как наблюдение |
+| OBS-02 | Поиск и бронирование принимают прошедшие даты и конец раньше начала. | `test_api_dates.py::test_api_meaningless_dates_rejected` | `INVALID_DATES_ACCEPTED` | 👁 покрыт как наблюдение |
 | OBS-03 | API принимает бессмысленные значения машины: `seats` 0, цена 0 и −5, `year` «abc» и «2999», `fuel` «banana». | `test_api_mutations.py::test_api_car_mutations` — `[lambda_mutation-400-Отрицательная цена-False]` | `NONSENSE_CAR_VALUES` | 👁 покрыт как наблюдение |
 | OBS-04 | Пустой результат поиска ничем не обозначен: нет сообщения «ничего не найдено». | `test_playwright_search.py::test_pw_empty_search_announced` | `SEARCH_OUTCOME_NOT_SHOWN` | 👁 покрыт как наблюдение |
 | OBS-05 | После 401 нет перехода на страницу входа; «Log out» остаётся в навигации, хотя токен удалён. | `test_playwright_session.py::test_pw_401_redirects_to_login`<br>`test_playwright_session.py::test_pw_401_hides_logout` | `STALE_SESSION_UI_AFTER_401` | 👁 покрыт как наблюдение |
