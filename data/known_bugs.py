@@ -145,6 +145,27 @@ KNOWN_BUGS: dict[str, KnownBug] = {
             "GET и PUT /v1/user/profile (страница профиля) (Q-API-08, Q-UI-18, Q-UI-19)"
         ),
     ),
+    "CAR_FORM_CITY_NOT_VALIDATED": KnownBug(
+        refs=("REQ-UI-CAR-01",),
+        description=(
+            "City в форме машины отмечен «*», но в схеме валидации его нет: с пустым городом Submit доступна, "
+            'форма уходит с city: "" и получает «Failed to submit car» (Q-UI-04, Q-UI-20)'
+        ),
+    ),
+    "CAR_SUCCESS_TEXT_NOT_SHOWN": KnownBug(
+        refs=("REQ-UI-CAR-02",),
+        description=(
+            "После ответа 200 форма машины очищается, но текста «Car submitted successfully» на экране нет: "
+            "по коду LetCarWork статус успеха ставится и тут же сбрасывается очисткой формы (Q-UI-15, Q-UI-26)"
+        ),
+    ),
+    "CAR_LIMITS_MISMATCH": KnownBug(
+        refs=("DISC-07",),
+        description=(
+            "Форма машины требует Seats ≥ 1 и Price ≥ 1, а API принимает машину с seats 0 и ценой 0 — "
+            "отвечает 200 и сохраняет её (Q-API-05, Q-UI-20)"
+        ),
+    ),
 }
 
 _ALLOWED_PREFIXES = ("REQ-", "DISC-")

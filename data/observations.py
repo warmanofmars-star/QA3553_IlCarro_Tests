@@ -44,6 +44,63 @@ OBSERVATIONS: dict[str, Observation] = {
             "остаётся в навигации до перезагрузки (Q-UI-13, Q-UI-17)"
         ),
     ),
+    "SEARCH_CITY_CASE_SENSITIVE": Observation(
+        ref="OBS-01",
+        description=(
+            "Поиск чувствителен к регистру города: введённые вручную «sderot» и «SDEROT» находят 0 машин, "
+            "«Sderot» — все машины города (Q-API-02, Q-UI-23)"
+        ),
+    ),
+    "INVALID_DATES_ACCEPTED": Observation(
+        ref="OBS-02",
+        description=(
+            "Поиск и бронирование с прошедшими датами и с концом раньше начала отвечают 200, бронирование — "
+            "«Car booked successfully!» (Q-API-01, Q-API-02, Q-API-18)"
+        ),
+    ),
+    "SEARCH_OUTCOME_NOT_SHOWN": Observation(
+        ref="OBS-04",
+        description=(
+            "Пустая выдача поиска ничем не обозначена: карточек нет, блока role=status или role=alert нет "
+            "(Q-UI-12, Q-UI-24)"
+        ),
+    ),
+    "GUEST_OPENS_CAR_FORM": Observation(
+        ref="OBS-06",
+        description=(
+            "Гость открывает /let-car-work: форма на месте, переход на вход не происходит; отправка заканчивается "
+            "«Failed to submit car» (Q-UI-13)"
+        ),
+    ),
+    "CAR_SUBMIT_ERROR_WITHOUT_CAUSE": Observation(
+        ref="OBS-07",
+        description=(
+            "При любой ошибке отправки машины на экране один текст «Failed to submit car»: причина из ответа "
+            "сервера не показывается (Q-UI-03, Q-UI-04, Q-UI-26)"
+        ),
+    ),
+    "CARD_PRICE_ROUNDED": Observation(
+        ref="OBS-08",
+        description="Цена на карточке округляется до одного знака: сохранённые 1234.56 показаны как «1234.6» (Q-UI-12)",
+    ),
+    "REGISTER_URL_UNCHANGED": Observation(
+        ref="OBS-09",
+        description="После регистрации и закрытия окна «Registered» URL остаётся /register (Q-UI-09, Q-UI-25)",
+    ),
+    "PREV_MONTH_BUTTON_ENABLED": Observation(
+        ref="OBS-10",
+        description=(
+            "Кнопка «предыдущий месяц» в текущем месяце доступна (атрибута disabled нет), но клик ничего не меняет "
+            "(Q-UI-11)"
+        ),
+    ),
+    "RUSSIAN_TEXTS_IN_ENGLISH_UI": Observation(
+        ref="OBS-11",
+        description=(
+            "Интерфейс на английском, а страницы машины и профиля показывают русские тексты: «Не удалось загрузить "
+            "машину», «Не удалось загрузить профиль» (Q-UI-01, Q-UI-18)"
+        ),
+    ),
 }
 
 

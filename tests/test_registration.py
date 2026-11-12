@@ -5,6 +5,7 @@ import pytest
 
 from data.data_generator import UserGenerator
 from data.known_bugs import known_bug
+from pages.login_page import LoginPage
 from pages.registration_page import RegistrationPage
 from utils.preconditions import require
 from utils.user_journal import UI_FORM, record_registration
@@ -48,6 +49,12 @@ def test_registration_success(driver):
     record_registration(user.email, UI_FORM)
     assert registration_page.confirmation_text_1() == "You are logged in success", "Текст успешного входа не совпадает!"
     registration_page.close_window()
+
+    with allure.step("Проверка: пользователь залогинен — токен в localStorage, «Log out» в навигации"):
+        # Значение токена не читаем: в шаги и логи оно не попадает
+        has_token = driver.execute_script("return localStorage.getItem('token') !== null;")
+        assert has_token, "После регистрации в localStorage нет token"
+        assert LoginPage(driver).is_logout_button_visible(), "После регистрации в навигации нет «Log out»"
 
 
 @pytest.mark.regression

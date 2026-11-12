@@ -1,8 +1,10 @@
+import contextlib
 from datetime import date, datetime
 
 import allure
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.wait import WebDriverWait
 
 from pages.base_page import BasePage
@@ -26,6 +28,10 @@ class SearchPage(BasePage):
     # Кнопка переключения месяца вперед в календаре react-date-range
     NEXT_MONTH_BTN = (By.CSS_SELECTOR, ".rdrNextButton")
 
+    # Подсказка города (FE: CityAutocomplete)
+    CITY_DROPDOWN = (By.CSS_SELECTOR, "[data-testid='city-dropdown']")
+    CITY_OPTIONS = (By.CSS_SELECTOR, "[data-testid='city-option']")
+
     # --- ДЕЙСТВИЯ ---:
     @staticmethod
     def get_day_locator(day):
@@ -44,6 +50,37 @@ class SearchPage(BasePage):
         # Ждем, пока React отфильтрует нужный город, и кликаем по нему
         option_locator = (By.CSS_SELECTOR, f"[data-testid='city-option'][data-value='{city_name}']")
         self.click(option_locator)
+
+    @allure.step("Ввод города {text} вручную, без выбора из подсказки")
+    def type_city(self, text: str):
+        self.fill(self.CITY_INPUT, text)
+
+    @allure.step("Закрытие подсказки города: фокус уходит клавишей Tab")
+    def leave_city_input(self):
+        # Tab, а не клик мимо: подсказка выбирает город по mousedown, клик мог бы попасть в вариант
+        self.find(self.CITY_INPUT).send_keys(Keys.TAB)
+        WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
+            lambda d: not d.find_elements(*self.CITY_DROPDOWN), message="Подсказка города не закрылась"
+        )
+
+    @allure.step("Ожидание вариантов подсказки города")
+    def wait_city_suggestions(self, expected: list[str], timeout: float = 5) -> list[str]:
+        """Варианты подсказки, когда они совпали с expected, или последние прочитанные, если не совпали.
+
+        Список перерисовывается на каждый символ ввода: ждём ожидаемого состояния, а сравнение
+        оставляем тесту, чтобы сообщение о провале показало, что было на экране.
+        """
+        actual: list[str] = []
+
+        def read(driver):
+            nonlocal actual
+            actual = [option.text for option in driver.find_elements(*self.CITY_OPTIONS)]
+            return actual == expected
+
+        # Несовпадение — не ошибка ожидания: его покажет сравнение в тесте
+        with contextlib.suppress(TimeoutException):
+            WebDriverWait(self.driver, timeout, ignored_exceptions=(StaleElementReferenceException,)).until(read)
+        return actual
 
     def click_dates_input(self):
         self.click(self.DATES_INPUT)
@@ -83,6 +120,15 @@ class SearchPage(BasePage):
 
         # Теперь безопасно кликаем дату конца, так как нужный месяц 100% на экране
         self.click(self.get_day_locator(end_date.day))
+
+    @allure.step("Листание календаря вперёд до месяца даты {target}")
+    def go_to_month(self, target: date):
+        """Кнопкой «следующий месяц» до месяца target, дожидаясь смены месяца после каждого клика."""
+        today = date.today()
+        for _ in range((target.year - today.year) * 12 + target.month - today.month):
+            shown = self.get_current_month()
+            self.click_next_month()
+            self.wait_for_month_to_change(shown)
 
     @allure.step("Ожидание смены месяца (завершение анимации)")
     def wait_for_month_to_change(self, old_month):
@@ -137,6 +183,10 @@ class SearchPage(BasePage):
 
     def is_calendar_invisible(self):
         return self.is_element_invisible(self.CALENDAR_POPOVER)
+
+    @allure.step("Проверка: кнопка «предыдущий месяц» недоступна")
+    def is_prev_month_disabled(self) -> bool:
+        return not self.find(self.PREV_MONTH_BTN).is_enabled()
 
     @allure.step("Проверка наличия маркера сегодняшнего дня (голубая полоса)")
     def is_today_highlighted(self):

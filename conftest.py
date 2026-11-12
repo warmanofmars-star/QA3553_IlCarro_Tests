@@ -436,6 +436,19 @@ def authenticated_driver(driver, temp_user):
     return driver
 
 
+@pytest.fixture
+def shared_authenticated_driver(driver, shared_user):
+    """Браузер Selenium, залогиненный общим пользователем токеном в localStorage, без запроса входа.
+
+    Для тестов, которым вход — только предусловие, а состояние пользователя на сервере не меняется
+    (валидация формы до отправки). Selenium-тесты идут в CI в трёх браузерах: свежий temp_user
+    с входом через форму стоил бы нового пользователя на каждый тест в каждом браузере.
+    """
+    page = LoginPage(driver)
+    page.restore_session(shared_user.api.token)
+    return driver
+
+
 def pytest_make_parametrize_id(val):
     # Если параметр — это функция или lambda, возвращаем статичную строку без адреса памяти (0x...),
     # чтобы воркеры pytest-xdist получали одинаковые ID тестов

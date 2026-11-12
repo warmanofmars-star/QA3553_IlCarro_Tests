@@ -294,3 +294,36 @@ def test_api_book_without_token():
         assert response.status_code in (401, 403), (
             f"Бронирование без токена: ожидали отказ 401/403, получили {response.status_code} {response.text}"
         )
+
+
+@pytest.mark.regression
+@allure.epic("API Testing")
+@allure.feature("Car Controller")
+@allure.story("Frontend and API agreement")
+@allure.severity(allure.severity_level.NORMAL)
+@known_bug("CAR_LIMITS_MISMATCH")
+@allure.tag("DISC-07")
+@pytest.mark.parametrize(
+    "field_name, value",
+    [("seats", 0), ("pricePerDay", 0)],
+)
+def test_api_rejects_car_values_forbidden_by_form(shared_api, shared_car_cleanup, field_name, value):
+    """
+    Форма машины не пропускает Seats и Price меньше 1 (DISC-07, сторона фронта — test_car_form_value_below_one).
+    Ожидание — API согласен с формой и отклоняет такую машину. Swagger ограничений не задаёт, поэтому
+    основание — согласие источников, а не контракт; сама бессмысленность значений — наблюдение OBS-03.
+    Факт: 200, машина сохраняется (Q-API-05). Если API её примет, очистка её удалит.
+    """
+    payload = CarGenerator.get_random_car(city=SearchDataGenerator.SMALL_CITY).to_api_payload()
+    payload[field_name] = value
+    shared_car_cleanup.register(payload["serialNumber"])
+
+    with allure.step(f"Создание машины с {field_name}={value}"):
+        response = shared_api.add_car(payload)
+        if response.status_code == 200:
+            shared_car_cleanup.mark_created(payload["serialNumber"])
+
+    with allure.step(f"Проверка: API, как и форма, отклоняет {field_name}={value} (4xx)"):
+        assert 400 <= response.status_code < 500, (
+            f"Форма запрещает {field_name}={value}, а API ответил {response.status_code} {response.text[:200]}"
+        )

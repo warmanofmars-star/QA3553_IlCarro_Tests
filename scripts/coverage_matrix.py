@@ -17,8 +17,8 @@
   * тест без единого тега требования;
   * тег с ID, которого нет в requirements.md;
   * ID без теста и без записи в исключениях;
-  * ID и с тестом, и с записью в исключениях любой категории, кроме partial;
-  * запись partial на ID без теста;
+  * ID и с тестом, и с записью в исключениях (исключение — только для пункта без теста);
+  * запись planned или partial: после шага 6.3b матрица закрыта, долгов в ней быть не может;
   * тест под known_bug / observation без тега своих refs или с тегом сверх них;
   * xfail не из реестров.
 В режиме --check дополнительно (код 1): traceability.md или сводка в README.md устарели.
@@ -55,6 +55,9 @@ from data.requirement_ids import RequirementItem, requirement_items  # noqa: E40
 
 README_START = "<!-- coverage:start -->"
 README_END = "<!-- coverage:end -->"
+
+# Категории реестра исключений, которые матрица больше не допускает (долги закрыты шагом 6.3b)
+CLOSED_CATEGORIES = frozenset({PLANNED, PARTIAL})
 
 REQUIREMENT_TAG = re.compile(r"^(?:REQ|DISC|OBS)-")
 # Причина xfail из реестров начинается с ключа записи: "[NO_AUTH_403] …"
@@ -256,6 +259,16 @@ def build_rows(tests: list[CollectedTest]) -> tuple[list[Row], list[str]]:
                     )
 
     for row in rows.values():
+        # Матрица закрыта шагом 6.3b: у каждого пункта тест или исключение с причиной. «Запланировано»
+        # и «частично» — долги; новый долг должен ронять проверку, а не тихо копиться в матрице
+        if row.exception is not None and row.exception.category in CLOSED_CATEGORIES:
+            problems.append(
+                f"{row.item.id}: запись {row.exception.category} в data/coverage_exceptions.py — категории "
+                f"{' и '.join(sorted(CLOSED_CATEGORIES))} запрещены, матрица закрыта шагом 6.3b. Напиши тест на пункт "
+                "(или на непокрытую часть) и убери запись; теста не будет — согласуй с пользователем исключение "
+                "другой категории"
+            )
+            continue
         if row.tests and row.exception is not None and not row.is_partial:
             problems.append(
                 f"{row.item.id}: есть и тест ({row.tests[0].name}), и запись в data/coverage_exceptions.py "

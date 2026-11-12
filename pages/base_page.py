@@ -24,6 +24,20 @@ class BasePage:
         full_url = f"{self.BASE_URL}{path}"
         self.driver.get(full_url)
 
+    def restore_session(self, token: str) -> None:
+        """Вход без формы: токен кладётся в localStorage, как его хранит сам фронтенд.
+
+        Для тестов, которым залогиненный браузер нужен только как предусловие: запроса входа к общему
+        бэкенду нет (аналог PwBasePage.restore_session). Токен не аргумент шага Allure и не попадает
+        в логи слушателя. Фронтенд читает localStorage при загрузке — после вызова страницу открывают заново.
+        """
+        with allure.step("Вход: токен пользователя кладётся в localStorage"):
+            self.open_url("/login")
+            self.driver.execute_script(
+                "localStorage.setItem('token', arguments[0]); localStorage.setItem('tokenType', 'Bearer');",
+                token,
+            )
+
     @allure.step("Поиск элемента: {locator}")
     def find(self, locator: tuple[str, str]) -> WebElement:
         return WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(EC.presence_of_element_located(locator))

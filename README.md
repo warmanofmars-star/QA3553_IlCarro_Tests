@@ -116,16 +116,16 @@ The table is generated — do not edit it by hand:
 <!-- coverage:start -->
 | Status | REQ | DISC | OBS | Total |
 |---|---:|---:|---:|---:|
-| ✅ Covered by a passing test | 30 | 0 | 0 | 30 |
-| 🟡 Partly covered by a passing test, the rest is planned | 4 | 0 | 0 | 4 |
-| 🐞 Covered, the test hits a known bug (strict xfail) | 13 | 6 | 0 | 19 |
-| 👁 Covered as an observation (strict xfail) | 0 | 0 | 2 | 2 |
+| ✅ Covered by a passing test | 35 | 0 | 0 | 35 |
+| 🟡 Partly covered by a passing test, the rest is planned | 0 | 0 | 0 | 0 |
+| 🐞 Covered, the test hits a known bug (strict xfail) | 15 | 7 | 0 | 22 |
+| 👁 Covered as an observation (strict xfail) | 0 | 0 | 11 | 11 |
 | ⚪ No test — exception with a recorded reason | 3 | 2 | 0 | 5 |
-| 🕓 No test yet — planned | 3 | 1 | 9 | 13 |
+| 🕓 No test yet — planned | 0 | 0 | 0 | 0 |
 | **Total** | 53 | 9 | 11 | 73 |
 
-Exceptions: the check would harm the shared backend — 1; blocked by another defect — 2; the feature is unreachable — 2. Planned: 0 in step 6.2 (API), 0 in step 6.3a (UI: request interception and session), 13 in step 6.3b (UI: the rest and observations). The rest of the partly covered items: 0 in step 6.2, 0 in step 6.3a, 4 in step 6.3b.
-All 111 tests reference at least one ID (a test without one fails the check).
+Exceptions: the check would harm the shared backend — 1; blocked by another defect — 2; the feature is unreachable — 2. Planned: 0 in step 6.2 (API), 0 in step 6.3a (UI: request interception and session), 0 in step 6.3b (UI: the rest and observations). The rest of the partly covered items: 0 in step 6.2, 0 in step 6.3a, 0 in step 6.3b.
+All 149 tests reference at least one ID (a test without one fails the check).
 <!-- coverage:end -->
 
 The full matrix — every ID with its tests, registry key and status, plus the list of exceptions and
@@ -298,11 +298,12 @@ pre-commit run --all-files    # check the whole project
 
 ## Plans
 
+Done: steps 6.1–6.3b — the [traceability matrix](docs/requirements/traceability.md) and tests for all its
+items. Every item has a test or an exception with a recorded reason; the matrix check rejects planned and
+partly covered items.
+
 Not done yet:
 
-- **Step 6.2 — API tests**, **step 6.3a — UI tests with request interception and the session** and
-  **step 6.3b — the rest of the UI tests and observations** for the items marked as planned in the
-  [traceability matrix](docs/requirements/traceability.md) (step 6.1, the matrix itself, is done).
 - **Step 7 — UI resilience tests:** how the UI behaves when the backend fails (network interception in Playwright).
 
 ## How the project is developed

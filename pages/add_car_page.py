@@ -3,6 +3,7 @@ import os
 import allure
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.wait import WebDriverWait
@@ -31,6 +32,17 @@ class AddCarPage(BasePage):
     SUBMIT_BTN = (By.CSS_SELECTOR, "button[type='submit']")
 
     SUBMIT_ERROR_MESSAGE = (By.CSS_SELECTOR, "div.error[role='alert']")
+    PAGE_TITLE = (By.CSS_SELECTOR, "h1.title")
+
+    # Поле формы по атрибуту name (имена — из формы LetCarWork: manufacture, model, year, fuel, seats, …)
+    @staticmethod
+    def field(name: str) -> tuple[str, str]:
+        return By.NAME, name
+
+    @staticmethod
+    def field_error(name: str) -> tuple[str, str]:
+        """Ошибка валидации поля: блок div.error сразу за полем (ErrorMessage Formik, FE: LetCarWork)."""
+        return By.XPATH, f"//*[@name='{name}']/following-sibling::div[contains(@class, 'error')]"
 
     def open(self):
         self.open_url(self.ENDPOINT)
@@ -69,6 +81,64 @@ class AddCarPage(BasePage):
     @allure.step("Отправка формы добавления автомобиля")
     def submit(self):
         self.click(self.SUBMIT_BTN)
+
+    @allure.step("Заполнение всей формы допустимыми значениями (город — из подсказки)")
+    def fill_valid_form(self, car):
+        self.fill_city(car.city)
+        self.fill_text_fields(car)
+        self.fill_dropdowns(car)
+
+    def replace_value(self, locator, value: str) -> None:
+        """Замена значения поля через клавиатуру.
+
+        WebElement.clear() меняет значение мимо обработчиков React: Formik не узнал бы, что поле
+        опустело. Выделение всего текста и Backspace — обычный ввод, его React видит. CONTROL —
+        для Windows и Linux (локальный запуск и узлы Grid).
+        """
+        with allure.step(f"Замена значения поля {locator} на {value!r}"):
+            element = self.find(locator)
+            element.send_keys(Keys.CONTROL, "a")
+            element.send_keys(Keys.BACKSPACE)
+            if value:
+                element.send_keys(value)
+
+    @allure.step("Выбор пустого варианта Fuel («Select fuel»)")
+    def clear_fuel(self):
+        Select(self.find(self.FUEL_SELECT)).select_by_value("")
+
+    @allure.step("Снятие фокуса с поля: клик по заголовку страницы")
+    def blur(self):
+        # Клик по заголовку, а не по body: в середине длинной формы клик по body попал бы в другое поле
+        self.click(self.PAGE_TITLE)
+
+    @allure.step("Ожидание текста ошибки под полем {name}")
+    def get_field_error_text(self, name: str) -> str | None:
+        """Текст ошибки под полем или None, если ошибка не появилась (валидация Formik асинхронная)."""
+        try:
+            element = WebDriverWait(self.driver, self.DEFAULT_TIMEOUT).until(
+                EC.visibility_of_element_located(self.field_error(name))
+            )
+        except TimeoutException:
+            return None
+        return element.text
+
+    def _wait_submit_enabled(self, enabled: bool, timeout: float) -> bool:
+        try:
+            WebDriverWait(self.driver, timeout).until(
+                lambda d: d.find_element(*self.SUBMIT_BTN).is_enabled() == enabled
+            )
+            return True
+        except TimeoutException:
+            return False
+
+    @allure.step("Ожидание: кнопка Submit доступна")
+    def wait_submit_enabled(self) -> bool:
+        return self._wait_submit_enabled(True, self.DEFAULT_TIMEOUT)
+
+    @allure.step("Ожидание: кнопка Submit недоступна")
+    def wait_submit_disabled(self, timeout: float = 5) -> bool:
+        """True — кнопка стала недоступна за timeout; False — осталась доступной."""
+        return self._wait_submit_enabled(False, timeout)
 
     @allure.step("Получение текста ошибки под формой")
     def get_submit_error_text(self):

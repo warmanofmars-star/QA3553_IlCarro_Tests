@@ -29,19 +29,19 @@
 
 | Статус | REQ | DISC | OBS | Всего |
 |---|---:|---:|---:|---:|
-| ✅ покрыт | 30 | 0 | 0 | 30 |
-| 🟡 частично | 4 | 0 | 0 | 4 |
-| 🐞 покрыт как известный баг | 13 | 6 | 0 | 19 |
-| 👁 покрыт как наблюдение | 0 | 0 | 2 | 2 |
+| ✅ покрыт | 35 | 0 | 0 | 35 |
+| 🟡 частично | 0 | 0 | 0 | 0 |
+| 🐞 покрыт как известный баг | 15 | 7 | 0 | 22 |
+| 👁 покрыт как наблюдение | 0 | 0 | 11 | 11 |
 | ⚪ исключение | 3 | 2 | 0 | 5 |
-| 🕓 запланирован | 3 | 1 | 9 | 13 |
+| 🕓 запланирован | 0 | 0 | 0 | 0 |
 | **Всего** | 53 | 9 | 11 | 73 |
 
 - **Исключения по категориям:** вредит общему бэкенду — 1; заблокировано другим дефектом — 2; функциональность недостижима — 2.
-- **Запланировано:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 13.
-- **Покрыто частично, доработка:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 4.
-- **Известные баги:** 18 в реестре `data/known_bugs.py`; **наблюдения:** 2 в реестре `data/observations.py`.
-- **Автотесты:** 111, у каждого есть тег хотя бы одного пункта.
+- **Запланировано:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 0.
+- **Покрыто частично, доработка:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 0.
+- **Известные баги:** 21 в реестре `data/known_bugs.py`; **наблюдения:** 11 в реестре `data/observations.py`.
+- **Автотесты:** 149, у каждого есть тег хотя бы одного пункта.
 
 ## Требования и тесты
 
@@ -111,7 +111,7 @@
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
 | REQ-UI-REG-01 | Поля проверяются до отправки: Name, Last name, Email (формат), Password (не короче 6, буква и цифра), согласие с условиями. | `test_registration.py::test_registration_negative_fields`<br>`test_registration.py::test_registration_without_check_box` | — | ✅ покрыт |
-| REQ-UI-REG-02 | После успешной регистрации — окно «Registered» / «You are logged in success»; пользователь залогинен. | `test_registration.py::test_registration_success` | — | 🟡 частично — не покрыто: Что пользователь после регистрации залогинен (токен, «Log out» в навигации): тест проверяет только тексты окна (PR 6.3b) |
+| REQ-UI-REG-02 | После успешной регистрации — окно «Registered» / «You are logged in success»; пользователь залогинен. | `test_registration.py::test_registration_success` | — | ✅ покрыт |
 | REQ-UI-REG-03 | При ответе 400 окно «Registration failed» показывает текст ошибки сервера. | `test_registration.py::test_registration_existing_user`<br>`test_registration.py::test_registration_password_rejected_by_api` | `PASSWORD_RULES_MISMATCH` | 🐞 покрыт как известный баг |
 | REQ-UI-REG-04 | Гость видит в навигации ссылку «Sign up»; она ведёт на форму регистрации `/register`. | `test_registration.py::test_navigation_to_registration` | — | ✅ покрыт |
 
@@ -119,7 +119,7 @@
 
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
-| REQ-UI-LOGIN-01 | Email обязателен и проверяется по формату, пароль обязателен; перед отправкой email приводится к нижнему регистру. | `test_login.py::test_login_negative_frontend`<br>`test_playwright_login.py::test_pw_login_negative` | — | 🟡 частично — не покрыто: Приведение email к нижнему регистру перед отправкой (перехват запроса) (PR 6.3b) |
+| REQ-UI-LOGIN-01 | Email обязателен и проверяется по формату, пароль обязателен; перед отправкой email приводится к нижнему регистру. | `test_login.py::test_login_negative_frontend`<br>`test_playwright_login.py::test_pw_login_negative`<br>`test_playwright_login.py::test_pw_login_sends_email_lowercase` | — | ✅ покрыт |
 | REQ-UI-LOGIN-02 | После входа — окно «You are logged in success», в навигации «Log out». | `test_login.py::test_login_success`<br>`test_playwright_login.py::test_pw_login_success` | — | ✅ покрыт |
 | REQ-UI-LOGIN-03 | При 401 — окно «Login failed» с текстом «Login or Password incorrect»; при любой другой ошибке — «Login failed. Try again». | `test_login.py::test_login_negative_backend`<br>`test_playwright_login.py::test_pw_login_other_error_text` | `LOGIN_ERROR_TEXT_HARDCODED` | 🐞 покрыт как известный баг |
 
@@ -127,8 +127,8 @@
 
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
-| REQ-UI-CAR-01 | Поля, отмеченные `*`, проверяются до отправки: City, Make, Model, Year, Fuel, Seats (≥ 1), Car class, Car registration number, Price (≥ 1). | — | — | 🕓 запланирован (PR 6.3b) |
-| REQ-UI-CAR-02 | Успешная отправка — «Car submitted successfully» и очистка формы; ошибка — «Failed to submit car». | `test_add_car.py::test_add_car_success`<br>`test_add_car.py::test_add_car_duplicate`<br>`test_playwright_add_car.py::test_real_add_car_success`<br>`test_playwright_add_car.py::test_pw_add_car_duplicate` | — | 🟡 частично — не покрыто: Текст «Car submitted successfully»: тесты успешной отправки проверяют только очистку формы (PR 6.3b) |
+| REQ-UI-CAR-01 | Поля, отмеченные `*`, проверяются до отправки: City, Make, Model, Year, Fuel, Seats (≥ 1), Car class, Car registration number, Price (≥ 1). | `test_car_form_validation.py::test_car_form_required_field`<br>`test_car_form_validation.py::test_car_form_city_required` | `CAR_FORM_CITY_NOT_VALIDATED` | 🐞 покрыт как известный баг |
+| REQ-UI-CAR-02 | Успешная отправка — «Car submitted successfully» и очистка формы; ошибка — «Failed to submit car». | `test_add_car.py::test_add_car_success`<br>`test_add_car.py::test_add_car_duplicate`<br>`test_playwright_add_car.py::test_real_add_car_success`<br>`test_playwright_add_car.py::test_pw_add_car_duplicate`<br>`test_playwright_car_form.py::test_pw_car_form_success_text` | `CAR_SUCCESS_TEXT_NOT_SHOWN` | 🐞 покрыт как известный баг |
 | REQ-UI-CAR-03 | Значение Fuel уходит в API строчными: `petrol`, `diesel`, `hybrid`, `electric`. | `test_playwright_car_form.py::test_pw_car_form_sends_fuel_lowercase` | — | ✅ покрыт |
 | REQ-UI-CAR-04 | Фото — ссылкой или файлом; файл отправляется в поле `image` как data URL (base64). | `test_playwright_car_form.py::test_pw_car_form_sends_photo_file_as_data_url`<br>`test_playwright_car_form.py::test_pw_car_form_sends_photo_link` | — | ✅ покрыт |
 
@@ -137,9 +137,9 @@
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
 | REQ-UI-SEARCH-01 | «Yalla!» доступна, только когда заполнены город и обе даты. | `test_search.py::test_search_form_dynamic`<br>`test_search.py::test_search_empty_city_validation` | — | ✅ покрыт |
-| REQ-UI-SEARCH-02 | В календаре недоступны дни раньше сегодняшнего и позже «сегодня + 365 дней». | `test_calendar.py::test_calendar_past_navigation_blocked` | — | 🟡 частично — не покрыто: Верхняя граница: дни позже «сегодня + 365 дней» недоступны (PR 6.3b) |
-| REQ-UI-SEARCH-03 | Подсказка города показывает до 8 вариантов из списка фронтенда; город можно ввести вручную. | — | — | 🕓 запланирован (PR 6.3b) |
-| REQ-UI-SEARCH-04 | Пагинация выдачи — на стороне клиента: `page` и `size` в URL, 10, 20 или 50 карточек на странице. | — | — | 🕓 запланирован (PR 6.3b) |
+| REQ-UI-SEARCH-02 | В календаре недоступны дни раньше сегодняшнего и позже «сегодня + 365 дней». | `test_calendar.py::test_calendar_past_navigation_blocked`<br>`test_calendar.py::test_calendar_far_future_blocked` | — | ✅ покрыт |
+| REQ-UI-SEARCH-03 | Подсказка города показывает до 8 вариантов из списка фронтенда; город можно ввести вручную. | `test_search.py::test_search_city_suggestions`<br>`test_search.py::test_search_city_typed_manually` | — | ✅ покрыт |
+| REQ-UI-SEARCH-04 | Пагинация выдачи — на стороне клиента: `page` и `size` в URL, 10, 20 или 50 карточек на странице. | `test_search.py::test_search_client_pagination` | — | ✅ покрыт |
 | REQ-UI-SEARCH-05 | Цена на карточке показывается с одним знаком после запятой. | `test_playwright_mocking.py::test_mock_search_results`<br>`test_search.py::test_search_form_dynamic` | — | ✅ покрыт |
 | REQ-UI-SEARCH-06 | Поле дат только для чтения: даты выбираются в календаре, который открывается кликом по полю и закрывается кликом вне календаря. | `test_calendar.py::test_calendar_ui_and_close`<br>`test_search.py::test_search_dates_readonly_protection` | — | ✅ покрыт |
 | REQ-UI-SEARCH-07 | Календарь поиска показывает стандартный интерфейс react-date-range: месяцы листаются кнопками со стрелками в пределах `minDate`…`maxDate` (REQ-UI-SEARCH-02), сегодняшний день отмечен (класс `rdrDayToday`). | `test_calendar.py::test_calendar_ui_and_close`<br>`test_calendar.py::test_calendar_month_navigation` | — | ✅ покрыт |
@@ -168,7 +168,7 @@
 | DISC-04 | Поля формы машины Gear, WD, Doors (и `features` в состоянии формы) отсутствуют в `CarDto`; фронт их собирает и не отправляет. | `test_playwright_car_form.py::test_pw_car_form_sends_gear_wd_doors` | `CAR_FORM_FIELDS_NOT_SENT` | 🐞 покрыт как известный баг |
 | DISC-05 | Фронт обращается к эндпоинтам, которых нет ни в Swagger, ни на бэкенде: `GET /v1/cars/{id}`, `GET` и `PUT /v1/user/profile`. | `test_playwright_car_page.py::test_pw_car_page_request_is_documented`<br>`test_playwright_car_page.py::test_pw_profile_page_request_is_documented`<br>`test_playwright_car_page.py::test_pw_profile_save_request_is_documented` | `FRONTEND_CALLS_UNDOCUMENTED_ENDPOINTS` | 🐞 покрыт как известный баг |
 | DISC-06 | Бронирование: Swagger описывает эндпоинт, фронт считает его не реализованным («Бронирование пока не реализовано в API»), API отвечает успехом, ничего не сохраняя. | — | — | ⚪ исключение: функциональность недостижима |
-| DISC-07 | Границы полей машины: фронт требует Seats ≥ 1 и Price ≥ 1; в Swagger ограничений нет; API принимает 0 и отрицательные значения. | — | — | 🕓 запланирован (PR 6.3b) |
+| DISC-07 | Границы полей машины: фронт требует Seats ≥ 1 и Price ≥ 1; в Swagger ограничений нет; API принимает 0 и отрицательные значения. | `test_api_car.py::test_api_rejects_car_values_forbidden_by_form`<br>`test_car_form_validation.py::test_car_form_value_below_one` | `CAR_LIMITS_MISMATCH` | 🐞 покрыт как известный баг |
 | DISC-08 | Пагинация: фронт передаёт `page` и `size` в поиск; в Swagger параметров нет; API их игнорирует. | `test_api_search.py::test_api_search_page_size` | `SEARCH_PAGINATION_IGNORED` | 🐞 покрыт как известный баг |
 | DISC-09 | Страница машины читает поля, которых нет в `CarDto`: `make`, `car_class`, `image_url`, `imageUrl`, `price_per_day`, `engine`, `gear`, `wheels_drive`, `fuel_consumption`, `doors`, `address`, `distance_included`, `description`. | — | — | ⚪ исключение: заблокировано другим дефектом (DISC-05) |
 
@@ -176,17 +176,17 @@
 
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
-| OBS-01 | Поиск чувствителен к регистру города: `tel aviv` — 0 машин. | — | — | 🕓 запланирован (PR 6.3b) |
-| OBS-02 | Поиск и бронирование принимают прошедшие даты, конец раньше начала, отсутствие дат. | — | — | 🕓 запланирован (PR 6.3b) |
+| OBS-01 | Поиск чувствителен к регистру города: `tel aviv` — 0 машин. | `test_playwright_search.py::test_pw_search_city_case_insensitive` | `SEARCH_CITY_CASE_SENSITIVE` | 👁 покрыт как наблюдение |
+| OBS-02 | Поиск и бронирование принимают прошедшие даты и конец раньше начала. | `test_api_dates.py::test_api_meaningless_dates_rejected` | `INVALID_DATES_ACCEPTED` | 👁 покрыт как наблюдение |
 | OBS-03 | API принимает бессмысленные значения машины: `seats` 0, цена 0 и −5, `year` «abc» и «2999», `fuel` «banana». | `test_api_mutations.py::test_api_car_mutations` — `[lambda_mutation-400-Отрицательная цена-False]` | `NONSENSE_CAR_VALUES` | 👁 покрыт как наблюдение |
-| OBS-04 | Пустой результат поиска ничем не обозначен: нет сообщения «ничего не найдено». | — | — | 🕓 запланирован (PR 6.3b) |
+| OBS-04 | Пустой результат поиска ничем не обозначен: нет сообщения «ничего не найдено». | `test_playwright_search.py::test_pw_empty_search_announced` | `SEARCH_OUTCOME_NOT_SHOWN` | 👁 покрыт как наблюдение |
 | OBS-05 | После 401 нет перехода на страницу входа; «Log out» остаётся в навигации, хотя токен удалён. | `test_playwright_session.py::test_pw_401_redirects_to_login`<br>`test_playwright_session.py::test_pw_401_hides_logout` | `STALE_SESSION_UI_AFTER_401` | 👁 покрыт как наблюдение |
-| OBS-06 | Форма добавления машины открывается гостю; отправка заканчивается «Failed to submit car». | — | — | 🕓 запланирован (PR 6.3b) |
-| OBS-07 | «Failed to submit car» не объясняет причину: город не поддерживается, пустой город, нет авторизации — текст один. | — | — | 🕓 запланирован (PR 6.3b) |
-| OBS-08 | Цена на экране округляется: 1234.56 показывается как «1234.6». | — | — | 🕓 запланирован (PR 6.3b) |
-| OBS-09 | После регистрации URL остаётся `/register`. | — | — | 🕓 запланирован (PR 6.3b) |
-| OBS-10 | Кнопка «предыдущий месяц» в календаре доступна, но ничего не делает. | — | — | 🕓 запланирован (PR 6.3b) |
-| OBS-11 | Интерфейс на английском, но страницы машины и профиля показывают русские тексты: «Не удалось загрузить машину», «Загрузка...», «Мой профиль». | — | — | 🕓 запланирован (PR 6.3b) |
+| OBS-06 | Форма добавления машины открывается гостю; отправка заканчивается «Failed to submit car». | `test_playwright_ui_observations.py::test_pw_guest_redirected_from_car_form` | `GUEST_OPENS_CAR_FORM` | 👁 покрыт как наблюдение |
+| OBS-07 | «Failed to submit car» не объясняет причину: город не поддерживается, пустой город, нет авторизации — текст один. | `test_playwright_ui_observations.py::test_pw_car_submit_error_names_cause` | `CAR_SUBMIT_ERROR_WITHOUT_CAUSE` | 👁 покрыт как наблюдение |
+| OBS-08 | Цена на экране округляется: 1234.56 показывается как «1234.6». | `test_playwright_search.py::test_pw_card_price_matches_saved` | `CARD_PRICE_ROUNDED` | 👁 покрыт как наблюдение |
+| OBS-09 | После регистрации URL остаётся `/register`. | `test_playwright_ui_observations.py::test_pw_registration_leaves_register_url` | `REGISTER_URL_UNCHANGED` | 👁 покрыт как наблюдение |
+| OBS-10 | Кнопка «предыдущий месяц» в календаре доступна, но ничего не делает. | `test_calendar.py::test_calendar_prev_month_disabled_in_current_month` | `PREV_MONTH_BUTTON_ENABLED` | 👁 покрыт как наблюдение |
+| OBS-11 | Интерфейс на английском, но страницы машины и профиля показывают русские тексты: «Не удалось загрузить машину», «Загрузка...», «Мой профиль». | `test_playwright_ui_observations.py::test_pw_page_texts_in_english` | `RUSSIAN_TEXTS_IN_ENGLISH_UI` | 👁 покрыт как наблюдение |
 
 ## Реестр исключений покрытия
 
@@ -218,25 +218,8 @@
 
 | ID | Что проверит тест |
 |---|---|
-| REQ-UI-CAR-01 | Валидация обязательных полей формы машины до отправки. Для City нарушается (Q-UI-04) — нужна запись в known_bugs.py |
-| REQ-UI-SEARCH-03 | Подсказка города: не больше 8 вариантов; город, введённый вручную |
-| REQ-UI-SEARCH-04 | Клиентская пагинация: page и size в URL, 10, 20 и 50 карточек на странице. Тест поиска только пользуется size=50, но число карточек не проверяет |
-| DISC-07 | Сторона фронтенда — форма не пропускает Seats и Price меньше 1 — вместе с REQ-UI-CAR-01. Сторону API уже фиксирует наблюдение OBS-03 |
-| OBS-01 | Поиск тем же городом в другом регистре находит те же машины |
-| OBS-02 | Поиск и бронирование с прошедшими датами, концом раньше начала и без дат |
-| OBS-04 | Пустая выдача поиска обозначена сообщением |
-| OBS-06 | Гостю форма добавления машины не открывается |
-| OBS-07 | Текст ошибки отправки машины называет причину |
-| OBS-08 | Цена на карточке совпадает с сохранённой. Правило округления фронтенда уже проверяет REQ-UI-SEARCH-05 |
-| OBS-09 | После регистрации URL меняется с /register |
-| OBS-10 | Кнопка «предыдущий месяц» в текущем месяце недоступна |
-| OBS-11 | Тексты страницы машины и профиля — на английском, как остальной интерфейс |
 
 ### Покрыто частично
 
 | ID | Что не покрыто | PR |
 |---|---|---|
-| REQ-UI-REG-02 | Что пользователь после регистрации залогинен (токен, «Log out» в навигации): тест проверяет только тексты окна | 6.3b |
-| REQ-UI-LOGIN-01 | Приведение email к нижнему регистру перед отправкой (перехват запроса) | 6.3b |
-| REQ-UI-CAR-02 | Текст «Car submitted successfully»: тесты успешной отправки проверяют только очистку формы | 6.3b |
-| REQ-UI-SEARCH-02 | Верхняя граница: дни позже «сегодня + 365 дней» недоступны | 6.3b |

@@ -5,7 +5,8 @@
 ({"message": "Car added successfully"}, Q-UI-05). До бэкенда он не доходит: машин тесты не создают,
 фото на общем сервере не копят (REQ-SEC-07). Запрос мимо подмены (опечатка в шаблоне) обрывает
 защита backend_write_guard: до бэкенда он тоже не доходит. Подменённый ответ нужен только затем,
-чтобы прочитать отправленное; что фронт показывает после ответа, здесь не проверяется.
+чтобы прочитать отправленное; что фронт показывает после ответа, проверяет только тест текста
+успешной отправки (REQ-UI-CAR-02).
 
 Пользователь — общий (shared_user): меняется только состояние браузера, ответы подменены. Вход —
 токеном в localStorage, без запроса входа к бэкенду.
@@ -15,7 +16,7 @@ import base64
 
 import allure
 import pytest
-from playwright.sync_api import Page
+from playwright.sync_api import Page, expect
 
 from config import PROJECT_ROOT
 from data.data_generator import CarGenerator
@@ -163,4 +164,28 @@ def test_pw_car_form_sends_gear_wd_doors(page: Page, car_form, shared_car_cleanu
         assert not lost, (
             f"Введённые в форму значения не попали в запрос POST /v1/cars: {lost} (в форме: {entered}; "
             f"ключи запроса: {sorted(body)})"
+        )
+
+
+@allure.epic("Playwright Testing")
+@allure.feature("Cars Management")
+@allure.story("Submit result")
+@allure.title("После успешной отправки — «Car submitted successfully»")
+@known_bug("CAR_SUCCESS_TEXT_NOT_SHOWN")
+@allure.tag("REQ-UI-CAR-02")
+def test_pw_car_form_success_text(page: Page, car_form, shared_car_cleanup):
+    """
+    Ответ 200 подменён в формате настоящего (Q-UI-05). Форма очищается — это проверяют тесты
+    test_add_car_success; текста успеха на экране нет (Q-UI-15, Q-UI-26).
+    """
+    car = CarGenerator.get_random_car()
+    car_form.fill_form(car)
+    _submit_and_read_request(page, car_form, shared_car_cleanup, car)
+
+    # Ответ обработан: форма очистилась. wait_for_function, а не expect — под xfail только проверка текста
+    page.wait_for_function("() => document.querySelector(\"[name='manufacture']\").value === ''")
+
+    with allure.step("Проверка: на экране «Car submitted successfully»"):
+        expect(page.get_by_role("status"), "После успешной отправки нет текста успеха").to_have_text(
+            "Car submitted successfully"
         )

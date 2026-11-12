@@ -7,7 +7,8 @@
 - Дата прогонов: 2026-11-05.
 - API: https://ilcarro-backend.herokuapp.com, UI: https://icarro-v1.netlify.app.
 - Скрипты: `research/explore_api.py` (функции `q_api_NN_*`), `research/explore_ui.py` (функции `q_ui_NN_*`),
-  `research/explore_ui_interception.py` (Q-UI-15 … Q-UI-19, с перехватом запросов), общие функции — `research/common.py`. Описание запуска — `research/README.md`.
+  `research/explore_ui_interception.py` (Q-UI-15 … Q-UI-19, с перехватом запросов), `research/explore_ui_rest.py`
+  (Q-UI-20 … Q-UI-26, шаг 6.3b), общие функции — `research/common.py`. Описание запуска — `research/README.md`.
 - Каждый скрипт запущен дважды (`--run 1`, `--run 2`). Скриншоты лежат в `research/evidence/` (в git не хранятся,
   создаются скриптом; имена указаны в вопросах).
 - Только временные пользователи `probe_<uuid>@example.com`, созданные через API (или через форму регистрации UI в Q-UI-07…09).
@@ -443,6 +444,111 @@ Petrol, Diesel, Hybrid, Electric; gear = «Automatic», wheelsDrive = «AWD», d
 - После клика: URL `/cars/<serial>`; единственный запрос к API — `GET /v1/cars/<serial>`, оборван браузером (`net::ERR_FAILED`).
   На экране: «Не удалось загрузить машину»; `model` и `manufacture` машины на странице нет.
 
+## Пробы шага 6.3b (Q-API-18, Q-UI-20 … Q-UI-26)
+
+Добавлены 2026-11-12 для пунктов шага 6.3b, по которым факта в логе не было. Запуски:
+`python research/explore_api.py --run 63b --only Q-API-18` и `python research/explore_ui_rest.py --run 63b`
+(Q-UI-24 и Q-UI-26 повторены отдельно: `--run 63b2 --only Q-UI-24,Q-UI-26` — в первом запуске упал сам скрипт,
+обработчик маршрута получал не те аргументы). Логи — `research/evidence/explore_api_run63b.log`,
+`research/evidence/explore_ui_rest_run63b.log`, `research/evidence/explore_ui_rest_run63b2.log`.
+В UI-пробах запросы, которые меняют данные (`POST /v1/cars`, `POST` регистрации), перехвачены через `page.route`
+и до бэкенда не дошли; вход — токеном в localStorage, без запроса входа. Город — Sderot. «Сегодня» — 2026-11-12.
+
+## Q-API-18 Даты поиска и бронирования: своя машина, малый город
+
+**Как проверяли:** `explore_api.py`, `q_api_18_dates_own_car_small_city`. Владелец создал машину в Sderot и бронировал её сам;
+поиск — без токена.
+
+| Случай | Поиск Sderot | Бронирование владельцем | bookedPeriods после |
+|---|---|---|---|
+| Прошедшие даты 2026-11-02..2026-11-06 | HTTP 200, 15 машин, своя в выдаче | HTTP 200, `Car booked successfully! We will contact you soon` | `[]` |
+| Конец раньше начала 2026-12-07..2026-12-02 | HTTP 200, 15 машин, своя в выдаче | HTTP 200, то же сообщение | `[]` |
+| Будущие даты 2026-12-02..2026-12-07 (для сравнения) | HTTP 200, 15 машин, своя в выдаче | HTTP 200, то же сообщение | `[]` |
+
+- Машина удалена в конце скрипта.
+
+## Q-UI-20 Форма машины: проверка полей до отправки
+
+**Как проверяли:** `explore_ui_rest.py`, `q_ui_20_car_form_validation`. Каждый раз форма заполнена целиком (город выбран
+из подсказки), затем одно поле изменено и с него снят фокус.
+
+| Поле и значение | Submit со всеми полями | Submit после изменения | Текст под полем |
+|---|---|---|---|
+| Make, Model, Year, Seats, Car class, Car registration number, Price — пусто (по одному) | доступна | недоступна | `Required` |
+| Fuel — «Select fuel» (значение `""`) | доступна | недоступна | `Required` |
+| Seats `0`, Seats `-1` | доступна | недоступна | `seats must be greater than or equal to 1` |
+| Price `0`, Price `-5` | доступна | недоступна | `pricePerDay must be greater than or equal to 1` |
+| City стёрт после выбора (значение поля `""`) | доступна | **доступна** | блока ошибки нет |
+
+- Пишущих запросов не было (0 оборвано).
+
+## Q-UI-21 Подсказка города на /search
+
+**Как проверяли:** `q_ui_21_city_suggestions`.
+
+| Введено | Вариантов | Варианты |
+|---|---|---|
+| фокус в пустом поле | 8 | Tel Aviv, Jerusalem, Haifa, Rishon LeZion, Petah Tikva, Ashdod, Netanya, Beersheba |
+| `a` | 8 | Tel Aviv, Jerusalem, Haifa, Petah Tikva, Ashdod, Netanya, Beersheba, Bnei Brak |
+| `Kiryat`, `kiryat` | 7 | Kiryat Ata, Kiryat Gat, Kiryat Yam, Kiryat Motzkin, Kiryat Bialik, Kiryat Ono, Kiryat Shmona |
+| `sderot` | 1 | Sderot |
+| `Zzz` | 0 | — |
+
+- Порядок вариантов совпадает с порядком списка городов фронтенда (`UI_CITIES` в `data/data_generator.py`).
+
+## Q-UI-22 Пагинация выдачи
+
+**Как проверяли:** `q_ui_22_pagination`. Поиск Sderot в UI (город из подсказки, даты 2026-11-12 — 2026-11-13).
+
+- Ответ поиска: HTTP 200, 14 машин. URL: `city=Sderot&from=2026-11-12&to=2026-11-13&page=0&size=10`; карточек 10.
+- «Rows per page»: варианты `10`, `20`, `50`, выбрано `10`; подпись «1-10 of 14», «1/2».
+- Next: `page=1`, `size=10`; карточек 4.
+- Rows per page = 20: `page=0&size=20`, карточек 14; = 50: `page=0&size=50`, карточек 14; = 10: `page=0&size=10`, карточек 10.
+- Новых запросов поиска при смене страницы и размера скрипт не ждал и не считал.
+
+## Q-UI-23 Поиск городом в другом регистре
+
+**Как проверяли:** `q_ui_23_city_case`. Город введён вручную (без выбора из подсказки), даты выбраны в календаре.
+
+| Введено | `city` в запросе | Ответ | Карточек |
+|---|---|---|---|
+| `Sderot` (из подсказки) | `"Sderot"` | HTTP 200, 14 машин | 10 |
+| `sderot` (вручную) | `"sderot"` | HTTP 200, 0 машин | 0 |
+| `SDEROT` (вручную) | `"SDEROT"` | HTTP 200, 0 машин | 0 |
+
+## Q-UI-24 Поиск: пустая выдача и сбой запроса
+
+**Как проверяли:** `q_ui_24_search_failures`. Ответ `POST /v1/cars/search` в двух случаях подменён (500, JSON
+`{"status":500,"message":"probe"}`) или оборван (`route.abort`).
+
+| Случай | Карточек | Блоков `role=status` / `role=alert` | Блок результатов |
+|---|---|---|---|
+| Beersheba, настоящий ответ HTTP 200, 0 машин | 0 | нет | нет |
+| Sderot, ответ подменён на 500 | 0 | нет | нет |
+| Sderot, запрос оборван | 0 | нет | нет |
+
+- После сбоя кнопка снова «Yalla!», URL с параметрами поиска (`page=0&size=10`).
+
+## Q-UI-25 URL после регистрации (ответ подменён)
+
+**Как проверяли:** `q_ui_25_register_url`. `POST /v1/user/registration/usernamepassword` перехвачен, ответ подменён на 200
+в формате настоящего (`{"accessToken": …}`, Q-API-06; значение токена придумано скриптом).
+
+- Перехвачен один запрос. Окно: «Registered», «You are logged in success», «OK»; при открытом окне путь `/register`.
+- После «OK»: путь `/register`; кнопка «Log out» есть; `token` в localStorage есть. То же, что при настоящей регистрации (Q-UI-09).
+
+## Q-UI-26 Текст ошибки отправки машины (ответ подменён)
+
+**Как проверяли:** `q_ui_26_submit_error_text`. Форма заполнена, `POST /v1/cars` перехвачен; тела ошибок 400 — в формате
+настоящих ответов (Q-UI-03, Q-UI-04).
+
+| Подменённый ответ | Блоки `role=status` / `role=alert` | Поле Make после ответа |
+|---|---|---|
+| 400, `message` `"City Beersheba is not supported"` | `Failed to submit car` | заполнено |
+| 400, `message` `{"city":"must not be blank"}` | `Failed to submit car` | заполнено |
+| 401, `message` `"probe unauthorized"` | `Failed to submit car` | заполнено |
+| 200, `{"message":"Car added successfully"}` | нет | пустое |
+
 ## Фреймворк: одновременная запись журналов прогона
 
 Вопрос не о приложении, а о самом фреймворке: портятся ли журналы прогона, когда воркеры xdist пишут
@@ -481,6 +587,8 @@ Petrol, Diesel, Hybrid, Electric; gear = «Automatic», wheelsDrive = «AWD», d
 | `explore_api.py --only Q-API-13…17` (2026-11-11) | 3 | 1 | 1 |
 | `explore_ui.py` (1 прогон) | 11 | 7 | 7 |
 | `explore_ui_interception.py` (2026-11-12) | 1 | 0 | 0 |
+| `explore_api.py --only Q-API-18` (2026-11-12) | 1 | 1 | 1 |
+| `explore_ui_rest.py` (2026-11-12, два запуска) | 2 | 0 | 0 |
 
 - Числа первых двух скриптов одинаковы в прогонах 1 и 2. После очистки у временных пользователей машин с префиксом `RS-`/`RU-` не осталось.
 - Пользователей API удалять не умеет, они остаются в системе.
