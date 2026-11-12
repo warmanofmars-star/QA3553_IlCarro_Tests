@@ -59,7 +59,7 @@ from the fixtures a test uses (`driver` / `authenticated_driver` and `page`), no
   hiding behind a known bug.
 - **Clean test data on a shared backend.** Every test registers its own temporary user; cars created
   by a test are deleted after it ([`utils/car_cleanup.py`](utils/car_cleanup.py), journal in
-  `logs/car_factory.jsonl`).
+  `logs/car_factory_<worker>.jsonl`, one file per xdist worker).
 - **CI with a test split and a browser matrix**, plus a Jenkins pipeline, and code-quality checks
   (ruff, gitleaks, pre-commit) — see below.
 

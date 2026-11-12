@@ -22,6 +22,7 @@ from utils.car_cleanup import CarCleanup, journal_summary, reset_journal
 from utils.listener import IlCarroListener
 from utils.network_faults import block_unhandled_writes
 from utils.preconditions import require
+from utils.run_journal import JournalError
 from utils.user_journal import reset_user_journal, user_journal_summary
 
 logger = logging.getLogger(__name__)
@@ -75,20 +76,42 @@ def pytest_configure(config):
     config.option.log_file = str(LOG_DIR / (f"pytest_{worker_id}.log" if worker_id else "pytest.log"))
 
 
+# Итоги журналов прогона: (заголовок, текст, журнал испорчен). Считает pytest_sessionfinish,
+# печатает pytest_terminal_summary
+JOURNAL_SUMMARIES = pytest.StashKey[list[tuple[str, str, bool]]]()
+
+
+def _summarize_journals(session) -> None:
+    """Считает итоги журналов машин и пользователей; испорченный журнал делает прогон красным.
+
+    Считается в pytest_sessionfinish, а не при печати: код выхода прогона задаёт session.exitstatus,
+    и менять его надёжно до того, как pytest начал печатать итог. Испорченная строка журнала —
+    не повод молча показать заниженные числа: итог журнала заменяется ошибкой с файлом и строкой.
+    """
+    sections: list[tuple[str, str, bool]] = []
+    for title, summarize in (("очистка машин", journal_summary), ("пользователи", user_journal_summary)):
+        try:
+            text = summarize()
+        except JournalError as exc:
+            logger.error(f"Журнал прогона испорчен ({title}): {exc}")
+            sections.append((title, f"Журнал испорчен, итог не посчитан: {exc}", True))
+            continue
+        if text:
+            sections.append((title, text, False))
+    session.config.stash[JOURNAL_SUMMARIES] = sections
+    if any(broken for _, _, broken in sections) and session.exitstatus == pytest.ExitCode.OK:
+        session.exitstatus = pytest.ExitCode.TESTS_FAILED
+
+
 def pytest_terminal_summary(terminalreporter):
     """Что прогон оставил на общем бэкенде: машины (создано и удалено) и пользователи (удалить нельзя).
 
     Печатает главный процесс после всех воркеров. Сбор без запуска (--collect-only) ничего
     не регистрирует и журналы не трогает, поэтому итога у него нет.
     """
-    if settings.is_xdist_worker or terminalreporter.config.getoption("collectonly", default=False):
-        return
-    summary = journal_summary()
-    if summary:
-        terminalreporter.write_sep("-", "очистка машин")
-        terminalreporter.write_line(summary)
-    terminalreporter.write_sep("-", "пользователи")
-    terminalreporter.write_line(user_journal_summary())
+    for title, text, broken in terminalreporter.config.stash.get(JOURNAL_SUMMARIES, []):
+        terminalreporter.write_sep("-", title, red=broken)
+        terminalreporter.write_line(text, red=broken, bold=broken)
 
 
 # Фикстуры, через которые тест получает браузер Selenium. authenticated_driver зависит от driver,
@@ -117,14 +140,18 @@ def pytest_collection_modifyitems(items):
 
 
 def pytest_sessionfinish(session):
-    """Пишет блок Environment для Allure: где и как шёл прогон.
+    """Считает итоги журналов прогона и пишет блок Environment для Allure: где и как шёл прогон.
 
-    Раньше его собирал workflow через echo, и в локальном или Docker-отчёте блока не было.
+    Блок Environment раньше собирал workflow через echo, и в локальном или Docker-отчёте его не было.
     Теперь файл пишет сам фреймворк — в любом запуске с --alluredir. В CI результаты нескольких
     jobs склеивает scripts/merge_allure_results.py: разные значения одного ключа — через «; ».
     """
     if settings.is_xdist_worker:
         return  # пишет только главный процесс, иначе воркеры перезапишут файл друг за другом
+
+    # Сбор без запуска журналы не трогает (см. pytest_configure): в них итог прошлого прогона
+    if not session.config.getoption("collectonly", default=False):
+        _summarize_journals(session)
 
     results_dir = session.config.getoption("allure_report_dir", default=None)
     if not results_dir:

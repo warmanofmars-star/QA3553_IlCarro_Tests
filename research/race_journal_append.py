@@ -40,8 +40,8 @@ def _writer(worker_id: str, journal_dir: str, records: int, barrier) -> None:
     sys.path.insert(0, str(ROOT))
     from utils import car_cleanup, user_journal
 
-    car_cleanup.JOURNAL_FILE = Path(journal_dir) / car_cleanup.JOURNAL_FILE.name
-    user_journal.USER_JOURNAL_FILE = Path(journal_dir) / user_journal.USER_JOURNAL_FILE.name
+    car_cleanup.JOURNAL_DIR = Path(journal_dir)
+    user_journal.JOURNAL_DIR = Path(journal_dir)
 
     barrier.wait()  # все процессы начинают писать одновременно
     for number in range(records):
