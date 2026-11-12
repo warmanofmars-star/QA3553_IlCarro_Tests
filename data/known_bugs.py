@@ -145,6 +145,13 @@ KNOWN_BUGS: dict[str, KnownBug] = {
             "GET и PUT /v1/user/profile (страница профиля) (Q-API-08, Q-UI-18, Q-UI-19)"
         ),
     ),
+    "CAR_FORM_CITY_NOT_VALIDATED": KnownBug(
+        refs=("REQ-UI-CAR-01",),
+        description=(
+            "City в форме машины отмечен «*», но в схеме валидации его нет: с пустым городом Submit доступна, "
+            'форма уходит с city: "" и получает «Failed to submit car» (Q-UI-04, Q-UI-20)'
+        ),
+    ),
 }
 
 _ALLOWED_PREFIXES = ("REQ-", "DISC-")

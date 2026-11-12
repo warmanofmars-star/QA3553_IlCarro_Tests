@@ -29,19 +29,19 @@
 
 | Статус | REQ | DISC | OBS | Всего |
 |---|---:|---:|---:|---:|
-| ✅ покрыт | 30 | 0 | 0 | 30 |
+| ✅ покрыт | 30 | 1 | 0 | 31 |
 | 🟡 частично | 4 | 0 | 0 | 4 |
-| 🐞 покрыт как известный баг | 13 | 6 | 0 | 19 |
+| 🐞 покрыт как известный баг | 14 | 6 | 0 | 20 |
 | 👁 покрыт как наблюдение | 0 | 0 | 2 | 2 |
 | ⚪ исключение | 3 | 2 | 0 | 5 |
-| 🕓 запланирован | 3 | 1 | 9 | 13 |
+| 🕓 запланирован | 2 | 0 | 9 | 11 |
 | **Всего** | 53 | 9 | 11 | 73 |
 
 - **Исключения по категориям:** вредит общему бэкенду — 1; заблокировано другим дефектом — 2; функциональность недостижима — 2.
-- **Запланировано:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 13.
+- **Запланировано:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 11.
 - **Покрыто частично, доработка:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 4.
-- **Известные баги:** 18 в реестре `data/known_bugs.py`; **наблюдения:** 2 в реестре `data/observations.py`.
-- **Автотесты:** 111, у каждого есть тег хотя бы одного пункта.
+- **Известные баги:** 19 в реестре `data/known_bugs.py`; **наблюдения:** 2 в реестре `data/observations.py`.
+- **Автотесты:** 124, у каждого есть тег хотя бы одного пункта.
 
 ## Требования и тесты
 
@@ -127,7 +127,7 @@
 
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
-| REQ-UI-CAR-01 | Поля, отмеченные `*`, проверяются до отправки: City, Make, Model, Year, Fuel, Seats (≥ 1), Car class, Car registration number, Price (≥ 1). | — | — | 🕓 запланирован (PR 6.3b) |
+| REQ-UI-CAR-01 | Поля, отмеченные `*`, проверяются до отправки: City, Make, Model, Year, Fuel, Seats (≥ 1), Car class, Car registration number, Price (≥ 1). | `test_car_form_validation.py::test_car_form_required_field`<br>`test_car_form_validation.py::test_car_form_city_required` | `CAR_FORM_CITY_NOT_VALIDATED` | 🐞 покрыт как известный баг |
 | REQ-UI-CAR-02 | Успешная отправка — «Car submitted successfully» и очистка формы; ошибка — «Failed to submit car». | `test_add_car.py::test_add_car_success`<br>`test_add_car.py::test_add_car_duplicate`<br>`test_playwright_add_car.py::test_real_add_car_success`<br>`test_playwright_add_car.py::test_pw_add_car_duplicate` | — | 🟡 частично — не покрыто: Текст «Car submitted successfully»: тесты успешной отправки проверяют только очистку формы (PR 6.3b) |
 | REQ-UI-CAR-03 | Значение Fuel уходит в API строчными: `petrol`, `diesel`, `hybrid`, `electric`. | `test_playwright_car_form.py::test_pw_car_form_sends_fuel_lowercase` | — | ✅ покрыт |
 | REQ-UI-CAR-04 | Фото — ссылкой или файлом; файл отправляется в поле `image` как data URL (base64). | `test_playwright_car_form.py::test_pw_car_form_sends_photo_file_as_data_url`<br>`test_playwright_car_form.py::test_pw_car_form_sends_photo_link` | — | ✅ покрыт |
@@ -168,7 +168,7 @@
 | DISC-04 | Поля формы машины Gear, WD, Doors (и `features` в состоянии формы) отсутствуют в `CarDto`; фронт их собирает и не отправляет. | `test_playwright_car_form.py::test_pw_car_form_sends_gear_wd_doors` | `CAR_FORM_FIELDS_NOT_SENT` | 🐞 покрыт как известный баг |
 | DISC-05 | Фронт обращается к эндпоинтам, которых нет ни в Swagger, ни на бэкенде: `GET /v1/cars/{id}`, `GET` и `PUT /v1/user/profile`. | `test_playwright_car_page.py::test_pw_car_page_request_is_documented`<br>`test_playwright_car_page.py::test_pw_profile_page_request_is_documented`<br>`test_playwright_car_page.py::test_pw_profile_save_request_is_documented` | `FRONTEND_CALLS_UNDOCUMENTED_ENDPOINTS` | 🐞 покрыт как известный баг |
 | DISC-06 | Бронирование: Swagger описывает эндпоинт, фронт считает его не реализованным («Бронирование пока не реализовано в API»), API отвечает успехом, ничего не сохраняя. | — | — | ⚪ исключение: функциональность недостижима |
-| DISC-07 | Границы полей машины: фронт требует Seats ≥ 1 и Price ≥ 1; в Swagger ограничений нет; API принимает 0 и отрицательные значения. | — | — | 🕓 запланирован (PR 6.3b) |
+| DISC-07 | Границы полей машины: фронт требует Seats ≥ 1 и Price ≥ 1; в Swagger ограничений нет; API принимает 0 и отрицательные значения. | `test_car_form_validation.py::test_car_form_value_below_one` | — | ✅ покрыт |
 | DISC-08 | Пагинация: фронт передаёт `page` и `size` в поиск; в Swagger параметров нет; API их игнорирует. | `test_api_search.py::test_api_search_page_size` | `SEARCH_PAGINATION_IGNORED` | 🐞 покрыт как известный баг |
 | DISC-09 | Страница машины читает поля, которых нет в `CarDto`: `make`, `car_class`, `image_url`, `imageUrl`, `price_per_day`, `engine`, `gear`, `wheels_drive`, `fuel_consumption`, `doors`, `address`, `distance_included`, `description`. | — | — | ⚪ исключение: заблокировано другим дефектом (DISC-05) |
 
@@ -218,10 +218,8 @@
 
 | ID | Что проверит тест |
 |---|---|
-| REQ-UI-CAR-01 | Валидация обязательных полей формы машины до отправки. Для City нарушается (Q-UI-04) — нужна запись в known_bugs.py |
 | REQ-UI-SEARCH-03 | Подсказка города: не больше 8 вариантов; город, введённый вручную |
 | REQ-UI-SEARCH-04 | Клиентская пагинация: page и size в URL, 10, 20 и 50 карточек на странице. Тест поиска только пользуется size=50, но число карточек не проверяет |
-| DISC-07 | Сторона фронтенда — форма не пропускает Seats и Price меньше 1 — вместе с REQ-UI-CAR-01. Сторону API уже фиксирует наблюдение OBS-03 |
 | OBS-01 | Поиск тем же городом в другом регистре находит те же машины |
 | OBS-02 | Поиск и бронирование с прошедшими датами, концом раньше начала и без дат |
 | OBS-04 | Пустая выдача поиска обозначена сообщением |
