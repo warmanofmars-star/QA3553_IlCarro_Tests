@@ -19,6 +19,7 @@ from models.user import User
 from pages.login_page import LoginPage
 from utils.car_cleanup import CarCleanup, journal_summary, reset_journal
 from utils.listener import IlCarroListener
+from utils.network_faults import block_unhandled_writes
 from utils.preconditions import require
 from utils.user_journal import reset_user_journal, user_journal_summary
 
@@ -435,6 +436,22 @@ def _mask_secret_params(request):
     for name in callspec.params if callspec else ():
         if SECRET_PARAM_NAME.search(name):
             allure.dynamic.parameter(name, SECRET_PLACEHOLDER, mode=allure.parameter_mode.MASKED)
+
+
+@pytest.fixture
+def backend_write_guard(page):
+    """Перехват закрытый по умолчанию: не-GET запросы к API, не пойманные подменами, обрываются.
+
+    Нужна тестам, которые подменяют пишущие запросы (utils/network_faults.py). Фикстура должна
+    сработать ДО подмен теста: маршрут, зарегистрированный раньше, проверяется позже. Поэтому
+    фикстуры и тесты с подменами запрашивают её явно, до регистрации своих маршрутов.
+    Оборванный запрос сам по себе тест не роняет — это делает require_intercepted; здесь он
+    только пишется в лог, чтобы причину было видно.
+    """
+    blocked = block_unhandled_writes(page)
+    yield blocked
+    for request in blocked:
+        logger.warning(f"Защита перехвата оборвала запрос мимо подмен: {request.method} {request.url}")
 
 
 @pytest.fixture

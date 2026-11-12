@@ -3,11 +3,12 @@
 
 Запрос POST /v1/cars перехватывается и получает подменённый ответ 200 в формате настоящего
 ({"message": "Car added successfully"}, Q-UI-05). До бэкенда он не доходит: машин тесты не создают,
-фото на общем сервере не копят (REQ-SEC-07). Подменённый ответ нужен только затем, чтобы прочитать
-отправленное; что фронт показывает после ответа, здесь не проверяется.
+фото на общем сервере не копят (REQ-SEC-07). Запрос мимо подмены (опечатка в шаблоне) обрывает
+защита backend_write_guard: до бэкенда он тоже не доходит. Подменённый ответ нужен только затем,
+чтобы прочитать отправленное; что фронт показывает после ответа, здесь не проверяется.
 
-Пользователь — общий (shared_user): тестам нужен только залогиненный браузер. Вход — токеном
-в localStorage, без запроса входа к бэкенду.
+Пользователь — общий (shared_user): меняется только состояние браузера, ответы подменены. Вход —
+токеном в localStorage, без запроса входа к бэкенду.
 """
 
 import base64
@@ -22,7 +23,7 @@ from data.known_bugs import known_bug
 from models.car import Car
 from pages.pw_add_car_page import PwAddCarPage
 from pages.pw_login_page import PwLoginPage
-from utils.network_faults import CAR_ADDED, CARS, NetworkFaults, api_response, require_intercepted
+from utils.network_faults import CAR_ADDED, CARS, NetworkFaults, require_intercepted, send_and_settle
 from utils.preconditions import require
 
 pytestmark = [pytest.mark.ui, pytest.mark.regression]
@@ -32,8 +33,8 @@ PHOTO_LINK = "https://example.com/test-car.jpg"
 
 
 @pytest.fixture
-def car_form(page: Page, shared_user) -> PwAddCarPage:
-    """Форма добавления машины, открытая залогиненным общим пользователем."""
+def car_form(page: Page, shared_user, backend_write_guard) -> PwAddCarPage:
+    """Форма добавления машины, открытая залогиненным общим пользователем; записи мимо подмен обрываются."""
     add_car_page = PwAddCarPage(page)
     add_car_page.restore_session(shared_user.api.token)
     add_car_page.open()
@@ -49,8 +50,7 @@ def _submit_and_read_request(page: Page, add_car_page: PwAddCarPage, cleanup, ca
     sent = NetworkFaults(page).respond(CARS, "POST", 200, CAR_ADDED)
 
     with allure.step("Отправка формы: POST /v1/cars перехвачен, ответ подменён на 200"):
-        with page.expect_response(api_response("POST", "/v1/cars")):
-            add_car_page.submit()
+        send_and_settle(page, "POST", "/v1/cars", add_car_page.submit)
         # Главное предусловие: без пойманного запроса проверка его содержимого пуста
         require_intercepted(sent, "POST /v1/cars")
 

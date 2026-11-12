@@ -4,11 +4,11 @@
 Ответ 401 подменяется (utils/network_faults.py): сценарий «сервер перестал принимать токен»
 воспроизводится без порчи настоящей сессии, а запрос POST /v1/cars до бэкенда не доходит.
 
-Пользователи:
-  * тестам с подменённым 401 нужен только залогиненный браузер — общий shared_user; на сервере
-    с его токеном ничего не происходит;
-  * тесты выхода берут свежего temp_user: если серверный выход появится (REQ-SEC-06), токен общего
-    пользователя перестал бы работать у остальных тестов воркера.
+Пользователи — по правилу CLAUDE.md (меняется ли состояние пользователя на сервере):
+  * тесты с подменённым 401 меняют только localStorage браузера — общий shared_user; вход —
+    токеном в localStorage, без запроса входа (защита backend_write_guard оборвала бы его POST);
+  * тесты выхода берут свежего temp_user: выход — состояние пользователя на сервере (REQ-SEC-06);
+    появись серверный выход, токен общего пользователя перестал бы работать у соседних тестов.
 """
 
 import re
@@ -24,25 +24,23 @@ from data.known_bugs import known_bug
 from data.observations import observation
 from pages.pw_add_car_page import PwAddCarPage
 from pages.pw_login_page import PwLoginPage
-from utils.network_faults import CARS, NetworkFaults, api_response, require_intercepted
+from utils.network_faults import CARS, NetworkFaults, require_intercepted, send_and_settle
 from utils.preconditions import require
 
 pytestmark = [pytest.mark.ui, pytest.mark.regression]
 
 
 @pytest.fixture
-def session_after_401(page: Page, shared_user, shared_car_cleanup) -> PwAddCarPage:
+def session_after_401(page: Page, shared_user, shared_car_cleanup, backend_write_guard) -> PwAddCarPage:
     """Залогиненный пользователь отправил форму машины, а сервер ответил 401 (ответ подменён).
 
     Сценарий общий для REQ-UI-SESSION-01 и OBS-05, проверки — в разных тестах. Возвращает страницу
     формы в состоянии «ответ 401 получен и обработан перехватчиком фронта».
     """
-    login_page = PwLoginPage(page)
-    login_page.login_as(shared_user.user)
-
     add_car_page = PwAddCarPage(page)
+    add_car_page.restore_session(shared_user.api.token)
     add_car_page.open()
-    login_page.logout_btn.wait_for(state="visible")
+    PwLoginPage(page).logout_btn.wait_for(state="visible")
     require(add_car_page.local_storage_item("token") is not None, "Предусловие: после входа в localStorage нет token")
 
     car = CarGenerator.get_random_car()
@@ -52,8 +50,7 @@ def session_after_401(page: Page, shared_user, shared_car_cleanup) -> PwAddCarPa
 
     sent = NetworkFaults(page).respond(CARS, "POST", 401)
     with allure.step("Отправка формы: POST /v1/cars перехвачен, ответ подменён на 401"):
-        with page.expect_response(api_response("POST", "/v1/cars")):
-            add_car_page.submit()
+        send_and_settle(page, "POST", "/v1/cars", add_car_page.submit)
         # Без пойманного запроса реакцию фронта на 401 проверять нельзя: 401 он не получал
         require_intercepted(sent, "POST /v1/cars")
         require(

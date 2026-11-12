@@ -18,7 +18,7 @@ from data.data_generator import SearchDataGenerator
 from data.known_bugs import known_bug
 from pages.pw_base_page import PwBasePage
 from pages.pw_search_page import PwSearchPage
-from utils.network_faults import PROFILE, NetworkFaults, api_response, require_intercepted
+from utils.network_faults import PROFILE, NetworkFaults, api_response, require_intercepted, send_and_settle
 from utils.preconditions import require
 from utils.swagger_contract import documented_operations, is_documented
 
@@ -138,7 +138,7 @@ def test_pw_profile_page_request_is_documented(page: Page, shared_user):
 @allure.title("Запрос сохранения профиля описан в Swagger")
 @known_bug("FRONTEND_CALLS_UNDOCUMENTED_ENDPOINTS")
 @allure.tag("DISC-05")
-def test_pw_profile_save_request_is_documented(page: Page, shared_user):
+def test_pw_profile_save_request_is_documented(page: Page, shared_user, backend_write_guard):
     """
     «Сохранить» на странице профиля отправляет PUT /v1/user/profile, которого нет в Swagger (Q-UI-18).
 
@@ -155,15 +155,13 @@ def test_pw_profile_save_request_is_documented(page: Page, shared_user):
     base_page.restore_session(shared_user.api.token)
 
     with allure.step("Открытие /profile: ответ GET подменён"):
-        with page.expect_response(api_response("GET", PROFILE_PATH)):
-            base_page.open_url("/profile")
+        send_and_settle(page, "GET", PROFILE_PATH, lambda: base_page.open_url("/profile"))
         require_intercepted(loaded, f"GET {PROFILE_PATH}")
 
     with allure.step("Клик «Сохранить»: PUT перехвачен"):
         save_btn = page.get_by_role("button", name="Сохранить")
         save_btn.wait_for(state="visible")
-        with page.expect_response(api_response("PUT", PROFILE_PATH)):
-            save_btn.click()
+        send_and_settle(page, "PUT", PROFILE_PATH, save_btn.click)
         # Без пойманного PUT сверять со Swagger нечего
         require_intercepted(saved, f"PUT {PROFILE_PATH}")
     request = saved[0]
