@@ -1,5 +1,5 @@
 """
-Поиск в интерфейсе: наблюдения OBS-01 (регистр города), OBS-04 (исход поиска не обозначен)
+Поиск в интерфейсе: наблюдения OBS-01 (регистр города), OBS-04 (пустая выдача не обозначена)
 и OBS-08 (цена на карточке округлена).
 
 Город — с малым числом машин (SearchDataGenerator.SMALL_CITY): ответ по крупному городу весит
@@ -16,7 +16,7 @@ from playwright.sync_api import Page, expect
 from data.data_generator import SearchDataGenerator
 from data.observations import observation
 from pages.pw_search_page import PwSearchPage
-from utils.network_faults import SEARCH, NetworkFaults, api_response, require_intercepted, send_and_settle
+from utils.network_faults import api_response
 from utils.preconditions import require
 from utils.search_helpers import RESULTS_PAGE_SIZE
 
@@ -67,51 +67,34 @@ def test_pw_search_city_case_insensitive(page: Page, typed_case):
 
 @allure.epic("Playwright Testing")
 @allure.feature("Search")
-@allure.story("Search outcome")
-@allure.title("Пустая выдача и сбой поиска обозначены сообщением")
+@allure.story("Empty result")
+@allure.title("Пустая выдача поиска обозначена сообщением")
 @observation("SEARCH_OUTCOME_NOT_SHOWN")
 @allure.tag("OBS-04")
-@pytest.mark.parametrize("search_outcome", ["empty_result", "server_error_500", "network_error"])
-def test_pw_search_outcome_announced(page: Page, request, search_outcome):
+def test_pw_empty_search_announced(page: Page):
     """
-    После поиска без карточек пользователь должен понять, что произошло: «ничего не найдено» или ошибка
-    (OBS-04; Q-UI-12, Q-UI-24). Сообщение ищется как блок role=status или role=alert — так фронт
-    показывает остальные сообщения (форма машины, вход); текст сообщения не задан, поэтому не сверяется.
-
-    Сбой поиска подменяется (ответ 500 или обрыв); пустая выдача — настоящий ответ по городу,
-    которого нет в API. Защита backend_write_guard — только в случаях с подменой: поиск — POST,
-    и настоящий запрос пустой выдачи она бы оборвала.
+    Поиск без единой машины должен сказать об этом пользователю, а не оставить пустое место (OBS-04;
+    Q-UI-12, Q-UI-24). Критерий — блок role=status или role=alert: так фронт показывает свои остальные
+    сообщения (форма машины, вход). Текст сообщения не задан, поэтому не сверяется.
+    Ответ поиска настоящий: город есть только во фронтенде, выдача по нему пуста всегда.
+    Реакция на сбой поиска (500, обрыв сети) — тема устойчивости UI, а не этого пункта.
     """
     search_page = PwSearchPage(page)
     search_page.open()
 
-    if search_outcome == "empty_result":
-        city = UI_ONLY_CITY
-        with allure.step(f"Поиск {city}: настоящий ответ"):
-            with page.expect_response(api_response("POST", SEARCH_PATH)) as response_info:
-                search_page.search_today(city)
-            response = response_info.value
-            require(response.status == 200, f"Предусловие: поиск {city} ответил {response.status}")
-            require(not response.json().get("cars"), f"Предусловие: выдача по {city} не пуста")
-    else:
-        city = SearchDataGenerator.SMALL_CITY
-        # Защита — до подмены: маршрут, зарегистрированный раньше, проверяется позже (utils/network_faults.py)
-        request.getfixturevalue("backend_write_guard")
-        faults = NetworkFaults(page)
-        if search_outcome == "network_error":
-            sent = faults.abort(SEARCH, "POST")
-        else:
-            sent = faults.respond(SEARCH, "POST", 500)
-        with allure.step(f"Поиск {city}: запрос перехвачен, сбой — {search_outcome}"):
-            send_and_settle(page, "POST", SEARCH_PATH, lambda: search_page.search_today(city))
-            require_intercepted(sent, f"POST {SEARCH_PATH}")
+    with allure.step(f"Поиск {UI_ONLY_CITY}"):
+        with page.expect_response(api_response("POST", SEARCH_PATH)) as response_info:
+            search_page.search_today(UI_ONLY_CITY)
+        response = response_info.value
+        require(response.status == 200, f"Предусловие: поиск {UI_ONLY_CITY} ответил {response.status}")
+        require(not response.json().get("cars"), f"Предусловие: выдача по {UI_ONLY_CITY} не пуста")
 
     # Поиск завершён: кнопка снова «Yalla!», а не «Loading...» (FE: Search)
     search_page.submit_btn.filter(has_text="Yalla!").wait_for()
     require(search_page.cards.count() == 0, "Предусловие: на экране есть карточки — выдача не пуста")
 
-    with allure.step("Проверка: на экране есть сообщение об исходе поиска"):
-        expect(search_page.messages.first, f"Поиск ({search_outcome}) закончился без сообщения").to_be_visible()
+    with allure.step("Проверка: на экране есть сообщение о пустой выдаче"):
+        expect(search_page.messages.first, "Пустая выдача ничем не обозначена").to_be_visible()
 
 
 @allure.epic("Playwright Testing")

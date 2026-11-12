@@ -41,7 +41,7 @@
 - **Запланировано:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 0.
 - **Покрыто частично, доработка:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 0.
 - **Известные баги:** 21 в реестре `data/known_bugs.py`; **наблюдения:** 11 в реестре `data/observations.py`.
-- **Автотесты:** 151, у каждого есть тег хотя бы одного пункта.
+- **Автотесты:** 149, у каждого есть тег хотя бы одного пункта.
 
 ## Требования и тесты
 
@@ -179,7 +179,7 @@
 | OBS-01 | Поиск чувствителен к регистру города: `tel aviv` — 0 машин. | `test_playwright_search.py::test_pw_search_city_case_insensitive` | `SEARCH_CITY_CASE_SENSITIVE` | 👁 покрыт как наблюдение |
 | OBS-02 | Поиск и бронирование принимают прошедшие даты, конец раньше начала, отсутствие дат. | `test_api_dates.py::test_api_meaningless_dates_rejected` | `INVALID_DATES_ACCEPTED` | 👁 покрыт как наблюдение |
 | OBS-03 | API принимает бессмысленные значения машины: `seats` 0, цена 0 и −5, `year` «abc» и «2999», `fuel` «banana». | `test_api_mutations.py::test_api_car_mutations` — `[lambda_mutation-400-Отрицательная цена-False]` | `NONSENSE_CAR_VALUES` | 👁 покрыт как наблюдение |
-| OBS-04 | Пустой результат поиска ничем не обозначен: нет сообщения «ничего не найдено». | `test_playwright_search.py::test_pw_search_outcome_announced` | `SEARCH_OUTCOME_NOT_SHOWN` | 👁 покрыт как наблюдение |
+| OBS-04 | Пустой результат поиска ничем не обозначен: нет сообщения «ничего не найдено». | `test_playwright_search.py::test_pw_empty_search_announced` | `SEARCH_OUTCOME_NOT_SHOWN` | 👁 покрыт как наблюдение |
 | OBS-05 | После 401 нет перехода на страницу входа; «Log out» остаётся в навигации, хотя токен удалён. | `test_playwright_session.py::test_pw_401_redirects_to_login`<br>`test_playwright_session.py::test_pw_401_hides_logout` | `STALE_SESSION_UI_AFTER_401` | 👁 покрыт как наблюдение |
 | OBS-06 | Форма добавления машины открывается гостю; отправка заканчивается «Failed to submit car». | `test_playwright_ui_observations.py::test_pw_guest_redirected_from_car_form` | `GUEST_OPENS_CAR_FORM` | 👁 покрыт как наблюдение |
 | OBS-07 | «Failed to submit car» не объясняет причину: город не поддерживается, пустой город, нет авторизации — текст один. | `test_playwright_ui_observations.py::test_pw_car_submit_error_names_cause` | `CAR_SUBMIT_ERROR_WITHOUT_CAUSE` | 👁 покрыт как наблюдение |

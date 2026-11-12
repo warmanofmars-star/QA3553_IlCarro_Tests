@@ -125,7 +125,7 @@ The table is generated — do not edit it by hand:
 | **Total** | 53 | 9 | 11 | 73 |
 
 Exceptions: the check would harm the shared backend — 1; blocked by another defect — 2; the feature is unreachable — 2. Planned: 0 in step 6.2 (API), 0 in step 6.3a (UI: request interception and session), 0 in step 6.3b (UI: the rest and observations). The rest of the partly covered items: 0 in step 6.2, 0 in step 6.3a, 0 in step 6.3b.
-All 151 tests reference at least one ID (a test without one fails the check).
+All 149 tests reference at least one ID (a test without one fails the check).
 <!-- coverage:end -->
 
 The full matrix — every ID with its tests, registry key and status, plus the list of exceptions and

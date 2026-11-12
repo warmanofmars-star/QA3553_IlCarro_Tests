@@ -61,7 +61,7 @@ OBSERVATIONS: dict[str, Observation] = {
     "SEARCH_OUTCOME_NOT_SHOWN": Observation(
         ref="OBS-04",
         description=(
-            "Пустая выдача и сбой поиска (ответ 500, обрыв сети) ничем не обозначены: ни карточек, ни сообщения "
+            "Пустая выдача поиска ничем не обозначена: карточек нет, блока role=status или role=alert нет "
             "(Q-UI-12, Q-UI-24)"
         ),
     ),
