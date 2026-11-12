@@ -298,11 +298,12 @@ pre-commit run --all-files    # check the whole project
 
 ## Plans
 
+Done: steps 6.1–6.3b — the [traceability matrix](docs/requirements/traceability.md) and tests for all its
+items. Every item has a test or an exception with a recorded reason; the matrix check rejects planned and
+partly covered items.
+
 Not done yet:
 
-- **Step 6.2 — API tests**, **step 6.3a — UI tests with request interception and the session** and
-  **step 6.3b — the rest of the UI tests and observations** for the items marked as planned in the
-  [traceability matrix](docs/requirements/traceability.md) (step 6.1, the matrix itself, is done).
 - **Step 7 — UI resilience tests:** how the UI behaves when the backend fails (network interception in Playwright).
 
 ## How the project is developed
