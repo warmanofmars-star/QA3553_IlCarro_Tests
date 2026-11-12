@@ -7,6 +7,7 @@ from data.data_generator import UserGenerator
 from data.known_bugs import known_bug
 from pages.registration_page import RegistrationPage
 from utils.preconditions import require
+from utils.user_journal import UI_FORM, record_registration
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,9 @@ def test_registration_success(driver):
     registration_page.submit_registration()
 
     assert registration_page.confirmation_text() == "Registered", "Заголовок об успехе не появился!"
+    # Окно «Registered» — признак, что форма создала пользователя; удалить его нельзя — учитываем в журнале.
+    # Сразу после проверки успеха: провал следующей проверки текста не должен скрыть созданного пользователя
+    record_registration(user.email, UI_FORM)
     assert registration_page.confirmation_text_1() == "You are logged in success", "Текст успешного входа не совпадает!"
     registration_page.close_window()
 

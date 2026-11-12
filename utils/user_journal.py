@@ -10,7 +10,8 @@ pytest_terminal_summary в conftest.py).
   * API_CLIENT — IlCarroAPI.register получил 200 (фикстуры temp_user, shared_user, user_pair и тесты,
     которые регистрируют пользователя клиентом);
   * RAW_REQUEST — «сырой» запрос регистрации в tests/test_api_auth.py получил 200;
-  * UI_FORM — форма регистрации показала окно «Registered» (pages/registration_page.py).
+  * UI_FORM — форма регистрации показала окно «Registered»; запись делает сам тест одной явной строкой
+    после проверки успеха (test_registration_success): page object побочных эффектов не имеет.
 Отклонённые регистрации (400) пользователя не создают и в журнал не попадают.
 """
 
