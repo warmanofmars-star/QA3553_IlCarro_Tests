@@ -4,7 +4,7 @@
 **Live Allure report:** [warmanofmars-star.github.io/QA3553_IlCarro_Tests](https://warmanofmars-star.github.io/QA3553_IlCarro_Tests/)
 
 UI and API test automation for **IlCarro**, a training car-rental web application:
-**51 tests** (19 API, 32 UI) in Python + pytest, Selenium and Playwright. They run locally,
+API and UI tests in Python + pytest, Selenium and Playwright. They run locally,
 in Docker with Selenium Grid 4 (Chrome, Firefox, Edge), in GitHub Actions and in a self-hosted Jenkins.
 
 - UI: <https://icarro-v1.netlify.app>
@@ -19,15 +19,15 @@ Project documentation other than this README is written in Russian; such links a
 
 ## What is tested
 
-| Area | Examples | Tests |
-|---|---|---:|
-| **API** | registration and login, adding and deleting cars, booking, dictionaries (cities) | 19 (`-m api`) |
-| **API security** | missing / invalid token, BOLA (deleting another user's car), mass assignment of `owner` and `bookedPeriods`, unsupported method and content type | 15 (`-m security`, some UI form checks included) |
-| **UI (Selenium)** | registration, login, adding a car, search, the date picker | 26 (`-m selenium`) |
-| **UI (Playwright)** | login, adding a car, search with a mocked backend response (`page.route`) | 6 (`-m playwright`) |
-| **Hybrid** | data prepared via API (a user, a car), the scenario runs in the UI | 3 (`-m hybrid`) |
+| Area | Examples | Selection |
+|---|---|---|
+| **API** | registration and login, adding and deleting cars, booking, dictionaries (cities) | `-m api` |
+| **API security** | missing / invalid token, BOLA (deleting another user's car), mass assignment of `owner` and `bookedPeriods`, unsupported method and content type | `-m security` (some UI form checks included) |
+| **UI (Selenium)** | registration, login, adding a car, search, the date picker | `-m selenium` |
+| **UI (Playwright)** | login, adding a car, search, session and logout, the car page; what the frontend sends and how it reacts to substituted responses (`page.route`) | `-m playwright` |
+| **Hybrid** | data prepared via API (a user, a car), the scenario runs in the UI | `-m hybrid` |
 
-Counts come from `pytest --collect-only -q -m <marker>`; areas overlap, so the column does not add up to 51.
+Areas overlap. How many tests a selection has: `pytest --collect-only -q -m <marker>`.
 The `selenium` and `playwright` markers are set automatically by a hook in [`conftest.py`](conftest.py)
 from the fixtures a test uses (`driver` / `authenticated_driver` and `page`), not by hand.
 
@@ -79,14 +79,21 @@ The application is not maintained, so defects stay. A selection — full lists a
 
 ## Current results
 
+The latest results — number of tests, passed and xfailed, the trend — are in the
+[live Allure report](https://warmanofmars-star.github.io/QA3553_IlCarro_Tests/) (the latest run on `main`).
+Locally:
+
 ```bash
-pytest --collect-only -q                                                          # 51 tests collected
-USE_GRID=false ENABLE_CONSOLE_LOGS=false pytest tests/ -n 2 --browser_name=chrome # 40 passed, 11 xfailed
+pytest --collect-only -q                                                          # how many tests are collected
+USE_GRID=false ENABLE_CONSOLE_LOGS=false pytest tests/ -n 2 --browser_name=chrome # full run without Grid
 ```
 
+A healthy run has only `passed` and `xfailed`: no `failed`, no `XPASS`.
+
 **xfail in this project means "a documented defect is still there"**, not "a flaky or unfinished test".
-Of the 11: 10 are known bugs (8 registry entries, some cover several tests or parameters) and 1 is an
-observation (`NONSENSE_CAR_VALUES`, OBS-03: the API saves a car with a negative price).
+Every xfail comes from a registry: a known bug ([`data/known_bugs.py`](data/known_bugs.py)) or an
+observation ([`data/observations.py`](data/observations.py), e.g. `NONSENSE_CAR_VALUES`, OBS-03: the API
+saves a car with a negative price); one entry may cover several tests or parameters.
 All xfails are strict and expect only `AssertionError`:
 
 - if a "known bug" test suddenly passes, the run fails with `XPASS` — the behaviour changed and the
@@ -94,12 +101,11 @@ All xfails are strict and expect only `AssertionError`:
 - a timeout, a network error or a failed precondition stays a normal failure and is not counted as
   the known bug.
 
-Results depend on an external backend (see [Known limitations](#known-limitations)) and are a snapshot
-at the time of writing; the published Allure report shows the latest run on `main`.
+Results depend on an external backend (see [Known limitations](#known-limitations)).
 
 ## Requirements traceability
 
-Each of the 72 items in `requirements.md` (53 `REQ`, 8 `DISC`, 11 `OBS`) is either referenced by a test
+Each item in `requirements.md` (`REQ`, `DISC`, `OBS`) is either referenced by a test
 or listed in [`data/coverage_exceptions.py`](data/coverage_exceptions.py) with a category and a reason.
 The table is generated — do not edit it by hand:
 
@@ -223,15 +229,15 @@ and manually (`workflow_dispatch` with an optional `test_marker`). Jobs:
 | Job | What it does |
 |---|---|
 | `lint` | `ruff check`, `ruff format --check`, gitleaks over the whole git history, and [`scripts/coverage_matrix.py --check`](scripts/coverage_matrix.py): the traceability matrix is consistent and up to date; runs in parallel with the tests |
-| `split-check` | [`scripts/check_ci_split.py`](scripts/check_ci_split.py): the `selenium` and `not selenium` selections are non-empty, do not overlap and together cover all tests (26 + 25 = 51) |
+| `split-check` | [`scripts/check_ci_split.py`](scripts/check_ci_split.py): the `selenium` and `not selenium` selections are non-empty, do not overlap and together cover all tests |
 | `api-and-playwright` | `-m "not selenium"` once, in Docker without the Grid |
 | `selenium` | `-m "selenium"`, matrix chrome / firefox / edge, each in Docker Compose with the Grid |
 | `report` | merges the results ([`scripts/merge_allure_results.py`](scripts/merge_allure_results.py)), checks them for secrets ([`scripts/scan_report_secrets.py`](scripts/scan_report_secrets.py); a finding fails the job and nothing is generated or published), takes the trend history from the published report, generates the Allure report and keeps it as an artifact |
 | `deploy` | publishes the report to GitHub Pages — only from `main` |
 | `notify-report` / `notify-failure` | Telegram message after a successful deploy, or when any job failed — only for `main` |
 
-So every test runs in exactly one job: 25 once plus 26 × 3 browsers = 103 test runs per pipeline
-instead of 51 × 3 = 153. An empty selection fails the job (except for a manual run with a marker);
+So every test runs in exactly one job: API and Playwright tests once, Selenium tests once per browser,
+instead of the whole suite three times. An empty selection fails the job (except for a manual run with a marker);
 a failed test fails the job, `continue-on-error` is not used. A new run of a pull request cancels the previous one;
 runs on `main` wait in a queue.
 
