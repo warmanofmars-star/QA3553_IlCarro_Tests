@@ -131,6 +131,20 @@ KNOWN_BUGS: dict[str, KnownBug] = {
             "в браузере, серверного выхода нет (Q-UI-14)"
         ),
     ),
+    "CAR_PAGE_NOT_LOADED": KnownBug(
+        refs=("REQ-UI-CARPAGE-01",),
+        description=(
+            "Клик по карточке открывает /cars/{serial}, но вместо данных машины на странице «Не удалось "
+            "загрузить машину» (Q-UI-01, Q-UI-19)"
+        ),
+    ),
+    "FRONTEND_CALLS_UNDOCUMENTED_ENDPOINTS": KnownBug(
+        refs=("DISC-05",),
+        description=(
+            "Фронт обращается к операциям, которых нет в Swagger и на бэкенде: GET /v1/cars/{id} (страница машины), "
+            "GET и PUT /v1/user/profile (страница профиля) (Q-API-08, Q-UI-18, Q-UI-19)"
+        ),
+    ),
 }
 
 _ALLOWED_PREFIXES = ("REQ-", "DISC-")

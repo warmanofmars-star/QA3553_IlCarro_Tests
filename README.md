@@ -73,7 +73,7 @@ The application is not maintained, so defects stay. A selection — full lists a
 | Booking answers 200 "Car booked successfully!" but saves nothing: the car's `bookedPeriods` stays empty. Booking a non-existent car also "succeeds". | REQ-BOOK-01, REQ-BOOK-02, DISC-06 | test (`BOOKING_NOT_PERSISTED`) for REQ-BOOK-01; research log Q-API-01 |
 | The frontend offers 54 cities, the API knows 37, only 22 match. Adding a car in a non-matching city fails with "Failed to submit car"; search there is silently empty. | DISC-02 | test (`CITIES_MISMATCH`); research log Q-UI-03, Q-UI-12 |
 | The registration form accepts a password that the API rejects (different password rules), and the error dialog shows `[object Object]`. | DISC-01, REQ-UI-REG-03 | test (`PASSWORD_RULES_MISMATCH`) |
-| The car page (`/cars/{serial}`) never loads: the frontend calls endpoints that exist neither in Swagger nor on the backend. | REQ-UI-CARPAGE-01, DISC-05 | research log Q-UI-01 only (no test yet) |
+| The car page (`/cars/{serial}`) never loads: the frontend calls endpoints that exist neither in Swagger nor on the backend. | REQ-UI-CARPAGE-01, DISC-05 | tests (`CAR_PAGE_NOT_LOADED`, `FRONTEND_CALLS_UNDOCUMENTED_ENDPOINTS`) |
 | Status codes contradict the contract and RFC 9110: no token → 403 instead of 401; unknown car on delete → 400 instead of 404; wrong type in a field and `text/plain` body → 500. | REQ-SEC-01, REQ-CAR-10, REQ-CAR-03, REQ-SEC-04 | tests (`NO_AUTH_403`, `NOT_FOUND_400`, `WRONG_TYPE_500`, `WRONG_CONTENT_TYPE_500`) |
 
 ## Current results
@@ -107,14 +107,14 @@ The table is generated — do not edit it by hand:
 |---|---:|---:|---:|---:|
 | ✅ Covered by a passing test | 30 | 0 | 0 | 30 |
 | 🟡 Partly covered by a passing test, the rest is planned | 4 | 0 | 0 | 4 |
-| 🐞 Covered, the test hits a known bug (strict xfail) | 12 | 5 | 0 | 17 |
+| 🐞 Covered, the test hits a known bug (strict xfail) | 13 | 6 | 0 | 19 |
 | 👁 Covered as an observation (strict xfail) | 0 | 0 | 2 | 2 |
 | ⚪ No test — exception with a recorded reason | 3 | 1 | 0 | 4 |
-| 🕓 No test yet — planned | 4 | 2 | 9 | 15 |
+| 🕓 No test yet — planned | 3 | 1 | 9 | 13 |
 | **Total** | 53 | 8 | 11 | 72 |
 
-Exceptions: the check would harm the shared backend — 1; blocked by another defect — 1; the feature is unreachable — 2. Planned: 0 in step 6.2 (API), 2 in step 6.3a (UI: request interception and session), 13 in step 6.3b (UI: the rest and observations). The rest of the partly covered items: 0 in step 6.2, 0 in step 6.3a, 4 in step 6.3b.
-All 107 tests reference at least one ID (a test without one fails the check).
+Exceptions: the check would harm the shared backend — 1; blocked by another defect — 1; the feature is unreachable — 2. Planned: 0 in step 6.2 (API), 0 in step 6.3a (UI: request interception and session), 13 in step 6.3b (UI: the rest and observations). The rest of the partly covered items: 0 in step 6.2, 0 in step 6.3a, 5 in step 6.3b.
+All 111 tests reference at least one ID (a test without one fails the check).
 <!-- coverage:end -->
 
 The full matrix — every ID with its tests, registry key and status, plus the list of exceptions and
@@ -160,7 +160,8 @@ research/       research scripts (not tests): produce docs/requirements/research
 schemas/        JSON Schemas for API responses
 scripts/        CI helpers: test split check, traceability matrix, Allure results merge, report secrets scan, Telegram
 tests/          all tests: API, security, mutations, Selenium, Playwright, hybrid
-utils/          preconditions, data state checks, car cleanup, validators, WebDriver listener
+utils/          preconditions, data state checks, car cleanup, registered users journal, validators,
+                request interception for Playwright, Swagger operations, WebDriver listener
 conftest.py     fixtures (temporary users, drivers, cleanup), markers hook, Allure environment
 ```
 
