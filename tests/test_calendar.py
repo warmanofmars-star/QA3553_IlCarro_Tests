@@ -3,6 +3,7 @@ from datetime import date, timedelta
 import allure
 import pytest
 
+from data.observations import observation
 from pages.search_page import SearchPage
 from utils.preconditions import require
 
@@ -129,3 +130,28 @@ def test_calendar_month_navigation(driver):
 
     returned_month = search_page.get_current_month()
     assert initial_month == returned_month, f"Не вернулись! Ожидали {initial_month}, получили {returned_month}"
+
+
+@allure.epic("UI Testing")
+@allure.feature("Calendar Component")
+@allure.story("Calendar Navigation")
+@allure.severity(allure.severity_level.MINOR)
+@observation("PREV_MONTH_BUTTON_ENABLED")
+@allure.tag("OBS-10")
+def test_calendar_prev_month_disabled_in_current_month(driver):
+    """
+    В текущем месяце листать назад некуда: прошедшие дни недоступны (minDate, REQ-UI-SEARCH-02).
+    Кнопка, которая ничего не делает, должна быть недоступна (OBS-10; Q-UI-11).
+    """
+    search_page = SearchPage(driver)
+    search_page.open()
+    search_page.click_dates_input()
+    require(search_page.is_calendar_visible(), "Календарь не открылся!")
+    shown = search_page.get_current_month()
+    require(
+        shown == date.today().strftime("%B"),
+        f"Предусловие: календарь открылся не на текущем месяце, а на {shown}",
+    )
+
+    with allure.step("Проверка: в текущем месяце кнопка «предыдущий месяц» недоступна"):
+        assert search_page.is_prev_month_disabled(), "В текущем месяце кнопка «предыдущий месяц» доступна"

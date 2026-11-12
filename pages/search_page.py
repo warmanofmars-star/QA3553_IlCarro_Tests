@@ -184,6 +184,10 @@ class SearchPage(BasePage):
     def is_calendar_invisible(self):
         return self.is_element_invisible(self.CALENDAR_POPOVER)
 
+    @allure.step("Проверка: кнопка «предыдущий месяц» недоступна")
+    def is_prev_month_disabled(self) -> bool:
+        return not self.find(self.PREV_MONTH_BTN).is_enabled()
+
     @allure.step("Проверка наличия маркера сегодняшнего дня (голубая полоса)")
     def is_today_highlighted(self):
         return self.is_element_visible(self.TODAY_DAY_MARKER)

@@ -119,13 +119,13 @@ The table is generated — do not edit it by hand:
 | ✅ Covered by a passing test | 33 | 1 | 0 | 34 |
 | 🟡 Partly covered by a passing test, the rest is planned | 3 | 0 | 0 | 3 |
 | 🐞 Covered, the test hits a known bug (strict xfail) | 14 | 6 | 0 | 20 |
-| 👁 Covered as an observation (strict xfail) | 0 | 0 | 2 | 2 |
+| 👁 Covered as an observation (strict xfail) | 0 | 0 | 11 | 11 |
 | ⚪ No test — exception with a recorded reason | 3 | 2 | 0 | 5 |
-| 🕓 No test yet — planned | 0 | 0 | 9 | 9 |
+| 🕓 No test yet — planned | 0 | 0 | 0 | 0 |
 | **Total** | 53 | 9 | 11 | 73 |
 
-Exceptions: the check would harm the shared backend — 1; blocked by another defect — 2; the feature is unreachable — 2. Planned: 0 in step 6.2 (API), 0 in step 6.3a (UI: request interception and session), 9 in step 6.3b (UI: the rest and observations). The rest of the partly covered items: 0 in step 6.2, 0 in step 6.3a, 3 in step 6.3b.
-All 130 tests reference at least one ID (a test without one fails the check).
+Exceptions: the check would harm the shared backend — 1; blocked by another defect — 2; the feature is unreachable — 2. Planned: 0 in step 6.2 (API), 0 in step 6.3a (UI: request interception and session), 0 in step 6.3b (UI: the rest and observations). The rest of the partly covered items: 0 in step 6.2, 0 in step 6.3a, 3 in step 6.3b.
+All 147 tests reference at least one ID (a test without one fails the check).
 <!-- coverage:end -->
 
 The full matrix — every ID with its tests, registry key and status, plus the list of exceptions and

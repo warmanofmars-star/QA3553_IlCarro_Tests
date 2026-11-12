@@ -45,6 +45,8 @@ from utils.preconditions import require
 CARS = "**/v1/cars"  # создание машины
 LOGIN = "**/v1/user/login/usernamepassword"
 PROFILE = "**/v1/user/profile"
+SEARCH = "**/v1/cars/search"
+REGISTRATION = "**/v1/user/registration/usernamepassword"
 
 # Настоящий ответ бэкенда на успешное создание машины (Q-API-04, Q-UI-05)
 CAR_ADDED = {"message": "Car added successfully"}
