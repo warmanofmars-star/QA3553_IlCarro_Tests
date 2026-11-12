@@ -117,6 +117,20 @@ KNOWN_BUGS: dict[str, KnownBug] = {
             "пользователем молча теряется (Q-UI-05, Q-UI-15)"
         ),
     ),
+    "LOGIN_ERROR_TEXT_HARDCODED": KnownBug(
+        refs=("REQ-UI-LOGIN-03",),
+        description=(
+            'При ответе 500, 400 и обрыве сети окно «Login failed» показывает "Login or Password incorrect" вместо '
+            "«Login failed. Try again»: текст зашит в окно (Q-UI-10)"
+        ),
+    ),
+    "LOGOUT_TOKEN_STILL_VALID": KnownBug(
+        refs=("REQ-SEC-06",),
+        description=(
+            "Токен после «Log out» принимается API: GET /v1/cars/my отвечает 200. Выход только удаляет токен "
+            "в браузере, серверного выхода нет (Q-UI-14)"
+        ),
+    ),
 }
 
 _ALLOWED_PREFIXES = ("REQ-", "DISC-")
