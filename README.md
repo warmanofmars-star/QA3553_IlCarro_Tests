@@ -57,9 +57,13 @@ from the fixtures a test uses (`driver` / `authenticated_driver` and `page`), no
 - **Preconditions are not assertions.** Setup steps use `require()` from
   [`utils/preconditions.py`](utils/preconditions.py), so a broken environment fails as an error instead of
   hiding behind a known bug.
-- **Clean test data on a shared backend.** Every test registers its own temporary user; cars created
-  by a test are deleted after it ([`utils/car_cleanup.py`](utils/car_cleanup.py), journal in
-  `logs/car_factory_<worker>.jsonl`, one file per xdist worker).
+- **Clean test data on a shared backend.** Users cannot be deleted on the shared backend, so a fresh
+  temporary user is registered only for a test that changes the user's state on the server (logout, profile,
+  the user's car count, login as the subject of the check). Other tests share one user per xdist worker;
+  "own vs. foreign" checks use a pair of users per module. The run summary counts registrations from the
+  journal (`logs/registered_users_<worker>.jsonl`). Cars created by a test are deleted after it
+  ([`utils/car_cleanup.py`](utils/car_cleanup.py), journal in `logs/car_factory_<worker>.jsonl`,
+  one file per xdist worker).
 - **CI with a test split and a browser matrix**, plus a Jenkins pipeline, and code-quality checks
   (ruff, gitleaks, pre-commit) — see below.
 
@@ -190,7 +194,9 @@ cp .env.example .env                # Windows: copy .env.example .env
 ```
 
 All settings are listed in [`.env.example`](.env.example) and read only by [`config.py`](config.py).
-No permanent account is needed: every test registers its own user. To run browsers locally,
+No permanent account is needed: tests register temporary users through the API (see
+"Clean test data on a shared backend" in [What makes this project interesting](#what-makes-this-project-interesting)).
+To run browsers locally,
 set `USE_GRID=false` (in `.env` or in the environment):
 
 ```bash
