@@ -36,7 +36,9 @@ pytest --collect-only -q                     # сколько тестов со�
 `drivers/factory.py`.
 
 Логи: обычный запуск → `logs/pytest.log`, воркеры xdist → `logs/pytest_gw0.log`, `pytest_gw1.log`…
-(главный процесс xdist файла не пишет; файлы прошлого прогона удаляются при старте). Журналы прогона —
+(главный процесс xdist файла не пишет). При старте главный процесс (не воркер — проверка `workerinput`)
+переносит файлы прошлого прогона в `logs/archive/<YYYYMMDD-HHMMSS>/`, хранятся 5 последних архивов
+(`utils/log_archive.py`); итог журналов читает только `logs/` верхнего уровня. Журналы прогона —
 тоже по файлу на процесс (`<воркер>` — `gw0`, `gw1`…, без xdist — `main`): фабрика машин —
 `logs/car_factory_<воркер>.jsonl`, зарегистрированные пользователи — `logs/registered_users_<воркер>.jsonl`
 (`utils/user_journal.py`). Запись и чтение — только через `utils/run_journal.py`: общий файл на

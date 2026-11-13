@@ -32,12 +32,6 @@ def append_record(directory: Path, name: str, record: dict) -> None:
         journal.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
-def reset(directory: Path, name: str) -> None:
-    """Удаляет файлы журнала прошлого прогона, включая общий файл <имя>.jsonl прежней схемы."""
-    for path in (directory / f"{name}.jsonl", *directory.glob(f"{name}_*.jsonl")):
-        path.unlink(missing_ok=True)
-
-
 def read_records(directory: Path, name: str, required: frozenset[str]) -> list[dict]:
     """Все записи журнала из файлов всех процессов. Испорченная строка — JournalError.
 

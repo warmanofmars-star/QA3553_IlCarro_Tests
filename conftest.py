@@ -18,12 +18,13 @@ from drivers.factory import SUPPORTED_BROWSERS, GridUnavailableError, attach_ses
 from models.car import Car
 from models.user import User
 from pages.login_page import LoginPage
-from utils.car_cleanup import CarCleanup, journal_summary, reset_journal
+from utils.car_cleanup import CarCleanup, journal_summary
 from utils.listener import IlCarroListener
+from utils.log_archive import archive_previous_run
 from utils.network_faults import block_unhandled_writes
 from utils.preconditions import require
 from utils.run_journal import JournalError
-from utils.user_journal import reset_user_journal, user_journal_summary
+from utils.user_journal import user_journal_summary
 
 logger = logging.getLogger(__name__)
 
@@ -43,12 +44,13 @@ def pytest_configure(config):
       * главный процесс xdist      -> файла нет: сам он тесты не выполняет
     Явно переданный --log-file имеет приоритет. Формат и уровни — в pytest.ini.
 
-    Главный процесс стартует раньше воркеров, поэтому только он удаляет файлы прошлого прогона
-    (логи, журнал фабрики машин и журнал пользователей): воркер стёр бы записи соседей.
+    Главный процесс стартует раньше воркеров, поэтому только он переносит файлы прошлого прогона
+    (логи, журнал фабрики машин и журнал пользователей) в logs/archive/ (utils/log_archive.py):
+    воркер унёс бы в архив записи соседей. Воркера узнаём по config.workerinput — его задаёт сам xdist.
 
     Сбор без запуска (--collect-only) логи не трогает: его вызывают проверки
     scripts/check_ci_split.py и scripts/coverage_matrix.py (в том числе хук pre-commit),
-    и они не должны стирать логи и журнал последнего настоящего прогона.
+    и они не должны архивировать логи и журнал последнего настоящего прогона.
     """
     for name in NOISY_LOGGERS:
         logging.getLogger(name).setLevel(logging.WARNING)
@@ -62,12 +64,8 @@ def pytest_configure(config):
 
     is_xdist_controller = not settings.is_xdist_worker and bool(config.getoption("numprocesses", default=None))
 
-    if not settings.is_xdist_worker:
-        LOG_DIR.mkdir(exist_ok=True)
-        for old_log in LOG_DIR.glob("*.log"):
-            old_log.unlink(missing_ok=True)
-        reset_journal()
-        reset_user_journal()
+    if not hasattr(config, "workerinput"):
+        archive_previous_run(LOG_DIR)
 
     if config.option.log_file or is_xdist_controller:
         return

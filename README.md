@@ -207,7 +207,8 @@ pytest --alluredir=allure-results && allure serve allure-results
 ```
 
 Markers (from [`pytest.ini`](pytest.ini)): `smoke`, `regression`, `ui`, `api`, `hybrid`, `security`,
-`contract`, `mutation`, plus the automatic `selenium` and `playwright`. Logs go to `logs/`.
+`contract`, `mutation`, plus the automatic `selenium` and `playwright`. Logs go to `logs/`; the previous
+run's files are moved to `logs/archive/<YYYYMMDD-HHMMSS>/` at startup (the last 5 archives are kept).
 
 ### In Docker (Selenium Grid 4)
 
