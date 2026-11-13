@@ -65,7 +65,7 @@ COMPOSE_PROFILES=chrome TEST_MARKER=smoke docker compose up --build --exit-code-
 ## Качество кода (ruff, pre-commit, gitleaks)
 
 Инструменты — в `requirements-dev.txt` (в Docker-образ не попадают), настройки ruff — `pyproject.toml`
-(`py312`, строка 120; `research/`, `scripts/`, `merge_code.py` проверяются тоже).
+(`py312`, строка 120; `research/` и `scripts/` проверяются тоже).
 
 ```bash
 pip install -r requirements-dev.txt && pre-commit install   # один раз после клонирования
@@ -158,7 +158,7 @@ Environment дополняет Jenkinsfile (`JenkinsBrowser`, `JenkinsMarker`,
 - **Логи — только стандартный `logging`, без `print`:** в модуле `logger = logging.getLogger(__name__)`.
   Обработчики, форматы и уровни настраивают `pytest.ini` и `pytest_configure` в `conftest.py`;
   свои обработчики и логгеры-фикстуры не заводи. `print` допустим только в консольных скриптах
-  (`merge_code.py`, `research/`, `scripts/`).
+  (`research/`, `scripts/`).
 - **Ожидания — по состоянию, без фиксированных пауз:** `WebDriverWait`/`expected_conditions` в Selenium,
   `expect()` и автоожидания локаторов в Playwright (элемент появился или исчез, поле заполнено, URL
   сменился, запрос ушёл). `time.sleep` и `page.wait_for_timeout` запрещены; в синхронном Playwright
