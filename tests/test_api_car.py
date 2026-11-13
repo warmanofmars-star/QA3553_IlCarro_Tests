@@ -24,17 +24,17 @@ pytestmark = pytest.mark.api
 @allure.story("Create Car successfully")
 @allure.severity(allure.severity_level.BLOCKER)
 @allure.tag("REQ-CAR-01")
-def test_api_add_car_success(auth_api, car_cleanup):
+def test_api_add_car_success(shared_api, shared_car_cleanup):
     with allure.step("1. Подготовка валидного JSON (CarDto)"):
         car_obj = CarGenerator.get_random_car()
         # Создание — предмет теста, поэтому не через фабрику; номер регистрируем для очистки
-        car_cleanup.register(car_obj.reg_number)
+        shared_car_cleanup.register(car_obj.reg_number)
 
     with allure.step("2. Отправка POST запроса на создание машины"):
-        response = auth_api.add_car(car_obj.to_api_payload())
+        response = shared_api.add_car(car_obj.to_api_payload())
 
     with allure.step("3. Состояние: машина появилась в /v1/cars/my владельца"):
-        assert car_obj.reg_number in my_cars(auth_api), (
+        assert car_obj.reg_number in my_cars(shared_api), (
             f"Машина {car_obj.reg_number} не сохранилась: её нет в /v1/cars/my. Ответ создания: "
             f"{response.status_code} {response.text}"
         )
@@ -57,17 +57,17 @@ def test_api_add_car_success(auth_api, car_cleanup):
 @allure.story("Full Lifecycle (Create -> Read -> Delete)")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.tag("REQ-CAR-01", "REQ-CAR-08")
-def test_api_car_lifecycle(auth_api, car_cleanup):
+def test_api_car_lifecycle(shared_api, shared_car_cleanup):
     car_obj = CarGenerator.get_random_car()
     serial_number = car_obj.reg_number
     # Создание и удаление — предмет теста; регистрация страхует, если тест упадёт посередине
-    car_cleanup.register(serial_number)
+    shared_car_cleanup.register(serial_number)
 
     with allure.step("1. Создаем машину"):
-        response_add = auth_api.add_car(car_obj.to_api_payload())
+        response_add = shared_api.add_car(car_obj.to_api_payload())
 
     with allure.step("2. Проверяем, что машина появилась в списке 'My Cars'"):
-        response_get = auth_api.get_my_cars()
+        response_get = shared_api.get_my_cars()
         assert response_get.status_code == 200, "Ошибка получения списка машин"
 
         response_json = response_get.json()
@@ -80,20 +80,20 @@ def test_api_car_lifecycle(auth_api, car_cleanup):
         serial_numbers_in_db = [car.get("serialNumber") for car in response_json.get("cars", [])]
         assert serial_number in serial_numbers_in_db, f"Машина с номером {serial_number} не найдена в базе!"
         # Для статистики очистки: машина точно была создана, дальше её удалит сам тест
-        car_cleanup.mark_created(serial_number)
+        shared_car_cleanup.mark_created(serial_number)
         assert response_add.status_code == 200, f"Машина сохранена, но ответ создания не 200: {response_add.text}"
 
     with allure.step("3. Удаляем созданную машину"):
-        response_delete = auth_api.delete_car(serial_number)
+        response_delete = shared_api.delete_car(serial_number)
 
     with allure.step("4. Убеждаемся, что машина исчезла из базы, и проверяем ответ удаления"):
-        assert serial_number not in my_cars(auth_api), "Машина не удалилась из базы!"
+        assert serial_number not in my_cars(shared_api), "Машина не удалилась из базы!"
         assert response_delete.status_code == 200, f"Машина удалена, но ответ не 200: {response_delete.text}"
         assert "Car deleted" in response_delete.json().get("message", ""), "Неверное сообщение при удалении"
 
 
 def _create_car_for(member, role: str) -> Car:
-    """Машина пользователя из user_pair; номер регистрируется в его очистке до запроса."""
+    """Машина участника user_pair; номер регистрируется в его очистке до запроса."""
     car = CarGenerator.get_random_car()
     member.cleanup.register(car.reg_number)
     with allure.step(f"Setup: {role} создаёт машину {car.reg_number}"):
@@ -111,7 +111,9 @@ def _create_car_for(member, role: str) -> Car:
 @allure.tag("REQ-CAR-05")
 def test_api_car_duplicate_serial(user_pair):
     """serialNumber уникален во всей системе: повтор другим пользователем отклоняется с 400,
-    исходная машина не меняется, у второго пользователя машина не появляется."""
+    исходная машина не меняется, у второго пользователя машина не появляется.
+
+    Пара общая для процесса: машины ищутся по номеру, прочие машины пары проверке не мешают."""
     owner, second_user = user_pair
     car = _create_car_for(owner, "владелец")
     # Если повтор примут, машина с этим номером окажется у второго пользователя — её уберёт его очистка
@@ -176,7 +178,11 @@ def test_api_car_unsupported_city(shared_api, shared_car_cleanup):
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.tag("REQ-CAR-07")
 def test_api_my_cars_only_own(user_pair):
-    """У двух пользователей по машине: /v1/cars/my каждого отдаёт только его машины."""
+    """У двух пользователей по машине: /v1/cars/my каждого отдаёт только его машины.
+
+    Пара общая для процесса, и у её участников могут быть другие машины (например, оставшиеся
+    после сбоя очистки). Проверке это не мешает: своя и чужая машины ищутся по номеру, а в списке
+    ищутся машины с ДРУГИМ владельцем — лишняя собственная машина таким признаком не обладает."""
     owner, second_user = user_pair
     own_car = _create_car_for(owner, "первый пользователь")
     other_car = _create_car_for(second_user, "второй пользователь")
@@ -219,13 +225,15 @@ def test_api_add_car_unauthorized():
 @allure.severity(allure.severity_level.BLOCKER)
 @known_bug("BOOKING_NOT_PERSISTED")
 @allure.tag("REQ-BOOK-01")
-def test_api_car_booking_flow(auth_api, create_car, second_user):
+def test_api_car_booking_flow(user_pair, shared_create_car):
     today = datetime.date.today()
     start_date = (today + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     end_date = (today + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
 
-    # Машина — у temp_user (владелец), бронирует второй пользователь, как в исследовании Q-API-01
-    car = create_car()
+    # Машина — у владельца пары, бронирует чужой, как в исследовании Q-API-01.
+    # shared_create_car регистрирует машину в очистке владельца пары (это одна и та же очистка)
+    owner, second_user = user_pair
+    car = shared_create_car()
     booker = second_user.user
 
     # Всё, кроме сохранения брони, — предусловия: их сбой не должен прятаться за известным багом
@@ -243,7 +251,7 @@ def test_api_car_booking_flow(auth_api, create_car, second_user):
         )
 
     with allure.step("3. Состояние: в bookedPeriods машины владельца есть период бронирующего"):
-        cars = my_cars(auth_api)
+        cars = my_cars(owner.api)
         require(car.reg_number in cars, f"Машины {car.reg_number} нет в /v1/cars/my владельца")
         booked_periods = cars[car.reg_number].get("bookedPeriods") or []
         expected_period = {"email": booker.email, "startDate": start_date, "endDate": end_date}

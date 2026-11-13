@@ -112,9 +112,9 @@ def pytest_terminal_summary(terminalreporter):
         terminalreporter.write_line(text, red=broken, bold=broken)
 
 
-# Фикстуры, через которые тест получает браузер Selenium. authenticated_driver зависит от driver,
+# Фикстуры, через которые тест получает браузер Selenium. shared_authenticated_driver зависит от driver,
 # но указан явно: если зависимость когда-нибудь поменяется, отбор для CI не развалится молча
-SELENIUM_FIXTURES = frozenset({"driver", "authenticated_driver"})
+SELENIUM_FIXTURES = frozenset({"driver", "authenticated_driver", "shared_authenticated_driver"})
 # Фикстура pytest-playwright, через которую тест получает страницу Playwright. context и browser
 # сами по себе тест не размечают: страницу тесты проекта берут только через page
 PLAYWRIGHT_FIXTURES = frozenset({"page"})
@@ -241,8 +241,8 @@ def pytest_runtest_makereport(item, call):
     report = outcome.get_result()
 
     if report.when == "call" and report.failed:
-        # Учитываем, что фикстура может называться driver или authenticated_driver
-        driver = item.funcargs.get("driver") or item.funcargs.get("authenticated_driver")
+        # Учитываем, что фикстура может называться driver или shared_authenticated_driver
+        driver = item.funcargs.get("driver") or item.funcargs.get("shared_authenticated_driver")
         if driver:
             test_name = item.name.replace("/", "_").replace("::", "_")
             allure.attach(
@@ -265,8 +265,8 @@ class TempUser:
 
 
 @dataclass
-class SecondUser(TempUser):
-    """«Чужой» пользователь со своей очисткой машин (см. фикстуру second_user)."""
+class PairUser(TempUser):
+    """Участник пары «владелец — чужой» со своей очисткой машин на тест (см. user_pair)."""
 
     cleanup: CarCleanup
 
@@ -285,25 +285,108 @@ def _register_temp_user(role: str) -> TempUser:
 
 @pytest.fixture
 def temp_user() -> TempUser:
-    """Создает уникального пользователя через API для полной изоляции тестов."""
+    """Свежий пользователь на тест — только там, где без нового аккаунта проверку не сделать.
+
+    Состояние пользователя на сервере — только его машины и брони (Q-API-21); вход его не меняет
+    и чужих токенов не отзывает (Q-API-19). Свежий пользователь нужен, когда предмет проверки —
+    регистрация или выход и токен после выхода; остальным тестам — shared_user (см. CLAUDE.md).
+    Пользователей API удалить не умеет: каждый temp_user навсегда остаётся на общем бэкенде.
+    """
     return _register_temp_user("временного пользователя")
 
 
-@pytest.fixture
-def second_user(request):
-    """Второй временный пользователь: «чужой» для проверок доступа (BOLA, подмена владельца).
+@pytest.fixture(scope="session")
+def shared_user() -> TempUser:
+    """Один пользователь на процесс pytest (на воркер xdist): его берут все тесты, кроме выхода и регистрации.
 
-    У него своя очистка машин (поле cleanup): если из-за дефекта машина окажется у него,
-    тест регистрирует её номер и здесь, и она не останется на общем бэкенде.
+    Пользователей API удалить не умеет: каждый temp_user навсегда остаётся на общем бэкенде.
+    Вход состояния пользователя не меняет и выданные раньше токены не отзывает (Q-API-19), поэтому
+    вход через форму под этим пользователем не мешает ни токену клиента, ни соседним тестам.
+    Тесты находят свои машины по serialNumber, а не по составу всех машин пользователя: тесты
+    одного воркера идут последовательно, и свои машины каждый удаляет сам (shared_car_cleanup),
+    но машина, которую очистка не смогла удалить, осталась бы у него до конца прогона.
     """
-    registered = _register_temp_user("второго пользователя")
-    data = SecondUser(
-        user=registered.user,
-        api=registered.api,
-        cleanup=CarCleanup(registered.api, registered.user.email, request.node.nodeid),
+    return _register_temp_user("общего пользователя")
+
+
+@pytest.fixture(scope="session")
+def other_shared_user() -> TempUser:
+    """Второй общий пользователь процесса — «чужой» в проверках «владелец и чужой» (см. user_pair).
+
+    Регистрируется лениво: только на воркере, которому достался тест с парой.
+    """
+    return _register_temp_user("второго общего пользователя")
+
+
+@pytest.fixture
+def user_pair(shared_user, shared_car_cleanup, other_shared_user, request) -> tuple[PairUser, PairUser]:
+    """Пара «владелец — чужой», одна на процесс: владелец — shared_user, чужой — other_shared_user.
+
+    Пользователи общие для всех тестов процесса, очистка машин — своя у каждого теста. У владельца это
+    shared_car_cleanup: машины, созданные shared_create_car, удаляет та же очистка. Проверки пары
+    опираются на номер машины, а не на состав всех машин владельца или чужого.
+    """
+    owner = PairUser(user=shared_user.user, api=shared_user.api, cleanup=shared_car_cleanup)
+    other = PairUser(
+        user=other_shared_user.user,
+        api=other_shared_user.api,
+        cleanup=CarCleanup(other_shared_user.api, other_shared_user.user.email, request.node.nodeid),
     )
-    yield data
-    data.cleanup.run()
+    yield owner, other
+    other.cleanup.run()
+
+
+@pytest.fixture
+def shared_api(shared_user) -> IlCarroAPI:
+    """API-клиент общего пользователя (см. shared_user)."""
+    return shared_user.api
+
+
+@pytest.fixture
+def shared_car_cleanup(shared_user, request):
+    """Очистка машин общего пользователя после теста.
+
+    Тест, который создаёт машину не через shared_create_car (через UI или «сырым» запросом, чтобы
+    проверить сам ответ), регистрирует её номер: shared_car_cleanup.register(car.reg_number).
+    """
+    cleanup = CarCleanup(shared_user.api, shared_user.user.email, request.node.nodeid)
+    yield cleanup
+    cleanup.run()
+
+
+@pytest.fixture
+def shared_create_car(shared_user, shared_car_cleanup):
+    """Фабрика: создаёт машину через API у общего пользователя и возвращает её данные (Car).
+
+    Фикстура возвращает ФУНКЦИЮ, поэтому тест создаёт сколько угодно машин с нужными полями:
+
+        car = shared_create_car(city="Sderot", price="250")
+        car = shared_create_car(extra_fields={"owner": "x@example.com"})  # поля сверх CarDto генератора
+
+    Все созданные машины удаляются после теста (см. shared_car_cleanup). Ответ, отличный от 200, —
+    сбой предусловия (require), а не найденный дефект.
+    """
+    return car_factory(shared_user.api, shared_car_cleanup)
+
+
+def car_factory(api: IlCarroAPI, cleanup: CarCleanup):
+    """Функция создания машины для клиента api: машина регистрируется в cleanup до запроса создания."""
+
+    def _create(*, extra_fields: dict | None = None, **overrides) -> Car:
+        car = CarGenerator.get_random_car(**overrides)
+        payload = car.to_api_payload() | (extra_fields or {})
+        # Регистрируем до запроса: если ответ потеряется, а машина создастся, её всё равно удалят
+        cleanup.register(car.reg_number)
+        with allure.step(f"Setup: создание машины {car.reg_number} через API ({car.city})"):
+            response = api.add_car(payload)
+            require(
+                response.status_code == 200,
+                f"Предусловие: машина {car.reg_number} не создана: {response.status_code} {response.text}",
+            )
+        cleanup.mark_created(car.reg_number)
+        return car
+
+    return _create
 
 
 @pytest.fixture
@@ -331,82 +414,6 @@ def create_car(temp_user, car_cleanup):
     сбой предусловия (require), а не найденный дефект.
     """
     return car_factory(temp_user.api, car_cleanup)
-
-
-@pytest.fixture(scope="session")
-def shared_user() -> TempUser:
-    """Один пользователь на процесс pytest (на воркер xdist) для тестов, которым нужен только токен.
-
-    Пользователей API удалить не умеет: каждый temp_user навсегда остаётся на общем бэкенде.
-    Тест, который находит свои данные по serialNumber и не судит о пользователе целиком (сколько
-    у него машин, его профиль, вход), берёт этого пользователя. Тесты одного воркера идут
-    последовательно, а свои машины каждый тест удаляет сам (shared_car_cleanup), поэтому
-    к началу теста у пользователя машин нет.
-    """
-    return _register_temp_user("общего пользователя")
-
-
-@pytest.fixture(scope="module")
-def _module_user_pair() -> tuple[TempUser, TempUser]:
-    """Два пользователя на модуль: регистрируются один раз, а не в каждом тесте (см. user_pair)."""
-    return _register_temp_user("первого пользователя пары"), _register_temp_user("второго пользователя пары")
-
-
-@pytest.fixture
-def user_pair(_module_user_pair, request) -> tuple[SecondUser, SecondUser]:
-    """Пара пользователей модуля для проверок «свой — чужой» (повтор serialNumber, /v1/cars/my).
-
-    Пользователи общие для тестов модуля, очистка машин — своя у каждого теста: к началу
-    следующего теста машин у пары нет.
-    """
-    test_name = request.node.nodeid
-    pair = tuple(
-        SecondUser(user=member.user, api=member.api, cleanup=CarCleanup(member.api, member.user.email, test_name))
-        for member in _module_user_pair
-    )
-    yield pair
-    for member in pair:
-        member.cleanup.run()
-
-
-@pytest.fixture
-def shared_api(shared_user) -> IlCarroAPI:
-    """API-клиент общего пользователя (см. shared_user)."""
-    return shared_user.api
-
-
-@pytest.fixture
-def shared_car_cleanup(shared_user, request):
-    """Очистка машин общего пользователя после теста — как car_cleanup у temp_user."""
-    cleanup = CarCleanup(shared_user.api, shared_user.user.email, request.node.nodeid)
-    yield cleanup
-    cleanup.run()
-
-
-@pytest.fixture
-def shared_create_car(shared_user, shared_car_cleanup):
-    """Фабрика машин общего пользователя — как create_car; машины удаляются после теста."""
-    return car_factory(shared_user.api, shared_car_cleanup)
-
-
-def car_factory(api: IlCarroAPI, cleanup: CarCleanup):
-    """Функция create_car для клиента api: машина регистрируется в cleanup до запроса создания."""
-
-    def _create(*, extra_fields: dict | None = None, **overrides) -> Car:
-        car = CarGenerator.get_random_car(**overrides)
-        payload = car.to_api_payload() | (extra_fields or {})
-        # Регистрируем до запроса: если ответ потеряется, а машина создастся, её всё равно удалят
-        cleanup.register(car.reg_number)
-        with allure.step(f"Setup: создание машины {car.reg_number} через API ({car.city})"):
-            response = api.add_car(payload)
-            require(
-                response.status_code == 200,
-                f"Предусловие: машина {car.reg_number} не создана: {response.status_code} {response.text}",
-            )
-        cleanup.mark_created(car.reg_number)
-        return car
-
-    return _create
 
 
 @pytest.fixture
@@ -438,9 +445,9 @@ def authenticated_driver(driver, temp_user):
 def shared_authenticated_driver(driver, shared_user):
     """Браузер Selenium, залогиненный общим пользователем токеном в localStorage, без запроса входа.
 
-    Для тестов, которым вход — только предусловие, а состояние пользователя на сервере не меняется
-    (валидация формы до отправки). Selenium-тесты идут в CI в трёх браузерах: свежий temp_user
-    с входом через форму стоил бы нового пользователя на каждый тест в каждом браузере.
+    Для тестов, которым вход — только предусловие, а не предмет проверки. Selenium-тесты идут в CI
+    в трёх браузерах: свежий пользователь с входом через форму стоил бы нового аккаунта на каждый
+    тест в каждом браузере.
     """
     page = LoginPage(driver)
     page.restore_session(shared_user.api.token)
