@@ -173,6 +173,10 @@ def test_registration_password_rejected_by_api(driver):
 
     with allure.step("Проверка текста окна ошибки"):
         title = registration_page.confirmation_text()
+        if title == "Registered":
+            # Регистрация настоящая: если бэкенд принял пароль abc123, пользователь создан и удалить его
+            # нельзя — учитываем в журнале до проверки, которая уронит тест
+            record_registration(user.email, UI_FORM)
         require(title == "Registration failed", f"Ожидали окно 'Registration failed', получили '{title}'")
         details = registration_page.confirmation_text_1()
         logger.info(f"Текст окна ошибки: '{details}'")
