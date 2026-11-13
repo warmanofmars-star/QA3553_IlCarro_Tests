@@ -10,7 +10,8 @@
   (7) сообщения консоли; (8) восстановление: повтор без сбоя; (9) пишущие запросы, дошедшие до бэкенда.
 
 Правила подмены (CLAUDE.md): только сбои — статус, обрыв, задержка — на эндпоинтах, которые фронт
-вызывает; тело сбоя пустое, кроме одной пробы со страницей посредника (502, text/html). Успешных
+вызывает; тело сбоя пустое, кроме пробы со страницей посредника (502, text/html) и пробы
+register.400.real_body — тело настоящего ответа 400 из лога исследования (Q-API-07). Успешных
 ответов скрипт не выдумывает, поэтому у регистрации и формы машины нет настоящей базы «после
 отправки»: база — состояние формы перед отправкой, а восстановление — только повторная отправка
 (тоже перехваченная).
@@ -27,12 +28,17 @@ Email исследовательского пользователя хранит
 (в git не попадает): повторный запуск входит этим пользователем, а не регистрирует нового.
 Токены не печатаются; FactLog дополнительно маскирует JWT и email.
 
+Ячейки доработки (второй прогон 7a-2): search.stale500.other_city — после сбоя поиска по другому
+городу (сам поиск подменён, на сервер уходят только поиски Sderot), search.401.user — 401 на поиске
+под пользователем, register.400.real_body — настоящее тело 400 с message-объектом.
+
 Запуск: python research/explore_ui_faults.py --run 7a
 Только отдельные ячейки: python research/explore_ui_faults.py --run 7a2 --only search.500,login.abort
 Лог: research/evidence/explore_ui_faults_run7a.log. Код выхода 1 — хотя бы одна проба упала.
 """
 
 import argparse
+import json
 import sys
 import time
 import traceback
@@ -86,6 +92,24 @@ GARBAGE_TOKEN = "probe-garbage-token"
 PROXY_502_HTML = (
     "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n"
     "<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+)
+# Город сбойного поиска в search.stale500.other_city: есть в списке CityAutocomplete. Запрос с ним до сервера
+# не доходит (500 подменой, иначе обрыв) — на общем бэкенде ищем только CITY
+OTHER_CITY = "Haifa"
+# Настоящий ответ 400 регистрации с message-объектом: Q-API-07 (пароль abc123), тело — explore_api_run1.log.
+# timestamp в логе замаскирован («<ts>»), его значение не записано — поле опущено, а не выдумано;
+# код регистрации читает только data.message (Q-UI-37)
+REGISTER_400_REAL_BODY = json.dumps(
+    {
+        "status": 400,
+        "error": "Bad Request",
+        "message": {
+            "password": " At least 8 characters; Must contain at least 1 uppercase letter, 1 lowercase letter, "
+            "and 1 number; Can contain special characters [@$#^&*!]"
+        },
+        "path": "/v1/user/registration/usernamepassword",
+    },
+    separators=(",", ":"),
 )
 USER_FILE = EVIDENCE_DIR / "explore_ui_faults_user.txt"
 LOGS_DIR = ROOT / "logs"
@@ -185,6 +209,12 @@ class ProbeFaults(NetworkFaults):
 
     def respond_empty(self, url: str, method: str, status: int) -> list[Request]:
         return self._intercept(url, method, lambda route: route.fulfill(status=status, body=""))
+
+    def respond_recorded(self, url: str, method: str, status: int, body: str) -> list[Request]:
+        """Тело настоящего ответа сервера, взятое из лога исследования (не написанное скриптом)."""
+        return self._intercept(
+            url, method, lambda route: route.fulfill(status=status, content_type="application/json", body=body)
+        )
 
     def respond_proxy_page(self, url: str, method: str, status: int) -> list[Request]:
         return self._intercept(
@@ -292,6 +322,43 @@ def search_form(page: Page) -> str:
 
 def search_outcome(page: Page) -> str:
     return f"карточек {page.locator('a.car-container').count()}"
+
+
+def choose_city(page: Page, city: str) -> None:
+    page.fill("#city", city)
+    page.locator(f'[data-testid="city-option"][data-value="{city}"]').first.click()
+
+
+def pick_range(page: Page, start: date, end: date) -> None:
+    """Диапазон дат в календаре. Как и pick_dates, считает, что календарь открывается на текущем месяце."""
+    page.click("#dates")
+    shown = (date.today().year, date.today().month)
+    for day in (start, end):
+        if (day.year, day.month) != shown:
+            page.click(".rdrNextButton")
+            shown = (day.year, day.month)
+        page.locator(f"button.rdrDay:not(.rdrDayPassive):not(.rdrDayDisabled) >> text='{day.day}'").first.click()
+    page.locator("h1.title").click()
+
+
+def search_state(page: Page) -> str:
+    """Форма и выдача поиска: город, строка дат, URL, карточки."""
+    url = urlsplit(page.url)
+    return (
+        f"город {page.input_value('#city')!r}; даты {page.input_value('#dates')!r}; URL {url.path}?{url.query}; "
+        f"{search_outcome(page)}"
+    )
+
+
+def card_links(page: Page) -> list[str]:
+    """Ссылки карточек (по serialNumber): чтобы сравнить наборы, не печатая номера."""
+    return page.locator("a.car-container").evaluate_all("els => els.map(e => e.getAttribute('href'))")
+
+
+# Поиск под исследовательским пользователем (вход токеном)
+def search_user_prepare(page: Page) -> None:
+    restore_session(page, probe_user().token)
+    search_prepare(page)
 
 
 # Вход (гость)
@@ -415,6 +482,12 @@ SCREENS = {
         "profile", "Профиль /profile (вход токеном)", "GET", "/v1/user/profile", PROFILE, False,
         profile_prepare, profile_trigger, profile_settle, lambda p: "полей ввода нет", profile_outcome,
         indicator=profile_indicator, retrigger=lambda p: p.reload(),
+    ),
+    # Базы нет: состояние «до отправки» снимает сама ячейка (search.401.user)
+    "search_user": Screen(
+        "search_user", "Поиск /search (вход токеном)", "POST", "/v1/cars/search", SEARCH, False,
+        search_user_prepare, lambda p: submit_button(p).click(), not_loading, search_form,
+        lambda p: f"{search_outcome(p)}; {logout_link(p)}",
     ),
 }  # fmt: skip
 
@@ -574,11 +647,12 @@ def report(cell: str, facts: dict[str, str], summary: list[str]) -> None:
     SUMMARY.append([cell, *summary])
 
 
-def common_facts(probe: Probe, screen: Screen, after: Snap) -> dict[str, str]:
-    new, gone = diff(BASE.get(screen.key), after)
+def common_facts(probe: Probe, screen: Screen, after: Snap, pre: Snap | None = None) -> dict[str, str]:
+    """pre — состояние перед отправкой: база экрана, если отдельной базы у него нет (search_user)."""
+    new, gone = diff(BASE.get(screen.key) or pre, after)
     writes = [r for r in probe.real if not r.startswith("GET")]
     return {
-        "(2) база": describe_base(screen),
+        "(2) база": describe_base(screen, pre),
         "(3) новый видимый текст относительно базы": new,
         "(3) исчез относительно базы": gone or "—",
         "(3) окна и сообщения (role=dialog/alert/status)": listed(after.messages, 200),
@@ -593,8 +667,11 @@ def common_facts(probe: Probe, screen: Screen, after: Snap) -> dict[str, str]:
     }
 
 
-def describe_base(screen: Screen) -> str:
+def describe_base(screen: Screen, pre: Snap | None = None) -> str:
     base = BASE.get(screen.key)
+    if base is None and pre is not None:
+        token = "да" if pre.token else "нет"
+        return f"состояние перед отправкой: {pre.outcome}; {pre.indicator}; токен {token}; {pre.form}"
     if base is None:
         return "не снята в этом запуске"
     if screen.write:
@@ -657,13 +734,19 @@ def base_cell(browser: Browser, screen: Screen) -> None:
         probe.context.close()
 
 
-def fault_cell(browser: Browser, screen: Screen, kind: str, status: int | None = None) -> None:
-    """Сбой одного вида на запросе экрана: kind — status | proxy502 | abort."""
+def fault_cell(
+    browser: Browser, screen: Screen, kind: str, status: int | None = None, *, name: str | None = None
+) -> None:
+    """Сбой одного вида на запросе экрана: kind — status | recorded | proxy502 | abort."""
     probe = open_probe(browser)
     try:
         screen.prepare(probe.page)
+        pre = snap(probe, screen)
         faults = ProbeFaults(probe.page)
-        if kind == "status":
+        if kind == "recorded":
+            sent = faults.respond_recorded(screen.pattern, screen.method, 400, REGISTER_400_REAL_BODY)
+            what = f"{screen.method} {screen.path} → 400, тело настоящего ответа (Q-API-07): {REGISTER_400_REAL_BODY}"
+        elif kind == "status":
             sent = faults.respond_empty(screen.pattern, screen.method, status)
             what = f"{screen.method} {screen.path} → {status}, тело пустое"
         elif kind == "proxy502":
@@ -707,10 +790,14 @@ def fault_cell(browser: Browser, screen: Screen, kind: str, status: int | None =
                 recovery = f"без сбоя: {real}; {recovered.outcome}; токен {'да' if recovered.token else 'нет'}"
         check_guard(probe)
 
-        facts = {"(1) маршрут сбоя": f"{what}; {count}; браузер получил: {result}"}
-        facts.update(common_facts(probe, screen, after))
+        facts = {
+            "(1) маршрут сбоя": f"{what}; {count}; браузер получил: {result}",
+            "(5) до отправки": f"токен {'да' if pre.token else 'нет'}; {pre.outcome}",
+        }
+        facts.update(common_facts(probe, screen, after, pre))
         facts["(8) восстановление"] = recovery
-        report(f"{screen.key}.{status or kind}", facts, summary_row(after, recovery, probe, count))
+        cell = name or f"{screen.key}.{status or kind}"
+        report(cell, facts, summary_row(after, recovery, probe, count))
     finally:
         probe.context.close()
 
@@ -784,6 +871,96 @@ def search_stale_cell(browser: Browser) -> None:
         facts.update(common_facts(probe, screen, after))
         facts["(8) восстановление"] = recovery
         report("search.stale500", facts, summary_row(after, recovery, probe, count))
+    finally:
+        probe.context.close()
+
+
+def search_other_city_cell(browser: Browser) -> None:
+    """Настоящий поиск CITY, затем другой город и другие даты — этот поиск 500, затем повтор с CITY."""
+    screen = SCREENS["search"]
+    probe = open_probe(browser)
+    foreign: list[str] = []
+
+    def only_main_city(route: Route) -> None:
+        # Регистрируется до маршрута сбоя, значит проверяется после него: сюда доходит поиск, который
+        # подмена не поймала. На общем бэкенде ищем только CITY — остальное обрывается, ячейка падает
+        body = route.request.post_data_json or {}
+        if body.get("city") != CITY:
+            foreign.append(f"POST /v1/cars/search city={body.get('city')!r}")
+            route.abort()
+            return
+        route.fallback()
+
+    try:
+        probe.page.route(SEARCH, only_main_city)
+        screen.prepare(probe.page)
+        first = finish(send(probe, screen, screen.trigger))
+        screen.settle(probe.page)
+        before = snap(probe, screen)
+        before_state, before_links = search_state(probe.page), card_links(probe.page)
+        first_card = probe.page.locator("a.car-container").first.inner_text() if before_links else ""
+
+        today = date.today()
+        choose_city(probe.page, OTHER_CITY)
+        pick_range(probe.page, today + timedelta(days=2), today + timedelta(days=3))
+        changed_state = search_state(probe.page)
+        sent = ProbeFaults(probe.page).respond_empty(SEARCH, "POST", 500)
+        request = send(probe, screen, screen.trigger)
+        result = finish(request)
+        screen.settle(probe.page)
+        after = snap(probe, screen)
+        after_state, after_links = search_state(probe.page), card_links(probe.page)
+        count = check_intercepted(sent, f"POST /v1/cars/search ({OTHER_CITY}) → 500, тело пустое")
+        if foreign:
+            raise ProbeFailure(f"поиск не по {CITY} дошёл до защиты и оборван: {foreign}")
+        check_guard(probe)
+        cards_text = " ".join(probe.page.locator("a.car-container").all_inner_texts())
+        sent_body = request.post_data_json or {}
+        marks = [
+            CITY,
+            OTHER_CITY,
+            probe.page.input_value("#dates"),
+            *(str(sent_body.get(k)) for k in ("startDate", "endDate")),
+        ]
+        in_cards = [m for m in marks if m and m in cards_text]
+
+        # unroute снимает все обработчики шаблона, в том числе защиту «только CITY» — она ставится заново
+        probe.page.unroute(SEARCH)
+        probe.page.route(SEARCH, only_main_city)
+        choose_city(probe.page, CITY)
+        pick_dates(probe.page)
+        probe.page.locator("h1.title").click()
+        again_state = search_state(probe.page)
+        real = finish(send(probe, screen, screen.trigger))
+        screen.settle(probe.page)
+        recovered_links = card_links(probe.page)
+        same = "да" if sorted(recovered_links) == sorted(before_links) else "нет"
+        recovery = (
+            f"повтор с {CITY} (форма: {again_state}): {real}; {search_outcome(probe.page)}; "
+            f"набор карточек как у первого поиска: {same}"
+        )
+        if foreign:
+            raise ProbeFailure(f"поиск не по {CITY} дошёл до защиты и оборван: {foreign}")
+        check_guard(probe)
+
+        facts = {
+            "(1) маршрут сбоя": f"500, тело пустое; {count}; тело перехваченного запроса: "
+            f"{json.dumps(request.post_data_json, ensure_ascii=False)}; браузер получил: {result}",
+            "до сбоя (настоящий поиск)": f"{first}; {before_state}",
+            "форма перед сбойным поиском": changed_state,
+            "после сбоя": after_state,
+            "набор карточек после сбоя тот же, что после первого поиска": "да"
+            if sorted(after_links) == sorted(before_links) and after_links
+            else f"нет (до {len(before_links)}, после {len(after_links)})",
+            "видимый текст первой карточки": repr(first_card),
+            f"в тексте карточек после сбоя есть город или даты ({', '.join(map(repr, marks))})": listed(in_cards, 80),
+            "(3) новый текст относительно экрана до сбоя": diff(before, after)[0],
+            "(3) исчез относительно экрана до сбоя": diff(before, after)[1] or "—",
+            "поиски не по основному городу, оборванные защитой": str(len(foreign)),
+        }
+        facts.update(common_facts(probe, screen, after))
+        facts["(8) восстановление"] = recovery
+        report("search.stale500.other_city", facts, summary_row(after, recovery, probe, count))
     finally:
         probe.context.close()
 
@@ -878,6 +1055,18 @@ def cells() -> dict[str, tuple[str, Callable[[Browser], None]]]:
                     lambda b, sc=screen, sec=seconds: delay_cell(b, sc, sec),
                 )
     table["search.stale500"] = ("Поиск: 500 после успешного поиска", search_stale_cell)
+    table["search.stale500.other_city"] = (
+        f"Поиск: {CITY} (200), затем {OTHER_CITY} и другие даты → 500, затем повтор с {CITY}",
+        search_other_city_cell,
+    )
+    table["search.401.user"] = (
+        "Поиск под пользователем (вход токеном): ответ 401, тело пустое",
+        lambda b: fault_cell(b, s["search_user"], "status", 401, name="search.401.user"),
+    )
+    table["register.400.real_body"] = (
+        "Регистрация: ответ 400 с телом настоящего ответа сервера (Q-API-07, message — объект)",
+        lambda b: fault_cell(b, s["register"], "recorded", 400, name="register.400.real_body"),
+    )
     table["car.real401"] = ("Форма машины: настоящий 401 (мусорный токен), без подмены", car_real_401_cell)
     return table
 
