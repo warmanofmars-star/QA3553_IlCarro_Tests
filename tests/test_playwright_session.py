@@ -7,9 +7,9 @@
 Пользователи — по правилу CLAUDE.md:
   * тесты с подменённым 401 меняют только localStorage браузера — общий shared_user; вход —
     токеном в localStorage, без запроса входа (защита backend_write_guard оборвала бы его POST);
-  * тесты выхода берут свежего temp_user: предмет проверки — выход и токен после выхода (REQ-SEC-06).
-    Сейчас выход только клиентский (Q-UI-14, Q-API-21), но если исправление бага сделает его серверным,
-    выход общего пользователя отозвал бы токен, которым работают соседние тесты процесса.
+  * тесты выхода берут свежего temp_user: на общем пользователе браузер теста нёс бы токен shared_user
+    (restore_session). Сейчас выход только клиентский (Q-UI-14, Q-API-21), но если он станет серверным,
+    он отзовёт токен, на котором работают остальные тесты процесса, и красное укажет не туда.
 """
 
 import re
@@ -110,6 +110,12 @@ def test_pw_401_hides_logout(page: Page, session_after_401):
 @allure.title("«Log out» удаляет токен и переводит на /search")
 @allure.tag("REQ-UI-SESSION-02")
 def test_pw_logout_clears_token_and_opens_search(page: Page, temp_user):
+    """«Log out» удаляет токен из localStorage и переводит на /search (REQ-UI-SESSION-02).
+
+    Пользователь свежий, а не общий: на shared_user браузер теста нёс бы его токен (restore_session);
+    если выход станет серверным, он отзовёт токен, на котором работают остальные тесты процесса,
+    и красными станут они — красное укажет не туда.
+    """
     login_page = PwLoginPage(page)
     login_page.login_as(temp_user.user)
     require(login_page.local_storage_item("token") is not None, "Предусловие: после входа в localStorage нет token")
@@ -132,6 +138,10 @@ def test_pw_token_rejected_after_logout(page: Page, temp_user):
     """
     Серверного выхода в API нет: «Log out» только удаляет токен в браузере, и тот, кто успел
     его скопировать, продолжает работать от имени пользователя (ASVS V3.3.1, Q-UI-14).
+
+    Пользователь свежий, а не общий: на shared_user браузер теста нёс бы его токен (restore_session);
+    если выход станет серверным, он отзовёт токен, на котором работают остальные тесты процесса,
+    и красными станут они — красное укажет не туда.
     """
     login_page = PwLoginPage(page)
     login_page.login_as(temp_user.user)
