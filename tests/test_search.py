@@ -31,7 +31,7 @@ RESULTS_FIRST_PAGE = 10
 @allure.severity(allure.severity_level.CRITICAL)
 # REQ-UI-SEARCH-04 здесь не тег: size в URL — способ показать всю выдачу, а не проверка пагинации
 @allure.tag("REQ-UI-SEARCH-01", "REQ-UI-SEARCH-05")
-def test_search_form_dynamic(driver, auth_api, create_car):
+def test_search_form_dynamic(driver, shared_api, shared_create_car):
     search_page = SearchPage(driver)
     results_page = ResultsPage(driver)
 
@@ -41,8 +41,8 @@ def test_search_form_dynamic(driver, auth_api, create_car):
     allure.dynamic.parameter("Даты", f"{start_date:%Y-%m-%d} — {end_date:%Y-%m-%d}")
 
     # Своя машина: проверяем, что находится именно она, а не «какая-нибудь» чужая
-    car = create_car(city=city)
-    require_city_fits_one_page(auth_api, city, start_date, end_date)
+    car = shared_create_car(city=city)
+    require_city_fits_one_page(shared_api, city, start_date, end_date)
 
     search_page.open()
     search_page.fill_city(city)

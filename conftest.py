@@ -114,7 +114,7 @@ def pytest_terminal_summary(terminalreporter):
 
 # Фикстуры, через которые тест получает браузер Selenium. shared_authenticated_driver зависит от driver,
 # но указан явно: если зависимость когда-нибудь поменяется, отбор для CI не развалится молча
-SELENIUM_FIXTURES = frozenset({"driver", "authenticated_driver", "shared_authenticated_driver"})
+SELENIUM_FIXTURES = frozenset({"driver", "shared_authenticated_driver"})
 # Фикстура pytest-playwright, через которую тест получает страницу Playwright. context и browser
 # сами по себе тест не размечают: страницу тесты проекта берут только через page
 PLAYWRIGHT_FIXTURES = frozenset({"page"})
@@ -387,58 +387,6 @@ def car_factory(api: IlCarroAPI, cleanup: CarCleanup):
         return car
 
     return _create
-
-
-@pytest.fixture
-def car_cleanup(temp_user, request):
-    """Очистка машин temp_user после теста.
-
-    Тест, который создаёт машину не через create_car (через UI или «сырым» запросом, чтобы
-    проверить сам ответ), регистрирует её номер: car_cleanup.register(car.reg_number).
-    """
-    cleanup = CarCleanup(temp_user.api, temp_user.user.email, request.node.nodeid)
-    yield cleanup
-    cleanup.run()
-
-
-@pytest.fixture
-def create_car(temp_user, car_cleanup):
-    """Фабрика: создаёт машину через API у temp_user и возвращает её данные (Car).
-
-    Фикстура возвращает ФУНКЦИЮ, поэтому тест создаёт сколько угодно машин с нужными полями:
-
-        car = create_car(city="Sderot", price="250")
-        car = create_car(extra_fields={"owner": "x@example.com"})  # поля сверх CarDto генератора
-
-    Все созданные машины удаляются после теста (см. car_cleanup). Ответ, отличный от 200, —
-    сбой предусловия (require), а не найденный дефект.
-    """
-    return car_factory(temp_user.api, car_cleanup)
-
-
-@pytest.fixture
-def auth_api(temp_user):
-    """
-    Фикстура-адаптер: берет изолированного API-клиента из песочницы (temp_user)
-    и отдает его чистым API-тестам. Никаких изменений в самих тестах не потребуется!
-    """
-    return temp_user.api
-
-
-@pytest.fixture
-def authenticated_driver(driver, temp_user):
-    """Автоматически логинится через UI под свежесозданным временным юзером."""
-    with allure.step("Setup Fixture: Автоматическая UI-авторизация (Sandbox)"):
-        login_page = LoginPage(driver)
-        login_page.open()
-
-        # Берем данные уникального юзера из песочницы
-        user = temp_user.user
-
-        login_page.login(user.email, user.password)
-        require(login_page.is_logout_button_visible(), "Setup Failed: Кнопка Logout не появилась после авторизации!")
-
-    return driver
 
 
 @pytest.fixture
