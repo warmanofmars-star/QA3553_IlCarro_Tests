@@ -33,7 +33,7 @@
 - `pytest -m "api" -v` — все API-тесты без запуска браузеров (19 тестов)
 - `pytest -m "ui" -n 3` — все браузерные тесты Selenium и Playwright (33 теста)
 - `pytest -m "playwright" -v` — только тесты на Playwright (6 тестов; маркер ставится автоматически по фикстуре `page`)
-- `pytest -m "selenium" -n 3` — только тесты на Selenium (26 тестов; маркер ставится автоматически по фикстуре `driver`/`authenticated_driver`)
+- `pytest -m "selenium" -n 3` — только тесты на Selenium (26 тестов; маркер ставится автоматически по фикстуре `driver`/`shared_authenticated_driver`)
 - `pytest -m "hybrid" -v` — гибридные тесты API + UI (3 теста)
 - `pytest -m "security" -v` — проверки безопасности, BOLA и защит форм (15 тестов)
 - `pytest -m "contract" -v` — валидация JSON Schema и словарей (3 теста)
@@ -199,7 +199,7 @@ selenium [chrome,        │      │
   или сбой curl — красный job с причиной в логе (на выкладку не влияет).
 
 **Маркер selenium** ставится автоматически (хук в `conftest.py`) каждому тесту с фикстурой
-`driver` или `authenticated_driver`. Проверить разбиение локально:
+`driver` или `shared_authenticated_driver`. Проверить разбиение локально:
 `python scripts/check_ci_split.py` → `26 + 25 = 51`
 
 **Пустой отбор валит job** (pytest возвращает 5). Исключение — ручной запуск с маркером:
