@@ -62,22 +62,24 @@ pytestmark = [pytest.mark.api, pytest.mark.regression, pytest.mark.mutation]
         ),
     ],
 )
-def test_api_car_mutations(auth_api, car_cleanup, mutate_func, expected_status, scenario, state_is_precondition):
+def test_api_car_mutations(
+    shared_api, shared_car_cleanup, mutate_func, expected_status, scenario, state_is_precondition
+):
     with allure.step(f"Сценарий мутации: {scenario}"):
         # 1. Генерируем 100% валидный словарь данных
         base_payload = CarGenerator.get_random_car().to_api_payload()
         serial_number = base_payload["serialNumber"]
         # Машина не должна создаться; если из-за дефекта создастся (цена -100), очистка её уберёт
-        car_cleanup.register(serial_number)
+        shared_car_cleanup.register(serial_number)
 
         # 2. Применяем лямбда-функцию, чтобы сломать словарь "на лету"
         mutate_func(base_payload)
 
         # 3. Отправляем мутировавший запрос
-        response = auth_api.add_car(base_payload)
+        response = shared_api.add_car(base_payload)
 
     with allure.step("Состояние: машины с этим serialNumber нет в /v1/cars/my"):
-        is_saved = serial_number in my_cars(auth_api)
+        is_saved = serial_number in my_cars(shared_api)
         message = f"Невалидная машина {serial_number} сохранилась. Ответ: {response.status_code} {response.text}"
         if state_is_precondition:
             require(not is_saved, message)
@@ -150,11 +152,13 @@ def test_api_car_required_field(shared_api, shared_car_cleanup, field):
 @allure.story("Mass Assignment: owner и bookedPeriods из тела запроса")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.tag("REQ-CAR-04")
-def test_api_car_mass_assignment(auth_api, create_car, second_user, temp_user):
+def test_api_car_mass_assignment(user_pair, shared_create_car):
     """
     Владелец определяется по токену; owner и bookedPeriods из тела запроса игнорируются
     (REQ-CAR-04, OWASP API3:2023). Сценарий — как в исследовании Q-API-04.
+    Создатель — владелец пары, в подложный owner подставлен чужой; машина ищется по номеру.
     """
+    owner, second_user = user_pair
     start_date, end_date = SearchDataGenerator.get_safe_future_dates()
     spoofed_period = {
         "email": second_user.user.email,
@@ -163,16 +167,16 @@ def test_api_car_mass_assignment(auth_api, create_car, second_user, temp_user):
     }
 
     with allure.step("Создаем машину с чужим owner и подложными bookedPeriods"):
-        car = create_car(extra_fields={"owner": second_user.user.email, "bookedPeriods": [spoofed_period]})
+        car = shared_create_car(extra_fields={"owner": second_user.user.email, "bookedPeriods": [spoofed_period]})
         # Если подмена сработает, машина окажется у второго пользователя — пусть его очистка её уберёт
         second_user.cleanup.register(car.reg_number)
 
     with allure.step("Проверка: машина у создателя, owner — его email, bookedPeriods пуст"):
-        owner_cars = my_cars(auth_api)
+        owner_cars = my_cars(owner.api)
         assert car.reg_number in owner_cars, f"Машины {car.reg_number} нет в /v1/cars/my создателя"
         saved = owner_cars[car.reg_number]
-        assert saved.get("owner") == temp_user.user.email, (
-            f"owner подменён из тела запроса: ожидали {temp_user.user.email}, получили {saved.get('owner')}"
+        assert saved.get("owner") == owner.user.email, (
+            f"owner подменён из тела запроса: ожидали {owner.user.email}, получили {saved.get('owner')}"
         )
         assert not saved.get("bookedPeriods"), f"bookedPeriods взят из тела запроса: {saved.get('bookedPeriods')}"
 

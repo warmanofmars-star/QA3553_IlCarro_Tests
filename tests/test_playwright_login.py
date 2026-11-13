@@ -17,11 +17,13 @@ pytestmark = pytest.mark.ui
 @allure.story("Positive Login (POM)")
 @allure.title("Успешная авторизация (Playwright + POM)")
 @allure.tag("REQ-UI-LOGIN-02")
-def test_pw_login_success(page: Page, temp_user):
+def test_pw_login_success(page: Page, shared_user):
+    """Вход через форму — предмет проверки, но состояния пользователя он не меняет и выданных
+    раньше токенов не отзывает (Q-API-19): пользователь общий."""
     pw_login_page = PwLoginPage(page)
     pw_login_page.open()
 
-    user = temp_user.user
+    user = shared_user.user
     pw_login_page.login(user.email, user.password)
 
     pw_login_page.check_success_message()

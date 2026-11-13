@@ -34,7 +34,7 @@ concurrency:
 # РАЗБИЕНИЕ ТЕСТОВ МЕЖДУ JOB'АМИ
 # ==========================================
 # Маркер selenium ставит хук в conftest.py каждому тесту, который использует фикстуру
-# driver или authenticated_driver. Ручные маркеры для этого не годятся: они уже расходились
+# driver или shared_authenticated_driver. Ручные маркеры для этого не годятся: они уже расходились
 # с тем, что тест на самом деле запускает. Выражения взаимно дополняют друг друга:
 #   selenium:           selenium       — матрица браузеров через Selenium Grid
 #   api-and-playwright: not selenium   — API и Playwright, один раз (Playwright всегда берёт

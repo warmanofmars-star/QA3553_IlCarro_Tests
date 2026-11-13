@@ -8,11 +8,12 @@ logs/registered_users_<воркер>.jsonl (свой файл у каждого 
 и pytest_terminal_summary в conftest.py).
 
 Запись делается там, где регистрация подтверждена приложением, а не там, где она задумана:
-  * API_CLIENT — IlCarroAPI.register получил 200 (фикстуры temp_user, shared_user, user_pair и тесты,
+  * API_CLIENT — IlCarroAPI.register получил 200 (фикстуры temp_user, shared_user, other_shared_user и тесты,
     которые регистрируют пользователя клиентом);
   * RAW_REQUEST — «сырой» запрос регистрации в tests/test_api_auth.py получил 200;
   * UI_FORM — форма регистрации показала окно «Registered»; запись делает сам тест одной явной строкой
-    после проверки успеха (test_registration_success): page object побочных эффектов не имеет.
+    после проверки успеха (test_registration_success; test_registration_password_rejected_by_api — если
+    бэкенд вопреки ожиданию принял регистрацию): page object побочных эффектов не имеет.
 Отклонённые регистрации (400) пользователя не создают и в журнал не попадают.
 """
 

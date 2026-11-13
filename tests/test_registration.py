@@ -104,17 +104,18 @@ def test_registration_negative_fields(driver, field_name, invalid_value, expecte
         ("new_valid_password", "Занятый email + Другой пароль (валидный и для фронта, и для API)"),
     ],
 )
-def test_registration_existing_user(driver, temp_user, registration_case, scenario):
+def test_registration_existing_user(driver, shared_user, registration_case, scenario):
     """
     Повторная регистрация занятого email: окно «Registration failed» показывает текст ошибки
     сервера (REQ-UI-REG-03). Код ответа здесь не виден — его проверяет API-тест REQ-AUTH-04.
     Пароль проходит правила и фронта, и API (DISC-01), поэтому сервер отказывает именно из-за занятого email.
+    Занятый email — общего пользователя: отклонённая регистрация его не меняет.
     """
     with allure.step(f"Сценарий: {scenario}"):
         registration_page = RegistrationPage(driver)
 
-        # 1. Забираем уже зарегистрированного юзера из песочницы
-        existing_user = temp_user.user
+        # 1. Уже зарегистрированный пользователь
+        existing_user = shared_user.user
 
         # 2. Определяем пароль для попытки повторной регистрации
         if registration_case == "same_password":
@@ -172,6 +173,10 @@ def test_registration_password_rejected_by_api(driver):
 
     with allure.step("Проверка текста окна ошибки"):
         title = registration_page.confirmation_text()
+        if title == "Registered":
+            # Регистрация настоящая: если бэкенд принял пароль abc123, пользователь создан и удалить его
+            # нельзя — учитываем в журнале до проверки, которая уронит тест
+            record_registration(user.email, UI_FORM)
         require(title == "Registration failed", f"Ожидали окно 'Registration failed', получили '{title}'")
         details = registration_page.confirmation_text_1()
         logger.info(f"Текст окна ошибки: '{details}'")

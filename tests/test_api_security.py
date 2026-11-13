@@ -4,7 +4,7 @@ import allure
 import pytest
 
 from api.car_api import IlCarroAPI
-from data.data_generator import CarGenerator, UserGenerator
+from data.data_generator import CarGenerator
 from data.known_bugs import known_bug
 from utils.car_state import my_cars
 from utils.preconditions import require
@@ -31,10 +31,11 @@ pytestmark = [pytest.mark.api, pytest.mark.security]
         pytest.param("wrong_scheme", 401, "Неверная схема (Basic вместо Bearer)", marks=allure.tag("REQ-SEC-02")),
     ],
 )
-def test_api_security_auth_tokens(auth_case, expected_status, scenario):
+def test_api_security_auth_tokens(request, auth_case, expected_status, scenario):
     """
     Проверка того, как сервер отбивает неавторизованные запросы
     с разными проблемами в заголовке Authorization.
+    Действующий токен для сценария wrong_scheme — общего пользователя: проверка его не меняет.
     """
     # Сценарий "empty": клиент без заголовка Authorization — настраивать нечего
     api = IlCarroAPI()
@@ -42,10 +43,9 @@ def test_api_security_auth_tokens(auth_case, expected_status, scenario):
     if auth_case == "invalid":
         api.session.headers.update({"Authorization": "Bearer fake_invalid_token_123"})
     elif auth_case == "wrong_scheme":
-        temp_user = UserGenerator.get_random_user()
-        res = api.register(temp_user.email, temp_user.password)
-        require(res.status_code == 200, f"Не удалось зарегистрировать пользователя для сценария: {res.text}")
-        valid_token = res.json().get("accessToken")
+        # Фикстура запрашивается только в этом сценарии: остальным пользователь не нужен
+        valid_token = request.getfixturevalue("shared_user").api.token
+        require(bool(valid_token), "Предусловие: у общего пользователя нет токена")
         api.session.headers.update({"Authorization": f"Basic {valid_token}"})
 
     with allure.step(f"Сценарий: {scenario} -> Попытка запросить список машин"):
@@ -100,14 +100,15 @@ def test_api_security_invalid_token_error_text(auth_case, authorization):
 @allure.story("BOLA (Broken Object Level Authorization)")
 @allure.severity(allure.severity_level.BLOCKER)
 @allure.tag("REQ-CAR-09")
-def test_api_security_bola_delete(auth_api, create_car, second_user):
+def test_api_security_bola_delete(user_pair, shared_create_car):
     """
     Проверка на уязвимость BOLA (OWASP API1:2023).
-    Владелец (temp_user) создает машину, второй пользователь пытается её удалить.
+    Владелец пары создает машину, второй пользователь пары пытается её удалить.
     Проверяем данные, а не код ответа: машина должна остаться у владельца (REQ-CAR-09).
     Код ответа проверяет test_api_security_bola_delete_status.
     """
-    car = create_car()
+    owner, second_user = user_pair
+    car = shared_create_car()
     # Если из-за уязвимости машина «переедет» к второму пользователю, её уберёт его очистка
     second_user.cleanup.register(car.reg_number)
 
@@ -115,7 +116,7 @@ def test_api_security_bola_delete(auth_api, create_car, second_user):
         response = second_user.api.delete_car(car.reg_number)
 
     with allure.step("Проверка: машина осталась в /v1/cars/my владельца"):
-        assert car.reg_number in my_cars(auth_api), (
+        assert car.reg_number in my_cars(owner.api), (
             "КРИТИЧЕСКАЯ УЯЗВИМОСТЬ BOLA! Второй пользователь удалил чужую машину. Ответ: "
             f"{response.status_code} {response.text}"
         )
@@ -128,12 +129,13 @@ def test_api_security_bola_delete(auth_api, create_car, second_user):
 @allure.severity(allure.severity_level.NORMAL)
 @known_bug("NOT_FOUND_400")
 @allure.tag("REQ-CAR-10")
-def test_api_security_bola_delete_status(auth_api, create_car, second_user):
+def test_api_security_bola_delete_status(user_pair, shared_create_car):
     """
     Код ответа на удаление чужой машины: 404, чтобы не раскрывать факт её существования
     (REQ-CAR-10, RFC 9110 §15.5.5).
     """
-    car = create_car()
+    owner, second_user = user_pair
+    car = shared_create_car()
     second_user.cleanup.register(car.reg_number)
 
     with allure.step("Второй пользователь пытается удалить машину владельца"):
@@ -141,7 +143,7 @@ def test_api_security_bola_delete_status(auth_api, create_car, second_user):
 
     with allure.step("Предусловие: машина осталась у владельца (иначе это BOLA, а не код ответа)"):
         # Сохранность машины — другое требование (REQ-CAR-09): его нарушение не должно уйти в xfail
-        require(car.reg_number in my_cars(auth_api), "Машина пропала у владельца после удаления вторым пользователем")
+        require(car.reg_number in my_cars(owner.api), "Машина пропала у владельца после удаления вторым пользователем")
 
     with allure.step("Проверка: сервер ответил 404 Not Found"):
         assert response.status_code == 404, (
@@ -156,21 +158,21 @@ def test_api_security_bola_delete_status(auth_api, create_car, second_user):
 @allure.severity(allure.severity_level.NORMAL)
 @known_bug("NOT_FOUND_400")
 @allure.tag("REQ-CAR-10")
-def test_api_idempotency_delete(auth_api, create_car):
+def test_api_idempotency_delete(shared_api, shared_create_car):
     """
     Повторное удаление уже удалённой машины: ожидаем 404 (REQ-CAR-10, RFC 9110 §15.5.5).
     """
-    serial_number = create_car().reg_number
+    serial_number = shared_create_car().reg_number
 
     with allure.step("Шаг 1: Удаляем машину (Первый запрос)"):
-        res_first = auth_api.delete_car(serial_number)
+        res_first = shared_api.delete_car(serial_number)
         # Первое удаление — предусловие: баг REQ-CAR-10 касается только повторного удаления
         require(res_first.status_code == 200, f"Первое удаление провалилось: {res_first.text}")
 
-        require(serial_number not in my_cars(auth_api), "После первого удаления машина осталась в /v1/cars/my")
+        require(serial_number not in my_cars(shared_api), "После первого удаления машина осталась в /v1/cars/my")
 
     with allure.step("Шаг 2: Удаляем ту же машину (Повторный запрос)"):
-        res_second = auth_api.delete_car(serial_number)
+        res_second = shared_api.delete_car(serial_number)
 
     with allure.step("Проверка: Сервер корректно обработал дублирующий DELETE-запрос"):
         assert res_second.status_code == 404, (
@@ -185,18 +187,18 @@ def test_api_idempotency_delete(auth_api, create_car):
 @allure.severity(allure.severity_level.NORMAL)
 @known_bug("UNKNOWN_ROUTE_403")
 @allure.tag("REQ-SEC-05")
-def test_api_security_method_not_allowed(auth_api, car_cleanup):
+def test_api_security_method_not_allowed(shared_api, shared_car_cleanup):
     """
     Проверка 16 из статьи: Сервер должен блокировать неподдерживаемые HTTP-методы.
     Пытаемся обновить машину через неподдерживаемый метод PUT.
     """
     car = CarGenerator.get_random_car()
     # Машина не должна создаться; если всё же создастся, очистка её уберёт
-    car_cleanup.register(car.reg_number)
+    shared_car_cleanup.register(car.reg_number)
 
     with allure.step("Отправляем PUT-запрос вместо POST на эндпоинт создания машины"):
-        url = f"{auth_api.BASE_URL}/v1/cars"
-        response = auth_api.session.put(url, json=car.to_api_payload())
+        url = f"{shared_api.BASE_URL}/v1/cars"
+        response = shared_api.session.put(url, json=car.to_api_payload())
 
     with allure.step("Проверка: Ожидаем 405 Method Not Allowed"):
         assert response.status_code == 405, (
@@ -211,16 +213,16 @@ def test_api_security_method_not_allowed(auth_api, car_cleanup):
 @allure.severity(allure.severity_level.NORMAL)
 @known_bug("WRONG_CONTENT_TYPE_500")
 @allure.tag("REQ-SEC-04")
-def test_api_security_unsupported_media_type(auth_api):
+def test_api_security_unsupported_media_type(shared_api):
     """
     Проверка 8 из статьи: Валидация заголовков.
     Сервер не должен пытаться парсить простой текст, если жестко ожидает JSON.
     """
-    url = f"{auth_api.BASE_URL}/v1/cars"
+    url = f"{shared_api.BASE_URL}/v1/cars"
 
     with allure.step("Отправляем обычный текст с заголовком text/plain вместо application/json"):
         headers = {"Content-Type": "text/plain"}
-        response = auth_api.session.post(url, data="Just some malicious plain text here", headers=headers)
+        response = shared_api.session.post(url, data="Just some malicious plain text here", headers=headers)
 
     with allure.step("Проверка: Ожидаем 415 Unsupported Media Type"):
         assert response.status_code == 415, (

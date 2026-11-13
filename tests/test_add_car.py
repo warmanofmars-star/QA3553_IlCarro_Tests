@@ -5,10 +5,20 @@ import pytest
 
 from data.data_generator import CarGenerator
 from pages.add_car_page import AddCarPage
+from pages.login_page import LoginPage
+from utils.preconditions import require
 
 logger = logging.getLogger(__name__)
 
 pytestmark = pytest.mark.ui
+
+
+def _open_car_form(driver) -> AddCarPage:
+    """Форма машины в браузере, залогиненном токеном общего пользователя (shared_authenticated_driver)."""
+    add_car_page = AddCarPage(driver)
+    add_car_page.open()
+    require(LoginPage(driver).is_logout_button_visible(), "Предусловие: вход токеном не сработал")
+    return add_car_page
 
 
 @pytest.mark.smoke
@@ -24,10 +34,9 @@ pytestmark = pytest.mark.ui
         ("Electric", "Premium", "Добавление премиального электрокара"),
     ],
 )
-def test_add_car_success(authenticated_driver, car_cleanup, fuel_type, car_class, scenario):
+def test_add_car_success(shared_authenticated_driver, shared_car_cleanup, fuel_type, car_class, scenario):
     with allure.step(f"Сценарий: {scenario}"):
         logger.info(f"--- ЗАПУСК ТЕСТА: {scenario} ---")
-        add_car_page = AddCarPage(authenticated_driver)
 
         # Генерируем машину, ПРИНУДИТЕЛЬНО задавая ей нужный тип топлива и класс!
         car = CarGenerator.get_random_car(fuel=fuel_type, car_class=car_class)
@@ -35,9 +44,9 @@ def test_add_car_success(authenticated_driver, car_cleanup, fuel_type, car_class
         # МАГИЯ ДАТАКЛАССОВ В ДЕЙСТВИИ:
         logger.info(f"Сгенерированные данные: {car}")
         # Машина создаётся через UI — номер регистрируем, чтобы фабрика удалила её после теста
-        car_cleanup.register(car.reg_number)
+        shared_car_cleanup.register(car.reg_number)
 
-        add_car_page.open()
+        add_car_page = _open_car_form(shared_authenticated_driver)
 
         # Пошагово заполняем форму, используя твои модульные методы из AddCarPage:
         add_car_page.fill_city(car.city)
@@ -60,14 +69,13 @@ def test_add_car_success(authenticated_driver, car_cleanup, fuel_type, car_class
 @allure.story("Negative Add Car - Duplicate Serial Number")
 @allure.severity(allure.severity_level.CRITICAL)
 @allure.tag("REQ-UI-CAR-02")
-def test_add_car_duplicate(authenticated_driver, create_car):
+def test_add_car_duplicate(shared_authenticated_driver, shared_create_car):
     with allure.step("API PRECONDITION: Создаем машину через бэкенд"):
-        car = create_car()
+        car = shared_create_car()
         logger.info(f"API успешно создал машину с номером: {car.reg_number}")
 
     with allure.step("UI SCENARIO: Пытаемся добавить машину с тем же номером"):
-        add_car_page = AddCarPage(authenticated_driver)
-        add_car_page.open()
+        add_car_page = _open_car_form(shared_authenticated_driver)
 
         # Заполняем форму ТЕМИ ЖЕ сгенерированными данными (главное - тот же reg_number)
         add_car_page.fill_city(car.city)

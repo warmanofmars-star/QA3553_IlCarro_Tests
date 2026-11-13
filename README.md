@@ -29,7 +29,7 @@ Project documentation other than this README is written in Russian; such links a
 
 Areas overlap. How many tests a selection has: `pytest --collect-only -q -m <marker>`.
 The `selenium` and `playwright` markers are set automatically by a hook in [`conftest.py`](conftest.py)
-from the fixtures a test uses (`driver` / `authenticated_driver` and `page`), not by hand.
+from the fixtures a test uses (`driver` / `shared_authenticated_driver` and `page`), not by hand.
 
 ## What makes this project interesting
 
@@ -57,10 +57,14 @@ from the fixtures a test uses (`driver` / `authenticated_driver` and `page`), no
 - **Preconditions are not assertions.** Setup steps use `require()` from
   [`utils/preconditions.py`](utils/preconditions.py), so a broken environment fails as an error instead of
   hiding behind a known bug.
-- **Clean test data on a shared backend.** Users cannot be deleted on the shared backend, so a fresh
-  temporary user is registered only for a test that changes the user's state on the server (logout, profile,
-  the user's car count, login as the subject of the check). Other tests share one user per xdist worker;
-  "own vs. foreign" checks use a pair of users per module. The run summary counts registrations from the
+- **Clean test data on a shared backend.** Users cannot be deleted on the shared backend, so by default
+  tests share one user per pytest process. A user's server-side state is only their cars and bookings;
+  a login does not change it or revoke other tokens, and logout is client-side only (the API has no logout
+  operation). A fresh user is registered only when registration is the subject of the check, when logout or
+  the token after logout is checked, or when a check depends on the user's full set of cars (no such test
+  today: tests find their cars by serial number). Owner vs. other checks use one pair of users per process.
+  A browser that only needs to be logged in gets the token in localStorage instead of the login form.
+  The run summary counts registrations from the
   journal (`logs/registered_users_<worker>.jsonl`). Cars created by a test are deleted after it
   ([`utils/car_cleanup.py`](utils/car_cleanup.py), journal in `logs/car_factory_<worker>.jsonl`,
   one file per xdist worker).
