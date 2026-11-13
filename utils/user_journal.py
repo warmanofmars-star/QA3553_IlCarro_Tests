@@ -51,11 +51,6 @@ def record_registration(email: str, source: str) -> None:
         logger.warning(f"Не удалось записать журнал пользователей: {exc}")
 
 
-def reset_user_journal() -> None:
-    """Удаляет файлы журнала прошлого прогона. Вызывается главным процессом до старта воркеров."""
-    run_journal.reset(JOURNAL_DIR, JOURNAL_NAME)
-
-
 def user_journal_summary() -> str:
     """Итог по журналу текущего прогона одной строкой. Нет файлов журнала — пользователей не создавали.
 

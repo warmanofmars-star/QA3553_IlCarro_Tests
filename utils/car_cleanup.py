@@ -140,11 +140,6 @@ class CarCleanup:
 JOURNAL_FIELDS = frozenset(item.name for item in fields(CleanupReport))
 
 
-def reset_journal() -> None:
-    """Удаляет файлы журнала прошлого прогона. Вызывается главным процессом до старта воркеров."""
-    run_journal.reset(JOURNAL_DIR, JOURNAL_NAME)
-
-
 def journal_summary() -> str | None:
     """Итог по журналу текущего прогона или None, если машин тесты не создавали.
 

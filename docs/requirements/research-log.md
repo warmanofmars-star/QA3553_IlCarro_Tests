@@ -528,6 +528,8 @@ Petrol, Diesel, Hybrid, Electric; gear = «Automatic», wheelsDrive = «AWD», d
 | Sderot, запрос оборван | 0 | нет | нет |
 
 - После сбоя кнопка снова «Yalla!», URL с параметрами поиска (`page=0&size=10`).
+- Строки со сбоем запроса (500 и обрыв) — точка старта исследования шага 7: с v6 `requirements.md` OBS-04 говорит
+  только о пустой выдаче, поведение при сбое поиска ни одним пунктом пока не описано.
 
 ## Q-UI-25 URL после регистрации (ответ подменён)
 
@@ -548,6 +550,65 @@ Petrol, Diesel, Hybrid, Electric; gear = «Automatic», wheelsDrive = «AWD», d
 | 400, `message` `{"city":"must not be blank"}` | `Failed to submit car` | заполнено |
 | 401, `message` `"probe unauthorized"` | `Failed to submit car` | заполнено |
 | 200, `{"message":"Car added successfully"}` | нет | пустое |
+
+## Пробы шага 6.4a (Q-API-19 … Q-API-21)
+
+Добавлены 2026-11-13 перед решением о постоянной учётке. Запуск: `python research/probe_session_tokens.py --run 1`,
+лог — `research/evidence/probe_session_tokens_run1.log`. Один временный пользователь, зарегистрирован через
+`IlCarroAPI.register` (записан в журнал пользователей), машин не создавалось. Токены в лог не выводились: только
+статусы ответов и claims.
+
+## Q-API-19 Два входа одним пользователем
+
+**Как проверяли:** проба, `q_api_19_two_logins`. Токен проверяли запросом `GET /v1/cars/my` — в Swagger он защищён
+(`Bearer Authentication`) и ничего не меняет.
+
+| Шаг | Результат |
+|---|---|
+| `GET /v1/cars/my` с токеном регистрации, до входов | HTTP 200, `{"cars":[]}` |
+| Вход 1 | HTTP 200, `accessToken` есть |
+| `GET /v1/cars/my` с токеном входа 1, до входа 2 | HTTP 200, `{"cars":[]}` |
+| Вход 2 | HTTP 200, `accessToken` есть, не совпадает с токеном входа 1 |
+| `GET /v1/cars/my` с токеном входа 1, после входа 2 | HTTP 200, `{"cars":[]}` |
+| `GET /v1/cars/my` с токеном входа 2 | HTTP 200, `{"cars":[]}` |
+| `GET /v1/cars/my` с токеном регистрации, после двух входов | HTTP 200, `{"cars":[]}` |
+
+- Все три токена (регистрации, входа 1, входа 2) приняты одновременно; второй вход первый токен не отозвал.
+- Связанный факт: после «Log out» в UI токен, сохранённый до выхода, тоже принимается (Q-UI-14).
+
+## Q-API-20 Срок жизни токена
+
+**Как проверяли:** проба, `q_api_20_token_lifetime`. Payload JWT декодирован без проверки подписи.
+
+| Токен | Claims (кроме времени) | iat (UTC) | exp (UTC) | exp − iat |
+|---|---|---|---|---|
+| регистрации | `iss` `"Regulait"`, `roles` `["ROLE_USER"]`, `sub` — email пользователя | 2026-11-13 08:17:15 | 2026-11-20 06:57:15 | 600000 с |
+| входа 1 | те же | 2026-11-13 08:17:17 | 2026-11-20 06:57:17 | 600000 с |
+| входа 2 | те же | 2026-11-13 08:17:18 | 2026-11-20 06:57:18 | 600000 с |
+
+- 600000 с = 6 сут 22 ч 40 мин (≈166,7 ч). Срок одинаков у токена регистрации и токенов входа.
+- Принимает ли сервер токен после `exp`, проба не проверяла (ждать 7 суток).
+
+## Q-API-21 Операции, которые меняют состояние пользователя или его данных
+
+**Как проверяли:** по Swagger (`docs/requirements/api-docs.json`), без запросов; список операций печатает
+`q_api_21_swagger_operations`.
+
+| Операция | Защита | summary в Swagger | Меняет состояние |
+|---|---|---|---|
+| `POST /v1/user/registration/usernamepassword` | нет | Registration users by username and password | да: создаёт пользователя |
+| `POST /v1/user/login/usernamepassword` | нет | Login users by username and password | выдаёт новый токен; прежние остаются в силе (Q-API-19) |
+| `POST /v1/cars` | Bearer | Add new Car | да: машина пользователя |
+| `POST /v1/cars/{serialNumber}/booking` | Bearer | Booking car | да: бронь машины |
+| `DELETE /v1/cars/{serialNumber}` | Bearer | Delete car by id | да: машина пользователя |
+| `POST /v1/cars/search` | нет | Search Car by city and period | нет: поиск, метод POST |
+| `GET /v1/cars/my` | Bearer | Get User cars | нет |
+| `GET /v1/cars/cities` | нет | Get All Cities | нет |
+
+- Операций профиля, смены пароля и выхода (отзыва токена) в Swagger нет.
+- Для учётки «только вход и чтение» допустимы `POST /v1/user/login/usernamepassword`, `GET /v1/cars/my`,
+  `GET /v1/cars/cities` и `POST /v1/cars/search`; запрещены `POST /v1/cars`, `POST /v1/cars/{serialNumber}/booking`,
+  `DELETE /v1/cars/{serialNumber}` и регистрация.
 
 ## Фреймворк: одновременная запись журналов прогона
 
@@ -589,6 +650,7 @@ Petrol, Diesel, Hybrid, Electric; gear = «Automatic», wheelsDrive = «AWD», d
 | `explore_ui_interception.py` (2026-11-12) | 1 | 0 | 0 |
 | `explore_api.py --only Q-API-18` (2026-11-12) | 1 | 1 | 1 |
 | `explore_ui_rest.py` (2026-11-12, два запуска) | 2 | 0 | 0 |
+| `probe_session_tokens.py` (2026-11-13) | 1 | 0 | 0 |
 
 - Числа первых двух скриптов одинаковы в прогонах 1 и 2. После очистки у временных пользователей машин с префиксом `RS-`/`RU-` не осталось.
 - Пользователей API удалять не умеет, они остаются в системе.
