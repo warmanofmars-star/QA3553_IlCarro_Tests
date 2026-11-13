@@ -5,7 +5,7 @@
 в команде: `USE_GRID=false pytest ...` (переменные окружения перекрывают `.env`).
 
 **Сколько тестов собирается (без запуска):**
-`pytest --collect-only -q` → `51 tests collected`
+`pytest --collect-only -q` — печатает id каждого теста, последней строкой — «N tests collected»
 
 **Полный прогон без Grid (как проверяют изменения перед PR):**
 `USE_GRID=false ENABLE_CONSOLE_LOGS=false pytest tests/ -n 2 --browser_name=chrome -rfEsxX`
@@ -27,17 +27,18 @@
 **Запуск с выбором конкретного браузера (`chrome`, `firefox`, `edge`):**
 `pytest tests/ -n 3 --browser_name=firefox --clean-alluredir --alluredir=allure-results`
 
-**Запуск по категориям (10 маркеров из `pytest.ini`; числа — `pytest -m <маркер> --collect-only -q`):**
-- `pytest -m "smoke" -n 3` — критический путь (13 тестов: 9 UI + 4 API)
-- `pytest -m "regression" -n 3` — полный регресс (39 тестов: 24 UI + 15 API)
-- `pytest -m "api" -v` — все API-тесты без запуска браузеров (19 тестов)
-- `pytest -m "ui" -n 3` — все браузерные тесты Selenium и Playwright (33 теста)
-- `pytest -m "playwright" -v` — только тесты на Playwright (6 тестов; маркер ставится автоматически по фикстуре `page`)
-- `pytest -m "selenium" -n 3` — только тесты на Selenium (26 тестов; маркер ставится автоматически по фикстуре `driver`/`shared_authenticated_driver`)
-- `pytest -m "hybrid" -v` — гибридные тесты API + UI (3 теста)
-- `pytest -m "security" -v` — проверки безопасности, BOLA и защит форм (15 тестов)
-- `pytest -m "contract" -v` — валидация JSON Schema и словарей (3 теста)
-- `pytest -m "mutation" -v` — негативные DDT лямбда-мутации (6 тестов)
+**Запуск по категориям (10 маркеров из `pytest.ini`; сколько тестов в отборе — `pytest -m <маркер> --collect-only -q`,
+последняя строка «N/M tests collected (K deselected)»):**
+- `pytest -m "smoke" -n 3` — критический путь (UI и API)
+- `pytest -m "regression" -n 3` — полный регресс (UI и API)
+- `pytest -m "api" -v` — все API-тесты без запуска браузеров
+- `pytest -m "ui" -n 3` — все браузерные тесты Selenium и Playwright
+- `pytest -m "playwright" -v` — только тесты на Playwright (маркер ставится автоматически по фикстуре `page`)
+- `pytest -m "selenium" -n 3` — только тесты на Selenium (маркер ставится автоматически по фикстуре `driver`/`shared_authenticated_driver`)
+- `pytest -m "hybrid" -v` — гибридные тесты API + UI
+- `pytest -m "security" -v` — проверки безопасности, BOLA и защит форм
+- `pytest -m "contract" -v` — валидация JSON Schema и словарей
+- `pytest -m "mutation" -v` — негативные DDT лямбда-мутации
 
 **Комбинированная фильтрация (логическое И / ИЛИ / НЕ):**
 `pytest -m "smoke and api" -v`
@@ -200,7 +201,9 @@ selenium [chrome,        │      │
 
 **Маркер selenium** ставится автоматически (хук в `conftest.py`) каждому тесту с фикстурой
 `driver` или `shared_authenticated_driver`. Проверить разбиение локально:
-`python scripts/check_ci_split.py` → `26 + 25 = 51`
+`python scripts/check_ci_split.py` — печатает «Всего тестов: N», размер каждого отбора (`-m 'selenium'`,
+`-m 'not selenium'`) и «✅ Разбиение дополняющее: A + B = N»; пустой отбор, пересечение или потерянные тесты —
+строки с ❌ и код 1
 
 **Пустой отбор валит job** (pytest возвращает 5). Исключение — ручной запуск с маркером:
 например, `test_marker=api` законно не оставляет тестов матрице Selenium.
