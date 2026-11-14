@@ -31,14 +31,22 @@
 
 Запросы с другим методом уходят дальше (route.fallback): на один адрес можно навесить несколько
 подмен для разных методов.
+
+Режимы ответа (правило подмены — CLAUDE.md): respond — тело, заданное тестом (проверка отправленного);
+respond_empty — статус сбоя с пустым телом; respond_recorded — тело настоящего ответа сервера из лога
+исследования, с обязательной ссылкой source на запись research-log.md. Последние два перенесены
+из research/explore_ui_faults.py (шаг 7a). Все режимы идут через один _intercept: для
+backend_write_guard и require_intercepted они одинаковы.
 """
 
+import json
+import re
 from collections.abc import Callable
 from urllib.parse import urlsplit
 
 from playwright.sync_api import Page, Request, Response, Route
 
-from config import settings
+from config import PROJECT_ROOT, settings
 from utils.preconditions import require
 
 # Адреса API (glob-шаблоны Playwright)
@@ -46,9 +54,29 @@ CARS = "**/v1/cars"  # создание машины
 LOGIN = "**/v1/user/login/usernamepassword"
 PROFILE = "**/v1/user/profile"
 REGISTRATION = "**/v1/user/registration/usernamepassword"
+SEARCH = "**/v1/cars/search"
 
 # Настоящий ответ бэкенда на успешное создание машины (Q-API-04, Q-UI-05)
 CAR_ADDED = {"message": "Car added successfully"}
+
+# Тела настоящих ответов сервера для respond_recorded. Поле, значения которого в логе нет, опущено,
+# а не выдумано: фронт читает из тела ошибки только message (Q-UI-37).
+# Регистрация с паролем abc123 (Q-API-07, полностью — research/evidence/explore_api_run1.log; Q-UI-40).
+# timestamp в логе замаскирован («<ts>»)
+REGISTER_400_WEAK_PASSWORD = {
+    "status": 400,
+    "error": "Bad Request",
+    "message": {
+        "password": " At least 8 characters; Must contain at least 1 uppercase letter, 1 lowercase letter, "
+        "and 1 number; Can contain special characters [@$#^&*!]"
+    },
+    "path": "/v1/user/registration/usernamepassword",
+}
+# POST /v1/cars с мусорным токеном (Q-UI-34): в research-log записан только message
+CAR_401_GARBAGE_TOKEN = {"message": "JWT strings must contain exactly 2 period characters. Found: 0"}
+
+RESEARCH_LOG = PROJECT_ROOT / "docs" / "requirements" / "research-log.md"
+_SOURCE_ID = re.compile(r"Q-(?:API|UI)-\d+")
 
 # Тела ошибок: поля как у настоящих ошибок бэкенда (status, error, message, path — Q-API-07),
 # текст message написан тестом
@@ -62,6 +90,21 @@ def error_body(status: int, path: str) -> dict:
         "message": "Сбой, подставленный тестом",
         "path": path,
     }
+
+
+def require_recorded_source(source: str) -> None:
+    """Источник тела respond_recorded — существующая запись research-log.md (Q-API-NN или Q-UI-NN).
+
+    Это ошибка автора теста, а не предусловие прогона: ValueError при регистрации подмены, до запроса.
+    Без источника «настоящее» тело ничем не отличалось бы от придуманного.
+    """
+    if not isinstance(source, str) or not _SOURCE_ID.fullmatch(source):
+        raise ValueError(
+            f"respond_recorded: source={source!r} — нужен ID записи research-log.md (Q-API-NN или Q-UI-NN), "
+            "откуда взято тело ответа"
+        )
+    if not re.search(rf"^## {re.escape(source)}(?!\d)", RESEARCH_LOG.read_text(encoding="utf-8"), re.MULTILINE):
+        raise ValueError(f"respond_recorded: записи {source} нет в {RESEARCH_LOG.name} — тело ответа не из лога")
 
 
 def api_request(method: str, path: str) -> Callable[[Request], bool]:
@@ -148,6 +191,23 @@ class NetworkFaults:
         def action(route: Route) -> None:
             payload = body if body is not None else error_body(status, urlsplit(route.request.url).path)
             route.fulfill(status=status, json=payload)
+
+        return self._intercept(url, method, action)
+
+    def respond_empty(self, url: str, method: str, status: int) -> list[Request]:
+        """Статус сбоя с пустым телом: фронт получает только статус."""
+        return self._intercept(url, method, lambda route: route.fulfill(status=status, body=""))
+
+    def respond_recorded(self, url: str, method: str, status: int, body: dict, *, source: str) -> list[Request]:
+        """Тело настоящего ответа сервера, взятое из лога исследования; source — ID записи (Q-…).
+
+        Без source или с ID, которого нет в research-log.md, — ValueError до регистрации маршрута.
+        """
+        require_recorded_source(source)
+        payload = json.dumps(body, separators=(",", ":"))
+
+        def action(route: Route) -> None:
+            route.fulfill(status=status, content_type="application/json", body=payload)
 
         return self._intercept(url, method, action)
 

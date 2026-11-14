@@ -72,7 +72,9 @@ from utils.network_faults import (  # noqa: E402
     CARS,
     LOGIN,
     PROFILE,
+    REGISTER_400_WEAK_PASSWORD,
     REGISTRATION,
+    SEARCH,
     NetworkFaults,
     api_request,
     block_unhandled_writes,
@@ -80,7 +82,6 @@ from utils.network_faults import (  # noqa: E402
 
 UI = settings.ui_url
 API = settings.api_url
-SEARCH = "**/v1/cars/search"  # в utils/network_faults шаблона поиска нет
 ACTION_TIMEOUT_MS = 30_000
 # Сколько ждать, пока экран успокоится после ответа: задержка 35 с плюс настоящий запрос к Heroku
 SETTLE_MS = 120_000
@@ -96,21 +97,9 @@ PROXY_502_HTML = (
 # Город сбойного поиска в search.stale500.other_city: есть в списке CityAutocomplete. Запрос с ним до сервера
 # не доходит (500 подменой, иначе обрыв) — на общем бэкенде ищем только CITY
 OTHER_CITY = "Haifa"
-# Настоящий ответ 400 регистрации с message-объектом: Q-API-07 (пароль abc123), тело — explore_api_run1.log.
-# timestamp в логе замаскирован («<ts>»), его значение не записано — поле опущено, а не выдумано;
-# код регистрации читает только data.message (Q-UI-37)
-REGISTER_400_REAL_BODY = json.dumps(
-    {
-        "status": 400,
-        "error": "Bad Request",
-        "message": {
-            "password": " At least 8 characters; Must contain at least 1 uppercase letter, 1 lowercase letter, "
-            "and 1 number; Can contain special characters [@$#^&*!]"
-        },
-        "path": "/v1/user/registration/usernamepassword",
-    },
-    separators=(",", ":"),
-)
+# Настоящий ответ 400 регистрации с message-объектом (Q-API-07): тело — utils/network_faults.py, там же
+# объяснено, почему нет timestamp. Строка — только для лога пробы; respond_recorded шлёт те же байты
+REGISTER_400_REAL_BODY = json.dumps(REGISTER_400_WEAK_PASSWORD, separators=(",", ":"))
 USER_FILE = EVIDENCE_DIR / "explore_ui_faults_user.txt"
 LOGS_DIR = ROOT / "logs"
 CAR_FIELDS = {
@@ -201,20 +190,11 @@ class Held:
 
 
 class ProbeFaults(NetworkFaults):
-    """Сбои, которых нет в utils/network_faults: пустое тело, страница посредника, задержка.
+    """Сбои, которых нет в utils/network_faults: страница посредника и задержка.
 
-    respond() из utils всегда шлёт JSON-тело в формате бэкенда с текстом, написанным тестом;
-    по правилу подмены (CLAUDE.md) тело сбоя здесь пустое. Счётчик срабатываний — тот же _intercept.
+    Пустое тело (respond_empty) и тело настоящего ответа (respond_recorded) — из utils (шаг 7b).
+    Счётчик срабатываний — тот же _intercept.
     """
-
-    def respond_empty(self, url: str, method: str, status: int) -> list[Request]:
-        return self._intercept(url, method, lambda route: route.fulfill(status=status, body=""))
-
-    def respond_recorded(self, url: str, method: str, status: int, body: str) -> list[Request]:
-        """Тело настоящего ответа сервера, взятое из лога исследования (не написанное скриптом)."""
-        return self._intercept(
-            url, method, lambda route: route.fulfill(status=status, content_type="application/json", body=body)
-        )
 
     def respond_proxy_page(self, url: str, method: str, status: int) -> list[Request]:
         return self._intercept(
@@ -744,7 +724,9 @@ def fault_cell(
         pre = snap(probe, screen)
         faults = ProbeFaults(probe.page)
         if kind == "recorded":
-            sent = faults.respond_recorded(screen.pattern, screen.method, 400, REGISTER_400_REAL_BODY)
+            sent = faults.respond_recorded(
+                screen.pattern, screen.method, 400, REGISTER_400_WEAK_PASSWORD, source="Q-API-07"
+            )
             what = f"{screen.method} {screen.path} → 400, тело настоящего ответа (Q-API-07): {REGISTER_400_REAL_BODY}"
         elif kind == "status":
             sent = faults.respond_empty(screen.pattern, screen.method, status)
