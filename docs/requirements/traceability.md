@@ -29,19 +29,19 @@
 
 | Статус | REQ | DISC | OBS | Всего |
 |---|---:|---:|---:|---:|
-| ✅ покрыт | 35 | 0 | 0 | 35 |
+| ✅ покрыт | 37 | 0 | 0 | 37 |
 | 🟡 частично | 0 | 0 | 0 | 0 |
 | 🐞 покрыт как известный баг | 15 | 7 | 0 | 22 |
 | 👁 покрыт как наблюдение | 0 | 0 | 11 | 11 |
 | ⚪ исключение | 3 | 2 | 0 | 5 |
 | 🕓 запланирован | 0 | 0 | 0 | 0 |
-| **Всего** | 53 | 9 | 11 | 73 |
+| **Всего** | 55 | 9 | 11 | 75 |
 
 - **Исключения по категориям:** вредит общему бэкенду — 1; заблокировано другим дефектом — 2; функциональность недостижима — 2.
 - **Запланировано:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 0.
 - **Покрыто частично, доработка:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 0.
 - **Известные баги:** 21 в реестре `data/known_bugs.py`; **наблюдения:** 11 в реестре `data/observations.py`.
-- **Автотесты:** 149, у каждого есть тег хотя бы одного пункта.
+- **Автотесты:** 160, у каждого есть тег хотя бы одного пункта.
 
 ## Требования и тесты
 
@@ -131,6 +131,7 @@
 | REQ-UI-CAR-02 | Успешная отправка — «Car submitted successfully» и очистка формы; ошибка — «Failed to submit car». | `test_add_car.py::test_add_car_success`<br>`test_add_car.py::test_add_car_duplicate`<br>`test_playwright_add_car.py::test_real_add_car_success`<br>`test_playwright_add_car.py::test_pw_add_car_duplicate`<br>`test_playwright_car_form.py::test_pw_car_form_success_text` | `CAR_SUCCESS_TEXT_NOT_SHOWN` | 🐞 покрыт как известный баг |
 | REQ-UI-CAR-03 | Значение Fuel уходит в API строчными: `petrol`, `diesel`, `hybrid`, `electric`. | `test_playwright_car_form.py::test_pw_car_form_sends_fuel_lowercase` | — | ✅ покрыт |
 | REQ-UI-CAR-04 | Фото — ссылкой или файлом; файл отправляется в поле `image` как data URL (base64). | `test_playwright_car_form.py::test_pw_car_form_sends_photo_file_as_data_url`<br>`test_playwright_car_form.py::test_pw_car_form_sends_photo_link` | — | ✅ покрыт |
+| REQ-UI-CAR-05 | При ответе 401 на отправку формы машины UI не показывает пользователю текст ошибки из ответа сервера. | `test_playwright_backend_faults.py::test_pw_car_form_401_hides_server_message` | — | ✅ покрыт |
 
 ### 2.4 Поиск (UI-SEARCH)
 
@@ -155,8 +156,9 @@
 
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
-| REQ-UI-SESSION-01 | При ответе 401 фронт удаляет `token` и запоминает `postLoginRedirect`. | `test_playwright_session.py::test_pw_401_clears_token_and_remembers_redirect` | — | ✅ покрыт |
+| REQ-UI-SESSION-01 | При ответе 401 фронт удаляет `token` и запоминает `postLoginRedirect`. | `test_playwright_backend_faults.py::test_pw_401_on_screen_clears_token`<br>`test_playwright_session.py::test_pw_401_clears_token_and_remembers_redirect` | — | ✅ покрыт |
 | REQ-UI-SESSION-02 | «Log out» удаляет токен и переводит на `/search`. | `test_playwright_session.py::test_pw_logout_clears_token_and_opens_search` | — | ✅ покрыт |
+| REQ-UI-SESSION-03 | Неудачная попытка входа или регистрации — ответ ошибки или обрыв соединения — не создаёт сессию: в localStorage нет `token`, в навигации нет «Log out». | `test_playwright_backend_faults.py::test_pw_rejected_login_creates_no_session`<br>`test_playwright_backend_faults.py::test_pw_failed_login_creates_no_session`<br>`test_playwright_backend_faults.py::test_pw_failed_registration_creates_no_session` | — | ✅ покрыт |
 
 ### 3. Расхождения источников (DISC)
 
@@ -180,7 +182,7 @@
 | OBS-02 | Поиск и бронирование принимают прошедшие даты и конец раньше начала. | `test_api_dates.py::test_api_meaningless_dates_rejected` | `INVALID_DATES_ACCEPTED` | 👁 покрыт как наблюдение |
 | OBS-03 | API принимает бессмысленные значения машины: `seats` 0, цена 0 и −5, `year` «abc» и «2999», `fuel` «banana». | `test_api_mutations.py::test_api_car_mutations` — `[lambda_mutation-400-Отрицательная цена-False]` | `NONSENSE_CAR_VALUES` | 👁 покрыт как наблюдение |
 | OBS-04 | Пустой результат поиска ничем не обозначен: нет сообщения «ничего не найдено». | `test_playwright_search.py::test_pw_empty_search_announced` | `SEARCH_OUTCOME_NOT_SHOWN` | 👁 покрыт как наблюдение |
-| OBS-05 | После 401 нет перехода на страницу входа; «Log out» остаётся в навигации, хотя токен удалён. | `test_playwright_session.py::test_pw_401_redirects_to_login`<br>`test_playwright_session.py::test_pw_401_hides_logout` | `STALE_SESSION_UI_AFTER_401` | 👁 покрыт как наблюдение |
+| OBS-05 | После 401 нет перехода на страницу входа; «Log out» остаётся в навигации, хотя токен удалён. | `test_playwright_backend_faults.py::test_pw_search_401_hides_logout`<br>`test_playwright_session.py::test_pw_401_redirects_to_login`<br>`test_playwright_session.py::test_pw_401_hides_logout` | `STALE_SESSION_UI_AFTER_401` | 👁 покрыт как наблюдение |
 | OBS-06 | Форма добавления машины открывается гостю; отправка заканчивается «Failed to submit car». | `test_playwright_ui_observations.py::test_pw_guest_redirected_from_car_form` | `GUEST_OPENS_CAR_FORM` | 👁 покрыт как наблюдение |
 | OBS-07 | «Failed to submit car» не объясняет причину: город не поддерживается, пустой город, нет авторизации — текст один. | `test_playwright_ui_observations.py::test_pw_car_submit_error_names_cause` | `CAR_SUBMIT_ERROR_WITHOUT_CAUSE` | 👁 покрыт как наблюдение |
 | OBS-08 | Цена на экране округляется: 1234.56 показывается как «1234.6». | `test_playwright_search.py::test_pw_card_price_matches_saved` | `CARD_PRICE_ROUNDED` | 👁 покрыт как наблюдение |
