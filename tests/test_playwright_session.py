@@ -12,12 +12,14 @@
     он отзовёт токен, на котором работают остальные тесты процесса, и красное укажет не туда.
 """
 
+import contextlib
 import re
 from urllib.parse import urlsplit
 
 import allure
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Page, Response, expect
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from api.car_api import IlCarroAPI
 from data.data_generator import CarGenerator
@@ -26,9 +28,66 @@ from data.observations import observation
 from pages.pw_add_car_page import PwAddCarPage
 from pages.pw_login_page import PwLoginPage
 from utils.network_faults import CARS, NetworkFaults, require_intercepted, send_and_settle
-from utils.preconditions import require
+from utils.preconditions import PreconditionError, require
 
 pytestmark = [pytest.mark.ui, pytest.mark.regression]
+
+LOGIN_PATH = "/v1/user/login/usernamepassword"
+SEARCH_URL = re.compile(r"/search(\?.*)?$")
+
+
+def _login_with_diagnostics(page: Page, login_page: PwLoginPage, user) -> None:
+    """login_as, но таймаут входа — PreconditionError с состоянием кнопки входа и временем ответа входа.
+
+    Зачем: тест однажды не дождался «Log out» после входа через форму. У фронта нет таймаута запроса
+    (Q-UI-27): ответ позже 30 с даёт кнопку «Loading...»; ответ-ошибка — «Y’alla!» и окно «Login failed»
+    (Q-UI-30, Q-UI-35). Сообщение различает эти версии; что тест проверяет, не меняется.
+    """
+    responses: list[Response] = []
+
+    def on_response(response: Response) -> None:
+        if response.request.method == "POST" and urlsplit(response.url).path == LOGIN_PATH:
+            responses.append(response)
+
+    page.on("response", on_response)
+    try:
+        login_page.login_as(user)
+    except PlaywrightTimeoutError as exc:
+        if responses:
+            # timing — время от начала запроса до заголовков ответа, по часам браузера
+            elapsed_ms = responses[-1].request.timing["responseStart"]
+            answer = f"HTTP {responses[-1].status} через {elapsed_ms / 1000:.1f} с после отправки"
+        else:
+            answer = "ответа нет"
+        if login_page.submit_btn.count():
+            text = " ".join(login_page.submit_btn.all_inner_texts()).strip()
+            state = "доступна" if login_page.submit_btn.first.is_enabled(timeout=1000) else "недоступна"
+            button = f"текст {text!r}, {state}"
+        else:
+            button = "на странице нет"
+        dialog = "есть" if login_page.error_dialog.count() else "нет"
+        raise PreconditionError(
+            f"Предусловие: вход через форму не завершился ({str(exc).splitlines()[0]}). Кнопка входа: {button}; "
+            f"окно ошибки входа: {dialog}; ответ входа: {answer}; URL {page.url}"
+        ) from exc
+    finally:
+        page.remove_listener("response", on_response)
+
+
+def _token_reached(page: Page, present: bool, timeout_ms: int) -> bool:
+    """Ждёт, пока token в localStorage появится (present) или исчезнет; False — не дождались.
+
+    Фронт пишет и удаляет token в useEffect после отрисовки (Q-UI-41), поэтому читаем состояние
+    с ожиданием, а не сразу после действия.
+    """
+    condition = (
+        "() => localStorage.getItem('token') !== null" if present else "() => localStorage.getItem('token') === null"
+    )
+    try:
+        page.wait_for_function(condition, timeout=timeout_ms)
+    except PlaywrightTimeoutError:
+        return False
+    return True
 
 
 @pytest.fixture
@@ -144,11 +203,12 @@ def test_pw_token_rejected_after_logout(page: Page, temp_user):
     и красными станут они — красное укажет не туда.
     """
     login_page = PwLoginPage(page)
-    login_page.login_as(temp_user.user)
+    _login_with_diagnostics(page, login_page, temp_user.user)
+    timeout_ms = login_page.expect_timeout
 
     # Токен этой сессии браузера: его и должен отозвать выход. В шаги и логи он не попадает
+    require(_token_reached(page, True, timeout_ms), "Предусловие: после входа в localStorage нет token")
     session_token = login_page.local_storage_item("token")
-    require(bool(session_token), "Предусловие: после входа в localStorage нет token")
     api = IlCarroAPI()
     api.session.headers.update({"Authorization": f"Bearer {session_token}"})
 
@@ -159,8 +219,15 @@ def test_pw_token_rejected_after_logout(page: Page, temp_user):
     with allure.step("Выход через «Log out»"):
         login_page.click_logout()
         login_page.logout_btn.wait_for(state="hidden")
-        require(login_page.local_storage_item("token") is None, "Предусловие: «Log out» не удалил token в браузере")
-        require(urlsplit(page.url).path == "/search", f"Предусловие: после «Log out» открыт {page.url}, а не /search")
+        require(_token_reached(page, False, timeout_ms), "Предусловие: «Log out» не удалил token в браузере")
+        # Выход ведёт на "/", а "/" переводит на /search в useEffect (Q-UI-41): сразу после клика и даже
+        # после скрытия «Log out» page.url ещё бывает "/". Ждём переход, а не читаем URL мгновенно
+        with contextlib.suppress(PlaywrightTimeoutError):
+            page.wait_for_url(SEARCH_URL, wait_until="commit", timeout=timeout_ms)
+        require(
+            urlsplit(page.url).path == "/search",
+            f"Предусловие: за {timeout_ms / 1000:g} с после «Log out» не открылся /search: открыт {page.url}",
+        )
 
     with allure.step("Проверка: тот же токен после выхода — 401"):
         after = api.get_my_cars()
