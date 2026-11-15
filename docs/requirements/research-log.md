@@ -132,6 +132,16 @@
 | Регистрация: пароль `abc123` | 400 | **объект**: `{"password":" At least 8 characters; Must contain at least 1 uppercase letter, 1 lowercase letter, and 1 number; Can contain special characters [@$#^&*!]"}` |
 | Регистрация: пароль `Abcdefg1` | 400 | объект, тот же текст про пароль |
 
+### Тело ответа (используется в тестах)
+
+Регистрация с паролем `abc123`, `POST /v1/user/registration/usernamepassword` — `explore_api_run1.log`, строка Q-API-07 (в `explore_api_run2.log` то же):
+
+```json
+{"status":400,"error":"Bad Request","message":{"password":" At least 8 characters; Must contain at least 1 uppercase letter, 1 lowercase letter, and 1 number; Can contain special characters [@$#^&*!]"},"path":"/v1/user/registration/usernamepassword"}
+```
+
+Поле `timestamp` опущено: в логе его значение замаскировано (`<ts>`).
+
 ## Q-API-08 Маршруты фронтенда, которых нет в Swagger
 
 **Как проверяли:** `q_api_08_routes_not_in_swagger`; каждый маршрут — с токеном и без.
@@ -148,6 +158,16 @@
 - Мусорный токен (`Bearer garbage.token.value`): везде HTTP 401, JSON; `message` = `"Malformed JWT JSON: …"` (за текстом следуют нечитаемые символы).
 - Схема `Basic` вместо `Bearer`: везде HTTP 401, JSON; `message` = `"JWT strings must contain exactly 2 period characters. Found: 0"`.
 - `POST /v1/cars` с мусорным токеном и со схемой `Basic` машину не создал.
+
+### Тело ответа (используется в тестах)
+
+`POST /v1/cars` со схемой `Basic` вместо `Bearer` (`Authorization: Basic <base64 email:пароль>`, в значении нет точек) — `explore_api_run1.log`, строка Q-API-09 (в `explore_api_run2.log` то же). `message` дословно совпадает с ответом на мусорный токен без точек из Q-UI-34 (там записан только `message`):
+
+```json
+{"status":401,"error":"Unauthorized","message":"JWT strings must contain exactly 2 period characters. Found: 0","path":"/v1/cars"}
+```
+
+Поле `timestamp` опущено: в логе его значение замаскировано (`<ts>`).
 
 ## Q-API-10 Удаление
 
@@ -263,6 +283,16 @@
 - Запрос: `POST /v1/cars`, `city="Beersheba"`; ответ HTTP 400, `message`: `"City Beersheba is not supported"`. Машины у владельца нет.
 - Скриншот: `q_ui_03_ui_only_city.png`.
 
+### Тело ответа (используется в тестах)
+
+`POST /v1/cars` с `city="Beersheba"` из формы — `explore_ui_run1.log` (в `explore_ui_run2.log` то же):
+
+```json
+{"status":400,"error":"Bad Request","message":"City Beersheba is not supported","path":"/v1/cars"}
+```
+
+Поле `timestamp` опущено: в логе его значение замаскировано (`<ts>`).
+
 ## Q-UI-04 Форма без города
 
 **Как проверяли:** `q_ui_04_no_city`.
@@ -270,6 +300,16 @@
 - Кнопка Submit доступна (`enabled=True`, атрибута `disabled` нет).
 - После клика: запрос `POST /v1/cars` с `"city": ""`; ответ HTTP 400, `message`: `{"city":"must not be blank"}`. На экране текст «Failed to submit car». Машины нет.
 - Скриншот: `q_ui_04_no_city.png`.
+
+### Тело ответа (используется в тестах)
+
+`POST /v1/cars` с `"city": ""` из формы — `explore_ui_run1.log` (в `explore_ui_run2.log` то же; тот же ответ в Q-API-17):
+
+```json
+{"status":400,"error":"Bad Request","message":{"city":"must not be blank"},"path":"/v1/cars"}
+```
+
+Поле `timestamp` опущено: в логе его значение замаскировано (`<ts>`).
 
 ## Q-UI-05 Поля gear, wheelsDrive, doors; значение fuel
 

@@ -41,7 +41,7 @@ OBSERVATIONS: dict[str, Observation] = {
         ref="OBS-05",
         description=(
             "После ответа 401 фронт удаляет токен, но оставляет пользователя на той же странице, и «Log out» "
-            "остаётся в навигации до перезагрузки (Q-UI-13, Q-UI-17)"
+            "остаётся в навигации до перезагрузки (Q-UI-13, Q-UI-17, Q-UI-39)"
         ),
     ),
     "SEARCH_CITY_CASE_SENSITIVE": Observation(

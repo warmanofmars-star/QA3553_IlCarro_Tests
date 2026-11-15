@@ -72,7 +72,8 @@ def test_pw_login_other_error_text(page: Page, backend_write_guard, login_failur
     """
     Ветка «любая другая ошибка» REQ-UI-LOGIN-03: при сбое, отличном от 401, окно должно сказать
     «Login failed. Try again», а не обвинять пользователя в неверном пароле (Q-UI-10).
-    Ответ входа подменён, запрос до бэкенда не доходит; ветку 401 проверяет test_login_negative_backend.
+    Ответ входа подменён (статус из Swagger, тело пустое: экран входа тело не читает, Q-UI-37), запрос
+    до бэкенда не доходит; ветку 401 проверяет test_login_negative_backend.
     """
     # Пользователь не регистрируется: данные нужны только, чтобы форма отправила запрос
     user = UserGenerator.get_random_user()
@@ -84,7 +85,7 @@ def test_pw_login_other_error_text(page: Page, backend_write_guard, login_failur
         sent = faults.abort(LOGIN, "POST")
     else:
         status = {"server_error_500": 500, "bad_request_400": 400}[login_failure]
-        sent = faults.respond(LOGIN, "POST", status)
+        sent = faults.respond_empty(LOGIN, "POST", status)
 
     with allure.step(f"Вход: запрос перехвачен, сбой — {login_failure}"):
         send_and_settle(page, "POST", LOGIN_PATH, lambda: pw_login_page.login(user.email, user.password))
@@ -112,14 +113,14 @@ def test_pw_login_other_error_text(page: Page, backend_write_guard, login_failur
 def test_pw_login_sends_email_lowercase(page: Page, backend_write_guard):
     """
     Фронт приводит email к нижнему регистру перед отправкой (REQ-UI-LOGIN-01, Q-UI-09). Запрос входа
-    перехвачен, ответ подменён на 401: пользователь не нужен, на бэкенд ничего не уходит.
+    перехвачен, ответ подменён на 401 с пустым телом: пользователь не нужен, на бэкенд ничего не уходит.
     """
     user = UserGenerator.get_random_user()
     typed_email = user.email.replace("user_", "User_").replace("@example.com", "@Example.COM")
     require(typed_email != typed_email.lower(), f"Предусловие: в email {typed_email} нет заглавных букв")
     pw_login_page = PwLoginPage(page)
     pw_login_page.open()
-    sent = NetworkFaults(page).respond(LOGIN, "POST", 401)
+    sent = NetworkFaults(page).respond_empty(LOGIN, "POST", 401)
 
     with allure.step(f"Вход с email {typed_email}: запрос перехвачен"):
         send_and_settle(page, "POST", LOGIN_PATH, lambda: pw_login_page.login(typed_email, user.password))

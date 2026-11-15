@@ -142,7 +142,7 @@ KNOWN_BUGS: dict[str, KnownBug] = {
         refs=("DISC-05",),
         description=(
             "Фронт обращается к операциям, которых нет в Swagger и на бэкенде: GET /v1/cars/{id} (страница машины), "
-            "GET и PUT /v1/user/profile (страница профиля) (Q-API-08, Q-UI-18, Q-UI-19)"
+            "GET /v1/user/profile (страница профиля) (Q-API-08, Q-UI-18, Q-UI-19)"
         ),
     ),
     "CAR_FORM_CITY_NOT_VALIDATED": KnownBug(

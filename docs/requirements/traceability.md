@@ -33,15 +33,15 @@
 | 🟡 частично | 0 | 0 | 0 | 0 |
 | 🐞 покрыт как известный баг | 15 | 7 | 0 | 22 |
 | 👁 покрыт как наблюдение | 0 | 0 | 11 | 11 |
-| ⚪ исключение | 3 | 2 | 0 | 5 |
+| ⚪ исключение | 3 | 3 | 0 | 6 |
 | 🕓 запланирован | 0 | 0 | 0 | 0 |
-| **Всего** | 55 | 9 | 11 | 75 |
+| **Всего** | 55 | 10 | 11 | 76 |
 
-- **Исключения по категориям:** вредит общему бэкенду — 1; заблокировано другим дефектом — 2; функциональность недостижима — 2.
+- **Исключения по категориям:** вредит общему бэкенду — 1; заблокировано другим дефектом — 2; функциональность недостижима — 3.
 - **Запланировано:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 0.
 - **Покрыто частично, доработка:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 0.
 - **Известные баги:** 21 в реестре `data/known_bugs.py`; **наблюдения:** 11 в реестре `data/observations.py`.
-- **Автотесты:** 160, у каждого есть тег хотя бы одного пункта.
+- **Автотесты:** 158, у каждого есть тег хотя бы одного пункта.
 
 ## Требования и тесты
 
@@ -156,7 +156,7 @@
 
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
-| REQ-UI-SESSION-01 | При ответе 401 фронт удаляет `token` и запоминает `postLoginRedirect`. | `test_playwright_backend_faults.py::test_pw_401_on_screen_clears_token`<br>`test_playwright_session.py::test_pw_401_clears_token_and_remembers_redirect` | — | ✅ покрыт |
+| REQ-UI-SESSION-01 | При ответе 401 фронт удаляет `token` и запоминает `postLoginRedirect`. | `test_playwright_backend_faults.py::test_pw_401_on_screen_clears_token` | — | ✅ покрыт |
 | REQ-UI-SESSION-02 | «Log out» удаляет токен и переводит на `/search`. | `test_playwright_session.py::test_pw_logout_clears_token_and_opens_search` | — | ✅ покрыт |
 | REQ-UI-SESSION-03 | Неудачная попытка входа или регистрации — ответ ошибки или обрыв соединения — не создаёт сессию: в localStorage нет `token`, в навигации нет «Log out». | `test_playwright_backend_faults.py::test_pw_rejected_login_creates_no_session`<br>`test_playwright_backend_faults.py::test_pw_failed_login_creates_no_session`<br>`test_playwright_backend_faults.py::test_pw_failed_registration_creates_no_session` | — | ✅ покрыт |
 
@@ -168,11 +168,12 @@
 | DISC-02 | Города: во фронтенде 54, в API 37, общих 22. | `test_dictionaries.py::test_frontend_backend_cities_mapping` | `CITIES_MISMATCH` | 🐞 покрыт как известный баг |
 | DISC-03 | Регистр email внутри API: регистрация приводит email к нижнему регистру (повтор с другим регистром — «User already exists»), вход — нет (email с заглавными — 401). | `test_api_auth.py::test_api_login_email_case` | `LOGIN_EMAIL_CASE_SENSITIVE` | 🐞 покрыт как известный баг |
 | DISC-04 | Поля формы машины Gear, WD, Doors (и `features` в состоянии формы) отсутствуют в `CarDto`; фронт их собирает и не отправляет. | `test_playwright_car_form.py::test_pw_car_form_sends_gear_wd_doors` | `CAR_FORM_FIELDS_NOT_SENT` | 🐞 покрыт как известный баг |
-| DISC-05 | Фронт обращается к эндпоинтам, которых нет ни в Swagger, ни на бэкенде: `GET /v1/cars/{id}`, `GET` и `PUT /v1/user/profile`. | `test_playwright_car_page.py::test_pw_car_page_request_is_documented`<br>`test_playwright_car_page.py::test_pw_profile_page_request_is_documented`<br>`test_playwright_car_page.py::test_pw_profile_save_request_is_documented` | `FRONTEND_CALLS_UNDOCUMENTED_ENDPOINTS` | 🐞 покрыт как известный баг |
+| DISC-05 | Фронт обращается к эндпоинтам, которых нет ни в Swagger, ни на бэкенде: `GET /v1/cars/{id}`, `GET /v1/user/profile`. | `test_playwright_car_page.py::test_pw_car_page_request_is_documented`<br>`test_playwright_car_page.py::test_pw_profile_page_request_is_documented` | `FRONTEND_CALLS_UNDOCUMENTED_ENDPOINTS` | 🐞 покрыт как известный баг |
 | DISC-06 | Бронирование: Swagger описывает эндпоинт, фронт считает его не реализованным («Бронирование пока не реализовано в API»), API отвечает успехом, ничего не сохраняя. | — | — | ⚪ исключение: функциональность недостижима |
 | DISC-07 | Границы полей машины: фронт требует Seats ≥ 1 и Price ≥ 1; в Swagger ограничений нет; API принимает 0 и отрицательные значения. | `test_api_car.py::test_api_rejects_car_values_forbidden_by_form`<br>`test_car_form_validation.py::test_car_form_value_below_one` | `CAR_LIMITS_MISMATCH` | 🐞 покрыт как известный баг |
 | DISC-08 | Пагинация: фронт передаёт `page` и `size` в поиск; в Swagger параметров нет; API их игнорирует. | `test_api_search.py::test_api_search_page_size` | `SEARCH_PAGINATION_IGNORED` | 🐞 покрыт как известный баг |
 | DISC-09 | Страница машины читает поля, которых нет в `CarDto`: `make`, `car_class`, `image_url`, `imageUrl`, `price_per_day`, `engine`, `gear`, `wheels_drive`, `fuel_consumption`, `doors`, `address`, `distance_included`, `description`. | — | — | ⚪ исключение: заблокировано другим дефектом (DISC-05) |
+| DISC-10 | Фронт отправляет `PUT /v1/user/profile` для сохранения профиля; операции нет в Swagger. | — | — | ⚪ исключение: функциональность недостижима |
 
 ### 4. Наблюдения (OBS)
 
@@ -205,6 +206,7 @@
 | REQ-UI-CARPAGE-02 | функциональность недостижима | Кнопка «Rent now!!» находится на странице машины, а страница не открывается: «Не удалось загрузить машину» (REQ-UI-CARPAGE-01, Q-UI-02) |
 | DISC-06 | функциональность недостижима | Сторона фронтенда — сообщение «Бронирование пока не реализовано в API» — на странице машины, которая не открывается (REQ-UI-CARPAGE-01). Сторону API проверяют REQ-BOOK-01 и REQ-BOOK-02 |
 | DISC-09 | заблокировано другим дефектом: DISC-05 | Поля, которые читает страница машины, видны только в ответе GET /v1/cars/{id}, а у этого эндпоинта нет контракта (DISC-05): на бэкенде он отвечает 403, в браузере обрывается (Q-UI-01, Q-UI-19). Подменять ответ несуществующего эндпоинта не будем — его тело пришлось бы выдумать. Согласовано с пользователем |
+| DISC-10 | функциональность недостижима | PUT /v1/user/profile фронт отправляет только после успешной загрузки профиля, а GET /v1/user/profile всегда заканчивается сбоем (Q-UI-27, Q-UI-33). Подменять ответ эндпоинта вне Swagger нельзя (правило подмены, CLAUDE.md). Пока GET /v1/user/profile не отвечает успешно; если начнёт — исключение пересматривается |
 
 ### Запланировано: PR 6.2 (API)
 
