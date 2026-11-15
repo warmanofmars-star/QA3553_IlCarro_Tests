@@ -89,11 +89,6 @@ DELAYS = (5, 35)
 CITY = "Sderot"  # малое число машин (Q-API-14): ответ поиска лёгкий
 # Без точек: парсер JWT отклоняет такой токен (Q-UI-13), пользователя за ним нет
 GARBAGE_TOKEN = "probe-garbage-token"
-# Стандартная страница ошибки nginx — так отвечает посредник, когда приложение за ним недоступно
-PROXY_502_HTML = (
-    "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n"
-    "<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
-)
 # Город сбойного поиска в search.stale500.other_city: есть в списке CityAutocomplete. Запрос с ним до сервера
 # не доходит (500 подменой, иначе обрыв) — на общем бэкенде ищем только CITY
 OTHER_CITY = "Haifa"
@@ -172,45 +167,6 @@ def journal_counts() -> tuple[int, int]:
 
 
 # ---------------------------------------------------------------- сбои
-
-
-class Held:
-    """Удержанные запросы: висят без ответа, пока скрипт не вызовет release()."""
-
-    def __init__(self) -> None:
-        self.routes: list[Route] = []
-        self.released = False
-
-    def release(self) -> None:
-        # fallback, а не continue_: запрос проходит дальше по цепочке маршрутов (разрешение чтения
-        # и входа, затем защита), поэтому и после задержки пишущий запрос не уйдёт на сервер
-        self.released = True
-        while self.routes:
-            self.routes.pop(0).fallback()
-
-
-class ProbeFaults(NetworkFaults):
-    """Сбои, которых нет в utils/network_faults: страница посредника и задержка.
-
-    Пустое тело (respond_empty) и тело настоящего ответа (respond_recorded) — из utils (шаг 7b).
-    Счётчик срабатываний — тот же _intercept.
-    """
-
-    def respond_proxy_page(self, url: str, method: str, status: int) -> list[Request]:
-        return self._intercept(
-            url, method, lambda route: route.fulfill(status=status, content_type="text/html", body=PROXY_502_HTML)
-        )
-
-    def hold(self, url: str, method: str) -> tuple[list[Request], Held]:
-        held = Held()
-
-        def action(route: Route) -> None:
-            if held.released:
-                route.fallback()
-            else:
-                held.routes.append(route)
-
-        return self._intercept(url, method, action), held
 
 
 def allow_reads_and_logins(page: Page, real: list[str]) -> None:
@@ -722,7 +678,7 @@ def fault_cell(
     try:
         screen.prepare(probe.page)
         pre = snap(probe, screen)
-        faults = ProbeFaults(probe.page)
+        faults = NetworkFaults(probe.page)
         if kind == "recorded":
             sent = faults.respond_recorded(
                 screen.pattern, screen.method, 400, REGISTER_400_WEAK_PASSWORD, source="Q-API-07"
@@ -789,18 +745,19 @@ def delay_cell(browser: Browser, screen: Screen, seconds: int) -> None:
     probe = open_probe(browser)
     try:
         screen.prepare(probe.page)
-        sent, held = ProbeFaults(probe.page).hold(screen.pattern, screen.method)
+        # then="fallback": после задержки запрос идёт дальше по цепочке — к разрешению входа и поиска
+        # (настоящий запрос), а пишущий запрос — к защите
+        held = NetworkFaults(probe.page).hold(screen.pattern, screen.method, seconds, then="fallback")
+        sent = held.requests
         started = time.monotonic()
         request = send(probe, screen, screen.trigger)
         at_start = snap(probe, screen)
-        # Пауза — это и есть внедрённый сбой: у задержки сервера нет наблюдаемого состояния, которого
-        # можно ждать. wait_for_timeout, а не time.sleep: в синхронном Playwright sleep остановил бы
-        # обработку событий страницы (маршруты, консоль), и снимок «во время задержки» был бы ложным
-        probe.page.wait_for_timeout(seconds * 1000)
+        # Пауза — сам внедрённый сбой (см. HeldRequests.wait); отсчёт — от перехвата запроса
+        held.wait()
         during = snap(probe, screen)
         failed_during = [x for x in probe.api_log if "сбой" in x]
         check_intercepted(sent, f"{screen.method} {screen.path} → задержка {seconds} с")
-        held.release()
+        held.finish()
         result = finish(request)
         screen.settle(probe.page)
         elapsed = time.monotonic() - started
@@ -833,7 +790,7 @@ def search_stale_cell(browser: Browser) -> None:
         first = finish(send(probe, screen, screen.trigger))
         screen.settle(probe.page)
         before = snap(probe, screen)
-        sent = ProbeFaults(probe.page).respond_empty(SEARCH, "POST", 500)
+        sent = NetworkFaults(probe.page).respond_empty(SEARCH, "POST", 500)
         result = finish(send(probe, screen, screen.trigger))
         screen.settle(probe.page)
         after = snap(probe, screen)
@@ -886,7 +843,7 @@ def search_other_city_cell(browser: Browser) -> None:
         choose_city(probe.page, OTHER_CITY)
         pick_range(probe.page, today + timedelta(days=2), today + timedelta(days=3))
         changed_state = search_state(probe.page)
-        sent = ProbeFaults(probe.page).respond_empty(SEARCH, "POST", 500)
+        sent = NetworkFaults(probe.page).respond_empty(SEARCH, "POST", 500)
         request = send(probe, screen, screen.trigger)
         result = finish(request)
         screen.settle(probe.page)
