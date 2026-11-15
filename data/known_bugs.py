@@ -159,6 +159,14 @@ KNOWN_BUGS: dict[str, KnownBug] = {
             "по коду LetCarWork статус успеха ставится и тут же сбрасывается очисткой формы (Q-UI-15, Q-UI-26)"
         ),
     ),
+    "DUPLICATE_EMAIL_409_BRANCH_UNREACHABLE": KnownBug(
+        refs=("DISC-11",),
+        description=(
+            "Фронт показывает «User with that email already exists» только на ответ 409, а сервер на повтор email "
+            'отвечает 400 "User already exists" (409 в Swagger нет): на настоящий повтор UI показывает окно '
+            "«Registration failed» с текстом сервера (Q-API-07, Q-UI-08, Q-UI-31)"
+        ),
+    ),
     "CAR_LIMITS_MISMATCH": KnownBug(
         refs=("DISC-07",),
         description=(

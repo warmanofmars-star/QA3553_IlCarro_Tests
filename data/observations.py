@@ -65,6 +65,27 @@ OBSERVATIONS: dict[str, Observation] = {
             "(Q-UI-12, Q-UI-24)"
         ),
     ),
+    "SEARCH_FAILURE_NOT_SHOWN": Observation(
+        ref="OBS-12",
+        description=(
+            "Сбой поиска (ответ 500, обрыв, страница посредника 502) ничем не обозначен: блока role=status "
+            "или role=alert нет, кнопка снова «Yalla!» (Q-UI-24, Q-UI-28)"
+        ),
+    ),
+    "STALE_RESULTS_AFTER_FAILED_SEARCH": Observation(
+        ref="OBS-13",
+        description=(
+            "После сбоя поиска по другому городу и датам на экране остаются карточки прошлого поиска, сообщения "
+            "нет; форма и URL показывают уже новый город (Q-UI-29, Q-UI-38)"
+        ),
+    ),
+    "LOGIN_WAIT_UNBOUNDED": Observation(
+        ref="OBS-14",
+        description=(
+            "Через 35 с после отправки входа без ответа кнопка «Loading...», сообщения нет, запрос фронтом "
+            "не прерван (Q-UI-27, Q-UI-35)"
+        ),
+    ),
     "GUEST_OPENS_CAR_FORM": Observation(
         ref="OBS-06",
         description=(
