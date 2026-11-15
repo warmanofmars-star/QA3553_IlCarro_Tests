@@ -1,5 +1,5 @@
 """
-API регистрации и входа: REQ-AUTH-01 … REQ-AUTH-07 и расхождение DISC-03.
+API регистрации и входа: REQ-AUTH-01 … REQ-AUTH-07, расхождение DISC-03 и сторона сервера DISC-11.
 
 Пользователей API удалить не умеет, поэтому новый аккаунт здесь создаётся только там, где регистрация
 и есть проверка. Фикстура registered_user регистрирует ОДНОГО пользователя на модуль и сохраняет ответ:
@@ -111,9 +111,12 @@ def test_api_registration_success(registered_user):
 @allure.feature("Authentication")
 @allure.story("Registration")
 @allure.severity(allure.severity_level.CRITICAL)
-@allure.tag("REQ-AUTH-04")
+@allure.tag("REQ-AUTH-04", "DISC-11")
 def test_api_registration_existing_user(registered_user):
     """Повторная регистрация того же username — 400.
+
+    Это и сторона сервера расхождения DISC-11: на повтор email сервер отвечает 400 по Swagger, а не 409,
+    которого ждёт фронт (сторона UI — test_pw_duplicate_email_message).
 
     Повторяется РОВНО то тело, которое только что прошло регистрацию (200, require). Раз то же тело
     было валидным, отказ валидации исключён, и 400 может означать только повтор username. Поэтому

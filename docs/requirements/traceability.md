@@ -29,19 +29,19 @@
 
 | Статус | REQ | DISC | OBS | Всего |
 |---|---:|---:|---:|---:|
-| ✅ покрыт | 37 | 0 | 0 | 37 |
+| ✅ покрыт | 38 | 0 | 0 | 38 |
 | 🟡 частично | 0 | 0 | 0 | 0 |
-| 🐞 покрыт как известный баг | 15 | 7 | 0 | 22 |
-| 👁 покрыт как наблюдение | 0 | 0 | 11 | 11 |
+| 🐞 покрыт как известный баг | 15 | 8 | 0 | 23 |
+| 👁 покрыт как наблюдение | 0 | 0 | 15 | 15 |
 | ⚪ исключение | 3 | 3 | 0 | 6 |
 | 🕓 запланирован | 0 | 0 | 0 | 0 |
-| **Всего** | 55 | 10 | 11 | 76 |
+| **Всего** | 56 | 11 | 15 | 82 |
 
 - **Исключения по категориям:** вредит общему бэкенду — 1; заблокировано другим дефектом — 2; функциональность недостижима — 3.
 - **Запланировано:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 0.
 - **Покрыто частично, доработка:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 0.
-- **Известные баги:** 21 в реестре `data/known_bugs.py`; **наблюдения:** 11 в реестре `data/observations.py`.
-- **Автотесты:** 158, у каждого есть тег хотя бы одного пункта.
+- **Известные баги:** 22 в реестре `data/known_bugs.py`; **наблюдения:** 15 в реестре `data/observations.py`.
+- **Автотесты:** 170, у каждого есть тег хотя бы одного пункта.
 
 ## Требования и тесты
 
@@ -114,6 +114,7 @@
 | REQ-UI-REG-02 | После успешной регистрации — окно «Registered» / «You are logged in success»; пользователь залогинен. | `test_registration.py::test_registration_success` | — | ✅ покрыт |
 | REQ-UI-REG-03 | При ответе 400 окно «Registration failed» показывает текст ошибки сервера. | `test_registration.py::test_registration_existing_user`<br>`test_registration.py::test_registration_password_rejected_by_api` | `PASSWORD_RULES_MISMATCH` | 🐞 покрыт как известный баг |
 | REQ-UI-REG-04 | Гость видит в навигации ссылку «Sign up»; она ведёт на форму регистрации `/register`. | `test_registration.py::test_navigation_to_registration` | — | ✅ покрыт |
+| REQ-UI-REG-05 | При ответе 401 или 500 на регистрацию и при обрыве соединения — сообщение `role=alert` «Registration failed. Try again». | `test_playwright_ui_faults.py::test_pw_registration_failure_message` | — | ✅ покрыт |
 
 ### 2.2 Вход (UI-LOGIN)
 
@@ -128,7 +129,7 @@
 | ID | Формулировка | Тесты | Реестр | Статус |
 |---|---|---|---|---|
 | REQ-UI-CAR-01 | Поля, отмеченные `*`, проверяются до отправки: City, Make, Model, Year, Fuel, Seats (≥ 1), Car class, Car registration number, Price (≥ 1). | `test_car_form_validation.py::test_car_form_required_field`<br>`test_car_form_validation.py::test_car_form_city_required` | `CAR_FORM_CITY_NOT_VALIDATED` | 🐞 покрыт как известный баг |
-| REQ-UI-CAR-02 | Успешная отправка — «Car submitted successfully» и очистка формы; ошибка — «Failed to submit car». | `test_add_car.py::test_add_car_success`<br>`test_add_car.py::test_add_car_duplicate`<br>`test_playwright_add_car.py::test_real_add_car_success`<br>`test_playwright_add_car.py::test_pw_add_car_duplicate`<br>`test_playwright_car_form.py::test_pw_car_form_success_text` | `CAR_SUCCESS_TEXT_NOT_SHOWN` | 🐞 покрыт как известный баг |
+| REQ-UI-CAR-02 | Успешная отправка — «Car submitted successfully» и очистка формы; ошибка — «Failed to submit car». | `test_add_car.py::test_add_car_success`<br>`test_add_car.py::test_add_car_duplicate`<br>`test_playwright_add_car.py::test_real_add_car_success`<br>`test_playwright_add_car.py::test_pw_add_car_duplicate`<br>`test_playwright_car_form.py::test_pw_car_form_success_text`<br>`test_playwright_ui_faults.py::test_pw_car_form_failure_message` | `CAR_SUCCESS_TEXT_NOT_SHOWN` | 🐞 покрыт как известный баг |
 | REQ-UI-CAR-03 | Значение Fuel уходит в API строчными: `petrol`, `diesel`, `hybrid`, `electric`. | `test_playwright_car_form.py::test_pw_car_form_sends_fuel_lowercase` | — | ✅ покрыт |
 | REQ-UI-CAR-04 | Фото — ссылкой или файлом; файл отправляется в поле `image` как data URL (base64). | `test_playwright_car_form.py::test_pw_car_form_sends_photo_file_as_data_url`<br>`test_playwright_car_form.py::test_pw_car_form_sends_photo_link` | — | ✅ покрыт |
 | REQ-UI-CAR-05 | При ответе 401 на отправку формы машины UI не показывает пользователю текст ошибки из ответа сервера. | `test_playwright_backend_faults.py::test_pw_car_form_401_hides_server_message` | — | ✅ покрыт |
@@ -174,6 +175,7 @@
 | DISC-08 | Пагинация: фронт передаёт `page` и `size` в поиск; в Swagger параметров нет; API их игнорирует. | `test_api_search.py::test_api_search_page_size` | `SEARCH_PAGINATION_IGNORED` | 🐞 покрыт как известный баг |
 | DISC-09 | Страница машины читает поля, которых нет в `CarDto`: `make`, `car_class`, `image_url`, `imageUrl`, `price_per_day`, `engine`, `gear`, `wheels_drive`, `fuel_consumption`, `doors`, `address`, `distance_included`, `description`. | — | — | ⚪ исключение: заблокировано другим дефектом (DISC-05) |
 | DISC-10 | Фронт отправляет `PUT /v1/user/profile` для сохранения профиля; операции нет в Swagger. | — | — | ⚪ исключение: функциональность недостижима |
+| DISC-11 | Повтор email при регистрации: фронт обрабатывает ответ 409 — `role=alert` «User with that email already exists»; Swagger 409 не объявляет (у регистрации ответы 200, 400, 401, 500); сервер на повтор email отвечает 400 `"User already exists"`. | `test_api_auth.py::test_api_registration_existing_user`<br>`test_playwright_ui_faults.py::test_pw_duplicate_email_message` | `DUPLICATE_EMAIL_409_BRANCH_UNREACHABLE` | 🐞 покрыт как известный баг |
 
 ### 4. Наблюдения (OBS)
 
@@ -190,6 +192,10 @@
 | OBS-09 | После регистрации URL остаётся `/register`. | `test_playwright_ui_observations.py::test_pw_registration_leaves_register_url` | `REGISTER_URL_UNCHANGED` | 👁 покрыт как наблюдение |
 | OBS-10 | Кнопка «предыдущий месяц» в календаре доступна, но ничего не делает. | `test_calendar.py::test_calendar_prev_month_disabled_in_current_month` | `PREV_MONTH_BUTTON_ENABLED` | 👁 покрыт как наблюдение |
 | OBS-11 | Интерфейс на английском, но страницы машины и профиля показывают русские тексты: «Не удалось загрузить машину», «Загрузка...», «Мой профиль». | `test_playwright_ui_observations.py::test_pw_page_texts_in_english` | `RUSSIAN_TEXTS_IN_ENGLISH_UI` | 👁 покрыт как наблюдение |
+| OBS-12 | Сбой запроса поиска — ответ ошибки (500), обрыв соединения, страница посредника (502) — ничем не обозначен на экране: сообщений нет, кнопка снова «Yalla!». | `test_playwright_ui_faults.py::test_pw_search_failure_announced` | `SEARCH_FAILURE_NOT_SHOWN` | 👁 покрыт как наблюдение |
+| OBS-13 | После неудачного поиска на экране остаётся выдача прошлого успешного поиска, в том числе другого города и дат, без пометки: форма и URL уже показывают новый город и даты, а карточка города и дат не показывает. | `test_playwright_ui_faults.py::test_pw_failed_search_drops_stale_results` | `STALE_RESULTS_AFTER_FAILED_SEARCH` | 👁 покрыт как наблюдение |
+| OBS-14 | У входа нет предела ожидания ответа: через 35 с после отправки формы кнопка «Loading...», сообщения нет, запрос фронтом не прерван. | `test_playwright_ui_faults.py::test_pw_login_wait_bounded` | `LOGIN_WAIT_UNBOUNDED` | 👁 покрыт как наблюдение |
+| OBS-15 | При ответе 400 без поля `message` окно регистрации показывает внутренний текст библиотеки «Request failed with status code 400». | `test_playwright_ui_faults.py::test_pw_registration_400_without_message` | `REGISTER_ERROR_LIBRARY_TEXT` | 👁 покрыт как наблюдение |
 
 ## Реестр исключений покрытия
 

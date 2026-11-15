@@ -1,3 +1,5 @@
+from datetime import date
+
 import allure
 from playwright.sync_api import Page
 
@@ -42,6 +44,36 @@ class PwSearchPage(PwBasePage):
         self.today.click()
         self.today.click()
         self.submit_btn.click()
+
+    @allure.step("Город {city}: выбор из подсказки")
+    def choose_city(self, city: str):
+        self.city_input.fill(city)
+        self.page.locator(f"[data-testid='city-option'][data-value='{city}']").click()
+
+    @allure.step("Даты: {start} — {end}")
+    def pick_range(self, start: date, end: date):
+        """Диапазон дат в календаре; календарь открывается на текущем месяце (как в пробах Q-UI-38)."""
+        self.dates_input.click()
+        shown = (date.today().year, date.today().month)
+        for day in (start, end):
+            if (day.year, day.month) != shown:
+                self.page.locator(".rdrNextButton").click()
+                shown = (day.year, day.month)
+            # Точное совпадение числа: подстрока «1» нашла бы и 11, и 21
+            day_number = self.page.get_by_text(str(day.day), exact=True)
+            self.page.locator("button.rdrDay:not(.rdrDayPassive):not(.rdrDayDisabled)").filter(
+                has=day_number
+            ).first.click()
+        # Клик вне календаря закрывает его (REQ-UI-SEARCH-06)
+        self.page.locator("h1.title").click()
+
+    @allure.step("Клик «Yalla!»")
+    def submit(self):
+        self.submit_btn.click()
+
+    def card_links(self) -> list[str]:
+        """Адреса карточек выдачи (/cars/{serialNumber}): сравнить наборы, не читая данных машин."""
+        return self.cards.evaluate_all("els => els.map(e => e.getAttribute('href'))")
 
     def card(self, serial_number: str):
         """Карточка машины в выдаче: ссылка на /cars/{serialNumber} (FE: Search)."""
