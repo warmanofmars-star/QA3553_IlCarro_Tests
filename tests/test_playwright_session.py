@@ -1,5 +1,6 @@
 """
-Сессия в интерфейсе: REQ-UI-SESSION-01, REQ-UI-SESSION-02, REQ-SEC-06 и наблюдение OBS-05.
+Сессия в интерфейсе: REQ-UI-SESSION-02, REQ-SEC-06 и наблюдение OBS-05.
+REQ-UI-SESSION-01 (401 удаляет token и запоминает postLoginRedirect) — test_playwright_backend_faults.py.
 
 Ответ 401 подменяется (utils/network_faults.py, тело пустое: форма машины тело не читает, Q-UI-37):
 сценарий «сервер перестал принимать токен» воспроизводится без порчи настоящей сессии, а запрос
@@ -95,7 +96,8 @@ def _token_reached(page: Page, present: bool, timeout_ms: int) -> bool:
 def session_after_401(page: Page, shared_user, shared_car_cleanup, backend_write_guard) -> PwAddCarPage:
     """Залогиненный пользователь отправил форму машины, а сервер ответил 401 (ответ подменён, тело пустое).
 
-    Сценарий общий для REQ-UI-SESSION-01 и OBS-05, проверки — в разных тестах. Возвращает страницу
+    Сценарий тестов OBS-05 (REQ-UI-SESSION-01 на том же сценарии — test_pw_401_on_screen_clears_token
+    в test_playwright_backend_faults.py). Возвращает страницу
     формы в состоянии «ответ 401 получен и обработан перехватчиком фронта».
     """
     add_car_page = PwAddCarPage(page)
@@ -122,20 +124,6 @@ def session_after_401(page: Page, shared_user, shared_car_cleanup, backend_write
         # а не читаем localStorage сразу после ответа: обработчики страницы могли ещё не отработать
         add_car_page.submit_error_message.wait_for(state="visible")
     return add_car_page
-
-
-@allure.epic("Playwright Testing")
-@allure.feature("Session")
-@allure.story("Response 401")
-@allure.title("После 401 фронт удаляет token и запоминает postLoginRedirect")
-@allure.tag("REQ-UI-SESSION-01")
-def test_pw_401_clears_token_and_remembers_redirect(session_after_401):
-    with allure.step("Проверка localStorage после ответа 401"):
-        assert session_after_401.local_storage_item("token") is None, "После ответа 401 token остался в localStorage"
-        redirect = session_after_401.local_storage_item("postLoginRedirect")
-        assert redirect == session_after_401.endpoint, (
-            f"После ответа 401 ожидали postLoginRedirect={session_after_401.endpoint!r}, в localStorage {redirect!r}"
-        )
 
 
 @allure.epic("Playwright Testing")

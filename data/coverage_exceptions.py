@@ -106,6 +106,15 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
             "которая не открывается (REQ-UI-CARPAGE-01). Сторону API проверяют REQ-BOOK-01 и REQ-BOOK-02"
         ),
     ),
+    "DISC-10": CoverageException(
+        category=UNREACHABLE,
+        reason=(
+            "PUT /v1/user/profile фронт отправляет только после успешной загрузки профиля, а GET /v1/user/profile "
+            "всегда заканчивается сбоем (Q-UI-27, Q-UI-33). Подменять ответ эндпоинта вне Swagger нельзя "
+            "(правило подмены, CLAUDE.md). Пока GET /v1/user/profile не отвечает успешно; если начнёт — "
+            "исключение пересматривается"
+        ),
+    ),
     "DISC-09": CoverageException(
         category=BLOCKED,
         blocked_by=("DISC-05",),

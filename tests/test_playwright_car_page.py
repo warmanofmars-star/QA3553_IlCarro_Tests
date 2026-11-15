@@ -3,7 +3,8 @@
 
 Машин тесты не создают: открывается существующая машина из выдачи города с малым числом машин
 (SearchDataGenerator.SMALL_CITY). Запросы чтения (GET) уходят на настоящий бэкенд — данных они
-не меняют; PUT /v1/user/profile перехватывается и до бэкенда не доходит.
+не меняют. Ответы не подменяются: эндпоинты вне Swagger в тестах не подменяются ничем (CLAUDE.md),
+поэтому PUT /v1/user/profile, который уходит только после загруженного профиля, не проверяется (DISC-10).
 """
 
 from dataclasses import dataclass
@@ -18,13 +19,12 @@ from data.data_generator import SearchDataGenerator
 from data.known_bugs import known_bug
 from pages.pw_base_page import PwBasePage
 from pages.pw_search_page import PwSearchPage
-from utils.network_faults import PROFILE, NetworkFaults, api_response, require_intercepted, send_and_settle
+from utils.network_faults import api_response
 from utils.preconditions import require
 from utils.swagger_contract import documented_operations, is_documented
 
 pytestmark = [pytest.mark.ui, pytest.mark.regression]
 
-PROFILE_PATH = "/v1/user/profile"
 # Модель короче трёх символов могла бы найтись на странице случайно — такую машину не берём
 MIN_MODEL_LENGTH = 3
 
@@ -127,44 +127,6 @@ def test_pw_profile_page_request_is_documented(page: Page, shared_user):
     ):
         base_page.open_url("/profile")
     request = request_info.value
-
-    with allure.step(f"Проверка: {request.method} {urlsplit(request.url).path} есть в Swagger"):
-        assert is_documented(request.method, urlsplit(request.url).path), _undocumented_message(request)
-
-
-@allure.epic("Playwright Testing")
-@allure.feature("Profile Page")
-@allure.story("Frontend requests vs Swagger")
-@allure.title("Запрос сохранения профиля описан в Swagger")
-@known_bug("FRONTEND_CALLS_UNDOCUMENTED_ENDPOINTS")
-@allure.tag("DISC-05")
-def test_pw_profile_save_request_is_documented(page: Page, shared_user, backend_write_guard):
-    """
-    «Сохранить» на странице профиля отправляет PUT /v1/user/profile, которого нет в Swagger (Q-UI-18).
-
-    До кнопки не дойти без загруженного профиля, а GET /v1/user/profile на бэкенде не существует,
-    поэтому его ответ подменён. Тело подмены придумано тестом — у приложения такого ответа нет;
-    оно нужно только, чтобы фронт отправил PUT. Сам PUT перехвачен и до бэкенда не доходит.
-    """
-    invented_profile = {"firstName": "Test", "lastName": "User", "username": shared_user.user.email}
-    faults = NetworkFaults(page)
-    loaded = faults.respond(PROFILE, "GET", 200, invented_profile)
-    saved = faults.respond(PROFILE, "PUT", 200, invented_profile)
-
-    base_page = PwBasePage(page)
-    base_page.restore_session(shared_user.api.token)
-
-    with allure.step("Открытие /profile: ответ GET подменён"):
-        send_and_settle(page, "GET", PROFILE_PATH, lambda: base_page.open_url("/profile"))
-        require_intercepted(loaded, f"GET {PROFILE_PATH}")
-
-    with allure.step("Клик «Сохранить»: PUT перехвачен"):
-        save_btn = page.get_by_role("button", name="Сохранить")
-        save_btn.wait_for(state="visible")
-        send_and_settle(page, "PUT", PROFILE_PATH, save_btn.click)
-        # Без пойманного PUT сверять со Swagger нечего
-        require_intercepted(saved, f"PUT {PROFILE_PATH}")
-    request = saved[0]
 
     with allure.step(f"Проверка: {request.method} {urlsplit(request.url).path} есть в Swagger"):
         assert is_documented(request.method, urlsplit(request.url).path), _undocumented_message(request)

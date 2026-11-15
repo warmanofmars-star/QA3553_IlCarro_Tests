@@ -16,12 +16,13 @@ REQ-UI-SESSION-01 (401 удаляет token там, где он был), REQ-UI-
 пользователь не создаётся.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from urllib.parse import urlsplit
 
 import allure
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Page, Request, expect
 
 from data.data_generator import CarGenerator, SearchDataGenerator, UserGenerator
 from data.observations import observation
@@ -38,6 +39,7 @@ from utils.network_faults import (
     REGISTRATION,
     SEARCH,
     NetworkFaults,
+    api_request,
     api_response,
     require_intercepted,
     send_and_settle,
@@ -168,6 +170,9 @@ class After401:
 
     screen: PwBasePage
     request_path: str
+    # Путь экрана (с параметрами) в момент отправки запроса — до ответа 401: так перехватчик фронта
+    # должен записать postLoginRedirect. Снят до сбоя, чтобы переход после 401 не подменил ожидание
+    path_before_401: str
 
 
 def _logged_in(screen: PwBasePage, token: str) -> None:
@@ -176,6 +181,27 @@ def _logged_in(screen: PwBasePage, token: str) -> None:
     screen.open()
     PwLoginPage(screen.page).logout_btn.wait_for(state="visible")
     require(screen.local_storage_item("token") is not None, "Предусловие: после входа в localStorage нет token")
+
+
+def _send_noting_path(page: Page, method: str, path: str, action: Callable[[], None]) -> str:
+    """send_and_settle, а заодно путь страницы в момент, когда запрос method path ушёл (до ответа).
+
+    Поиск пишет параметры в URL перед отправкой (Q-UI-38): путь, снятый при отправке, уже с ними.
+    """
+    noted: list[str] = []
+    matches = api_request(method, path)
+
+    def on_request(request: Request) -> None:
+        if matches(request) and not noted:
+            noted.append(_current_path(page))
+
+    page.on("request", on_request)
+    try:
+        send_and_settle(page, method, path, action)
+    finally:
+        page.remove_listener("request", on_request)
+    require(bool(noted), f"Предусловие: не снят путь страницы при отправке {method} {path}")
+    return noted[0]
 
 
 def _require_sent_with_token(sent: list, what: str) -> None:
@@ -198,11 +224,11 @@ def car_form_after_401(page: Page, shared_user, shared_car_cleanup, backend_writ
 
     sent = NetworkFaults(page).respond_empty(CARS, "POST", 401)
     with allure.step("Отправка формы: POST /v1/cars перехвачен, ответ — 401 с пустым телом"):
-        send_and_settle(page, "POST", CARS_PATH, add_car_page.submit)
+        path_before_401 = _send_noting_path(page, "POST", CARS_PATH, add_car_page.submit)
         _require_sent_with_token(sent, f"POST {CARS_PATH}")
         # Фронт обработал ответ: форма показала ошибку отправки (Q-UI-32)
         add_car_page.submit_error_message.wait_for(state="visible")
-    return After401(add_car_page, CARS_PATH)
+    return After401(add_car_page, CARS_PATH, path_before_401)
 
 
 @pytest.fixture
@@ -216,12 +242,14 @@ def search_after_401(page: Page, shared_user, backend_write_guard) -> After401:
 
     sent = NetworkFaults(page).respond_empty(SEARCH, "POST", 401)
     with allure.step("Поиск: POST /v1/cars/search перехвачен, ответ — 401 с пустым телом"):
-        send_and_settle(page, "POST", SEARCH_PATH, lambda: search_page.search_today(SearchDataGenerator.SMALL_CITY))
+        path_before_401 = _send_noting_path(
+            page, "POST", SEARCH_PATH, lambda: search_page.search_today(SearchDataGenerator.SMALL_CITY)
+        )
         _require_sent_with_token(sent, f"POST {SEARCH_PATH}")
         # Фронт обработал ответ: сообщений поиск не показывает (Q-UI-39), признак конца — кнопка
         # снова «Yalla!» вместо «Loading...»
         search_page.submit_btn.filter(has_text="Yalla!").wait_for(state="visible")
-    return After401(search_page, SEARCH_PATH)
+    return After401(search_page, SEARCH_PATH, path_before_401)
 
 
 @allure.epic("Playwright Testing")
@@ -234,7 +262,7 @@ def test_pw_401_on_screen_clears_token(request, page: Page, screen_after_401):
     """Перехватчик ответов фронта (FE: `index`) срабатывает на любом экране, где был token:
     форма машины (Q-UI-32) и поиск под пользователем (Q-UI-39)."""
     after_401: After401 = request.getfixturevalue(screen_after_401)
-    expected_redirect = _current_path(page)
+    expected_redirect = after_401.path_before_401
 
     with allure.step("Проверка localStorage после ответа 401"):
         assert after_401.screen.local_storage_item("token") is None, (
