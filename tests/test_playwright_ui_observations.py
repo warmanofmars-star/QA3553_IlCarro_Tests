@@ -3,8 +3,10 @@
 OBS-09 (URL после регистрации), OBS-11 (русские тексты в английском интерфейсе).
 
 Пишущие запросы (POST /v1/cars, POST регистрации) перехвачены и получают подменённый ответ: машин
-и пользователей тесты не создают. Тела ответов — в формате настоящих (Q-UI-03, Q-UI-04, Q-API-06),
-значения, которых у приложения нет (токен регистрации), придуманы тестом.
+и пользователей тесты не создают. Ответы 400 на машину — тела настоящих ответов из research-log.md
+(respond_recorded, Q-UI-03, Q-UI-04). Успех регистрации — ответ формы TokenDto из Swagger с явно
+фальшивым токеном (пункт (в) правила подмены, CLAUDE.md): настоящий успех оставил бы пользователя
+на общем бэкенде навсегда.
 """
 
 import re
@@ -21,7 +23,15 @@ from pages.pw_add_car_page import PwAddCarPage
 from pages.pw_base_page import PwBasePage
 from pages.pw_login_page import PwLoginPage
 from pages.pw_registration_page import PwRegistrationPage
-from utils.network_faults import CARS, REGISTRATION, NetworkFaults, require_intercepted, send_and_settle
+from utils.network_faults import (
+    CAR_400_CITY_BLANK,
+    CAR_400_CITY_NOT_SUPPORTED,
+    CARS,
+    REGISTRATION,
+    NetworkFaults,
+    require_intercepted,
+    send_and_settle,
+)
 from utils.preconditions import require
 
 pytestmark = [pytest.mark.ui, pytest.mark.regression]
@@ -56,18 +66,20 @@ def test_pw_guest_redirected_from_car_form(page: Page):
 @observation("CAR_SUBMIT_ERROR_WITHOUT_CAUSE")
 @allure.tag("OBS-07")
 @pytest.mark.parametrize(
-    "server_message, causes",
+    "server_body, source, causes",
     [
-        pytest.param("City Beersheba is not supported", ["City Beersheba is not supported"], id="unsupported_city"),
-        pytest.param({"city": "must not be blank"}, ["city", "must not be blank"], id="blank_city"),
+        pytest.param(CAR_400_CITY_NOT_SUPPORTED, "Q-UI-03", ["City Beersheba is not supported"], id="unsupported_city"),
+        pytest.param(CAR_400_CITY_BLANK, "Q-UI-04", ["city", "must not be blank"], id="blank_city"),
     ],
 )
 def test_pw_car_submit_error_names_cause(
-    page: Page, shared_user, shared_car_cleanup, backend_write_guard, server_message, causes
+    page: Page, shared_user, shared_car_cleanup, backend_write_guard, server_body, source, causes
 ):
     """
     Сервер объясняет отказ (Q-UI-03, Q-UI-04), а пользователь видит один текст «Failed to submit car»
-    (OBS-07). Ответ подменён: тело — в формате настоящего ответа 400.
+    (OBS-07). Ответ подменён телом настоящего ответа 400 из записи source в research-log.md
+    (respond_recorded сверяет его с записью). Запись Q-UI-…, а не Q-API-…: ответ получен на запрос,
+    который отправила сама форма.
     """
     add_car_page = PwAddCarPage(page)
     add_car_page.restore_session(shared_user.api.token)
@@ -78,9 +90,7 @@ def test_pw_car_submit_error_names_cause(
     # Страховка: если перехват не сработает и машина создастся на бэкенде, очистка её удалит
     shared_car_cleanup.register(car.reg_number)
     add_car_page.fill_form(car)
-    sent = NetworkFaults(page).respond(
-        CARS, "POST", 400, {"status": 400, "error": "Bad Request", "message": server_message, "path": "/v1/cars"}
-    )
+    sent = NetworkFaults(page).respond_recorded(CARS, "POST", 400, server_body, source=source)
 
     with allure.step("Отправка формы: POST /v1/cars перехвачен, ответ подменён на 400"):
         send_and_settle(page, "POST", "/v1/cars", add_car_page.submit)
@@ -103,8 +113,9 @@ def test_pw_car_submit_error_names_cause(
 def test_pw_registration_leaves_register_url(page: Page, backend_write_guard):
     """
     Пользователь зарегистрирован и залогинен, а адрес остаётся адресом формы регистрации (OBS-09;
-    Q-UI-09, Q-UI-25). Запрос регистрации перехвачен: ответ 200 в формате настоящего ({"accessToken": …},
-    Q-API-06), значение токена придумано тестом. Пользователь на бэкенде не создаётся.
+    Q-UI-09, Q-UI-25). Запрос регистрации перехвачен; ответ — пункт (в) правила подмены (CLAUDE.md):
+    200 формы TokenDto из Swagger ({"accessToken": …}), значение явно фальшивое, тест на него не опирается.
+    Настоящий успех оставил бы пользователя на общем бэкенде навсегда; с подменой он не создаётся.
     """
     registration_page = PwRegistrationPage(page)
     registration_page.open()

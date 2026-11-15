@@ -32,11 +32,12 @@
 Запросы с другим методом уходят дальше (route.fallback): на один адрес можно навесить несколько
 подмен для разных методов.
 
-Режимы ответа (правило подмены — CLAUDE.md): respond — тело, заданное тестом (проверка отправленного);
-respond_empty — статус сбоя с пустым телом; respond_recorded — тело настоящего ответа сервера из лога
-исследования, с обязательной ссылкой source на запись research-log.md. Последние два перенесены
-из research/explore_ui_faults.py (шаг 7a). Все режимы идут через один _intercept: для
-backend_write_guard и require_intercepted они одинаковы.
+Режимы ответа (правило подмены — CLAUDE.md): respond — успешный ответ (только 2xx) с телом, заданным
+тестом: проверка отправленного (а) или успех формы из Swagger на пишущий запрос (в); respond_empty —
+статус сбоя с пустым телом; respond_recorded — тело настоящего ответа сервера, записанное в research-log.md
+под своим Q-ID (source): тело сверяется с json-блоками этой записи дословно. Придуманного тела сбоя нет
+ни в одном режиме. Все режимы идут через один _intercept: для backend_write_guard и require_intercepted
+они одинаковы.
 """
 
 import json
@@ -59,10 +60,11 @@ SEARCH = "**/v1/cars/search"
 # Настоящий ответ бэкенда на успешное создание машины (Q-API-04, Q-UI-05)
 CAR_ADDED = {"message": "Car added successfully"}
 
-# Тела настоящих ответов сервера для respond_recorded. Поле, значения которого в логе нет, опущено,
-# а не выдумано: фронт читает из тела ошибки только message (Q-UI-37).
-# Регистрация с паролем abc123 (Q-API-07, полностью — research/evidence/explore_api_run1.log; Q-UI-40).
-# timestamp в логе замаскирован («<ts>»)
+# Тела настоящих ответов сервера для respond_recorded — одно место истины для тестов и research/explore_ui_faults.py.
+# Каждое дословно записано в research-log.md, подраздел «Тело ответа (используется в тестах)» записи
+# из комментария; respond_recorded сверяет тело с записью при каждой подмене. timestamp опущен, а не выдуман:
+# в логах его значение замаскировано («<ts>»), а фронт читает из тела ошибки только message (Q-UI-37).
+# Регистрация с паролем abc123 — Q-API-07 (используется и в Q-UI-40)
 REGISTER_400_WEAK_PASSWORD = {
     "status": 400,
     "error": "Bad Request",
@@ -72,39 +74,66 @@ REGISTER_400_WEAK_PASSWORD = {
     },
     "path": "/v1/user/registration/usernamepassword",
 }
-# POST /v1/cars с мусорным токеном (Q-UI-34): в research-log записан только message
-CAR_401_GARBAGE_TOKEN = {"message": "JWT strings must contain exactly 2 period characters. Found: 0"}
+# POST /v1/cars с токеном без точек — Q-API-09 (схема Basic). Тот же message у мусорного токена в UI (Q-UI-34),
+# но там записан только message, а полное тело — в Q-API-09
+CAR_401_GARBAGE_TOKEN = {
+    "status": 401,
+    "error": "Unauthorized",
+    "message": "JWT strings must contain exactly 2 period characters. Found: 0",
+    "path": "/v1/cars",
+}
+# POST /v1/cars с городом, которого нет в API, из формы — Q-UI-03
+CAR_400_CITY_NOT_SUPPORTED = {
+    "status": 400,
+    "error": "Bad Request",
+    "message": "City Beersheba is not supported",
+    "path": "/v1/cars",
+}
+# POST /v1/cars с пустым городом из формы — Q-UI-04
+CAR_400_CITY_BLANK = {
+    "status": 400,
+    "error": "Bad Request",
+    "message": {"city": "must not be blank"},
+    "path": "/v1/cars",
+}
 
 RESEARCH_LOG = PROJECT_ROOT / "docs" / "requirements" / "research-log.md"
 _SOURCE_ID = re.compile(r"Q-(?:API|UI)-\d+")
-
-# Тела ошибок: поля как у настоящих ошибок бэкенда (status, error, message, path — Q-API-07),
-# текст message написан тестом
-_ERROR_TITLES = {400: "Bad Request", 401: "Unauthorized", 500: "Internal Server Error"}
+_JSON_BLOCK = re.compile(r"^```json\n(.*?)^```", re.MULTILINE | re.DOTALL)
 
 
-def error_body(status: int, path: str) -> dict:
-    return {
-        "status": status,
-        "error": _ERROR_TITLES.get(status, "Error"),
-        "message": "Сбой, подставленный тестом",
-        "path": path,
-    }
-
-
-def require_recorded_source(source: str) -> None:
-    """Источник тела respond_recorded — существующая запись research-log.md (Q-API-NN или Q-UI-NN).
+def require_recorded_source(source: str, body: dict) -> None:
+    """Тело respond_recorded дословно записано в research-log.md, в разделе «## <source>».
 
     Это ошибка автора теста, а не предусловие прогона: ValueError при регистрации подмены, до запроса.
-    Без источника «настоящее» тело ничем не отличалось бы от придуманного.
+    Без сверки «настоящее» тело ничем не отличалось бы от придуманного: достаточно было бы поменять
+    букву в message. Сравнение — как dict после json-парсинга: порядок ключей и пробелы не важны.
     """
     if not isinstance(source, str) or not _SOURCE_ID.fullmatch(source):
         raise ValueError(
             f"respond_recorded: source={source!r} — нужен ID записи research-log.md (Q-API-NN или Q-UI-NN), "
             "откуда взято тело ответа"
         )
-    if not re.search(rf"^## {re.escape(source)}(?!\d)", RESEARCH_LOG.read_text(encoding="utf-8"), re.MULTILINE):
+    text = RESEARCH_LOG.read_text(encoding="utf-8")
+    header = re.search(rf"^## {re.escape(source)}(?!\d).*$", text, re.MULTILINE)
+    if header is None:
         raise ValueError(f"respond_recorded: записи {source} нет в {RESEARCH_LOG.name} — тело ответа не из лога")
+    # Раздел — до следующего заголовка второго уровня; подразделы «###» входят в него
+    next_header = re.search(r"^## ", text[header.end() :], re.MULTILINE)
+    section = text[header.end() : header.end() + next_header.start()] if next_header else text[header.end() :]
+    recorded = []
+    for block in _JSON_BLOCK.findall(section):
+        try:
+            recorded.append(json.loads(block))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"respond_recorded: в записи {source} json-блок не разбирается: {exc}") from exc
+    if body not in recorded:
+        raise ValueError(
+            f"respond_recorded: тела нет в записи {source} ({RESEARCH_LOG.name}): "
+            f"{json.dumps(body, ensure_ascii=False)}. "
+            f"Json-блоков в записи: {len(recorded)}. Тело берётся дословно из подраздела «Тело ответа "
+            "(используется в тестах)» — не правится и не придумывается"
+        )
 
 
 def api_request(method: str, path: str) -> Callable[[Request], bool]:
@@ -185,25 +214,32 @@ class NetworkFaults:
         self.page.route(url, handler)
         return intercepted
 
-    def respond(self, url: str, method: str, status: int, body: dict | None = None) -> list[Request]:
-        """Ответ с заданным статусом и телом (по умолчанию — тело ошибки в формате бэкенда)."""
+    def respond(self, url: str, method: str, status: int, body: dict) -> list[Request]:
+        """Успешный ответ (2xx) с телом, заданным тестом: пункты (а) и (в) правила подмены в CLAUDE.md.
 
-        def action(route: Route) -> None:
-            payload = body if body is not None else error_body(status, urlsplit(route.request.url).path)
-            route.fulfill(status=status, json=payload)
-
-        return self._intercept(url, method, action)
+        Статус вне 2xx — ValueError до регистрации маршрута: тело сбоя тестом не придумывается.
+        """
+        if not 200 <= status <= 299:
+            raise ValueError(
+                f"respond: статус {status} — не 2xx. Тело сбоя тест не придумывает (правило подмены, CLAUDE.md): "
+                "пустое тело — respond_empty(url, method, status), настоящее тело из research-log.md — "
+                'respond_recorded(url, method, status, body, source="Q-…")'
+            )
+        return self._intercept(url, method, lambda route: route.fulfill(status=status, json=body))
 
     def respond_empty(self, url: str, method: str, status: int) -> list[Request]:
         """Статус сбоя с пустым телом: фронт получает только статус."""
         return self._intercept(url, method, lambda route: route.fulfill(status=status, body=""))
 
     def respond_recorded(self, url: str, method: str, status: int, body: dict, *, source: str) -> list[Request]:
-        """Тело настоящего ответа сервера, взятое из лога исследования; source — ID записи (Q-…).
+        """Тело настоящего ответа сервера, записанное в research-log.md; source — ID записи (Q-…).
 
-        Без source или с ID, которого нет в research-log.md, — ValueError до регистрации маршрута.
+        Без source, с ID, которого нет в research-log.md, с телом, которого нет среди json-блоков записи,
+        или со статусом, не совпадающим с полем status тела, — ValueError до регистрации маршрута.
         """
-        require_recorded_source(source)
+        require_recorded_source(source, body)
+        if "status" in body and body["status"] != status:
+            raise ValueError(f"respond_recorded: статус {status}, а в записанном теле {source} status={body['status']}")
         payload = json.dumps(body, separators=(",", ":"))
 
         def action(route: Route) -> None:

@@ -1,8 +1,9 @@
 """
 Сессия в интерфейсе: REQ-UI-SESSION-01, REQ-UI-SESSION-02, REQ-SEC-06 и наблюдение OBS-05.
 
-Ответ 401 подменяется (utils/network_faults.py): сценарий «сервер перестал принимать токен»
-воспроизводится без порчи настоящей сессии, а запрос POST /v1/cars до бэкенда не доходит.
+Ответ 401 подменяется (utils/network_faults.py, тело пустое: форма машины тело не читает, Q-UI-37):
+сценарий «сервер перестал принимать токен» воспроизводится без порчи настоящей сессии, а запрос
+POST /v1/cars до бэкенда не доходит.
 
 Пользователи — по правилу CLAUDE.md:
   * тесты с подменённым 401 меняют только localStorage браузера — общий shared_user; вход —
@@ -92,7 +93,7 @@ def _token_reached(page: Page, present: bool, timeout_ms: int) -> bool:
 
 @pytest.fixture
 def session_after_401(page: Page, shared_user, shared_car_cleanup, backend_write_guard) -> PwAddCarPage:
-    """Залогиненный пользователь отправил форму машины, а сервер ответил 401 (ответ подменён).
+    """Залогиненный пользователь отправил форму машины, а сервер ответил 401 (ответ подменён, тело пустое).
 
     Сценарий общий для REQ-UI-SESSION-01 и OBS-05, проверки — в разных тестах. Возвращает страницу
     формы в состоянии «ответ 401 получен и обработан перехватчиком фронта».
@@ -108,7 +109,7 @@ def session_after_401(page: Page, shared_user, shared_car_cleanup, backend_write
     shared_car_cleanup.register(car.reg_number)
     add_car_page.fill_form(car)
 
-    sent = NetworkFaults(page).respond(CARS, "POST", 401)
+    sent = NetworkFaults(page).respond_empty(CARS, "POST", 401)
     with allure.step("Отправка формы: POST /v1/cars перехвачен, ответ подменён на 401"):
         send_and_settle(page, "POST", "/v1/cars", add_car_page.submit)
         # Без пойманного запроса реакцию фронта на 401 проверять нельзя: 401 он не получал

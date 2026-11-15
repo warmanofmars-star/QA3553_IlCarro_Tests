@@ -275,9 +275,9 @@ def _page_text(page: Page) -> str:
 @allure.tag("REQ-UI-CAR-05")
 def test_pw_car_form_401_hides_server_message(page: Page, shared_user, shared_car_cleanup, backend_write_guard):
     """
-    Ответ 401 с текстом парсера JWT (Q-UI-34) не должен попасть на экран (ASVS V7.4.1). В логе
-    исследования записан только message настоящего ответа, поэтому тело подмены — только message:
-    остальные поля не выдумываются. Проверка отсутствия текста опирается на require_intercepted:
+    Ответ 401 с текстом парсера JWT (Q-UI-34) не должен попасть на экран (ASVS V7.4.1). Тело подмены —
+    настоящий ответ POST /v1/cars на токен без точек из Q-API-09: message тот же, что в Q-UI-34, а там
+    записан только message. Проверка отсутствия текста опирается на require_intercepted:
     без пойманного запроса фронт этого текста не получал, и его отсутствие ничего бы не доказало.
     """
     server_message = CAR_401_GARBAGE_TOKEN["message"]
@@ -288,7 +288,7 @@ def test_pw_car_form_401_hides_server_message(page: Page, shared_user, shared_ca
     shared_car_cleanup.register(car.reg_number)
     add_car_page.fill_form(car)
 
-    sent = NetworkFaults(page).respond_recorded(CARS, "POST", 401, CAR_401_GARBAGE_TOKEN, source="Q-UI-34")
+    sent = NetworkFaults(page).respond_recorded(CARS, "POST", 401, CAR_401_GARBAGE_TOKEN, source="Q-API-09")
     with allure.step("Отправка формы: POST /v1/cars перехвачен, ответ — 401 с текстом сервера"):
         send_and_settle(page, "POST", CARS_PATH, add_car_page.submit)
         require_intercepted(sent, f"POST {CARS_PATH}")
