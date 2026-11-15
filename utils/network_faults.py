@@ -84,6 +84,13 @@ REGISTER_400_WEAK_PASSWORD = {
     },
     "path": "/v1/user/registration/usernamepassword",
 }
+# Регистрация с password = "" — Q-API-16: поля message в теле нет. Форма такой запрос не отправляет
+# (пароль обязателен, REQ-UI-REG-01), поэтому в UI этот ответ — только подменой (OBS-15)
+REGISTER_400_EMPTY_PASSWORD = {
+    "status": 400,
+    "error": "Bad Request",
+    "path": "/v1/user/registration/usernamepassword",
+}
 # POST /v1/cars с токеном без точек — Q-API-09 (схема Basic). Тот же message у мусорного токена в UI (Q-UI-34),
 # но там записан только message, а полное тело — в Q-API-09
 CAR_401_GARBAGE_TOKEN = {

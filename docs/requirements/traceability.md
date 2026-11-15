@@ -32,15 +32,15 @@
 | ✅ покрыт | 38 | 0 | 0 | 38 |
 | 🟡 частично | 0 | 0 | 0 | 0 |
 | 🐞 покрыт как известный баг | 15 | 8 | 0 | 23 |
-| 👁 покрыт как наблюдение | 0 | 0 | 14 | 14 |
+| 👁 покрыт как наблюдение | 0 | 0 | 15 | 15 |
 | ⚪ исключение | 3 | 3 | 0 | 6 |
 | 🕓 запланирован | 0 | 0 | 0 | 0 |
-| **Всего** | 56 | 11 | 14 | 81 |
+| **Всего** | 56 | 11 | 15 | 82 |
 
 - **Исключения по категориям:** вредит общему бэкенду — 1; заблокировано другим дефектом — 2; функциональность недостижима — 3.
 - **Запланировано:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 0.
 - **Покрыто частично, доработка:** PR 6.2 (API) — 0; PR 6.3a (UI: перехват запросов и сессия) — 0; PR 6.3b (UI: остальное и наблюдения) — 0.
-- **Известные баги:** 22 в реестре `data/known_bugs.py`; **наблюдения:** 14 в реестре `data/observations.py`.
+- **Известные баги:** 22 в реестре `data/known_bugs.py`; **наблюдения:** 15 в реестре `data/observations.py`.
 - **Автотесты:** 170, у каждого есть тег хотя бы одного пункта.
 
 ## Требования и тесты
@@ -52,7 +52,7 @@
 | REQ-AUTH-01 | Регистрация с корректными данными возвращает 200 и `accessToken`. | `test_api_auth.py::test_api_registration_success` | — | ✅ покрыт |
 | REQ-AUTH-02 | Поля `username`, `password`, `firstName`, `lastName` обязательны: без них или с пустыми значениями — 400. | `test_api_auth.py::test_api_registration_required_fields` | — | ✅ покрыт |
 | REQ-AUTH-03 | Пароль при регистрации: не короче 8 символов, есть цифра, строчная и заглавная латинские буквы и спецсимвол из `@$#^&*!`; иначе 400. | `test_api_auth.py::test_api_registration_password_pattern` | — | ✅ покрыт |
-| REQ-AUTH-04 | Повторная регистрация того же `username` отклоняется с 400. | `test_api_auth.py::test_api_registration_existing_user`<br>`test_api_auth.py::test_api_duplicate_email_answers_400` | — | ✅ покрыт |
+| REQ-AUTH-04 | Повторная регистрация того же `username` отклоняется с 400. | `test_api_auth.py::test_api_registration_existing_user` | — | ✅ покрыт |
 | REQ-AUTH-05 | Вход с верными данными возвращает 200 и `accessToken`. | `test_api_auth.py::test_api_login_success` | — | ✅ покрыт |
 | REQ-AUTH-06 | Вход с неверным паролем или несуществующим пользователем — 401. | `test_api_auth.py::test_api_login_rejected` | — | ✅ покрыт |
 | REQ-AUTH-07 | Тело входа проверяется по контракту: без обязательных полей или с паролем не по шаблону — 400. | `test_api_auth.py::test_api_login_body_not_by_contract` | `LOGIN_BODY_NOT_VALIDATED` | 🐞 покрыт как известный баг |
@@ -175,7 +175,7 @@
 | DISC-08 | Пагинация: фронт передаёт `page` и `size` в поиск; в Swagger параметров нет; API их игнорирует. | `test_api_search.py::test_api_search_page_size` | `SEARCH_PAGINATION_IGNORED` | 🐞 покрыт как известный баг |
 | DISC-09 | Страница машины читает поля, которых нет в `CarDto`: `make`, `car_class`, `image_url`, `imageUrl`, `price_per_day`, `engine`, `gear`, `wheels_drive`, `fuel_consumption`, `doors`, `address`, `distance_included`, `description`. | — | — | ⚪ исключение: заблокировано другим дефектом (DISC-05) |
 | DISC-10 | Фронт отправляет `PUT /v1/user/profile` для сохранения профиля; операции нет в Swagger. | — | — | ⚪ исключение: функциональность недостижима |
-| DISC-11 | Повтор email при регистрации: фронт обрабатывает ответ 409 — `role=alert` «User with that email already exists»; Swagger 409 не объявляет (у регистрации ответы 200, 400, 401, 500); сервер на повтор email отвечает 400 `"User already exists"`. | `test_api_auth.py::test_api_duplicate_email_answers_400`<br>`test_playwright_ui_faults.py::test_pw_duplicate_email_message` | `DUPLICATE_EMAIL_409_BRANCH_UNREACHABLE` | 🐞 покрыт как известный баг |
+| DISC-11 | Повтор email при регистрации: фронт обрабатывает ответ 409 — `role=alert` «User with that email already exists»; Swagger 409 не объявляет (у регистрации ответы 200, 400, 401, 500); сервер на повтор email отвечает 400 `"User already exists"`. | `test_api_auth.py::test_api_registration_existing_user`<br>`test_playwright_ui_faults.py::test_pw_duplicate_email_message` | `DUPLICATE_EMAIL_409_BRANCH_UNREACHABLE` | 🐞 покрыт как известный баг |
 
 ### 4. Наблюдения (OBS)
 
@@ -195,6 +195,7 @@
 | OBS-12 | Сбой запроса поиска — ответ ошибки (500), обрыв соединения, страница посредника (502) — ничем не обозначен на экране: сообщений нет, кнопка снова «Yalla!». | `test_playwright_ui_faults.py::test_pw_search_failure_announced` | `SEARCH_FAILURE_NOT_SHOWN` | 👁 покрыт как наблюдение |
 | OBS-13 | После неудачного поиска на экране остаётся выдача прошлого успешного поиска, в том числе другого города и дат, без пометки: форма и URL уже показывают новый город и даты, а карточка города и дат не показывает. | `test_playwright_ui_faults.py::test_pw_failed_search_drops_stale_results` | `STALE_RESULTS_AFTER_FAILED_SEARCH` | 👁 покрыт как наблюдение |
 | OBS-14 | У входа нет предела ожидания ответа: через 35 с после отправки формы кнопка «Loading...», сообщения нет, запрос фронтом не прерван. | `test_playwright_ui_faults.py::test_pw_login_wait_bounded` | `LOGIN_WAIT_UNBOUNDED` | 👁 покрыт как наблюдение |
+| OBS-15 | При ответе 400 без поля `message` окно регистрации показывает внутренний текст библиотеки «Request failed with status code 400». | `test_playwright_ui_faults.py::test_pw_registration_400_without_message` | `REGISTER_ERROR_LIBRARY_TEXT` | 👁 покрыт как наблюдение |
 
 ## Реестр исключений покрытия
 

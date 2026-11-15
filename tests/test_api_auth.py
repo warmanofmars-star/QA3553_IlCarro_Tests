@@ -111,9 +111,12 @@ def test_api_registration_success(registered_user):
 @allure.feature("Authentication")
 @allure.story("Registration")
 @allure.severity(allure.severity_level.CRITICAL)
-@allure.tag("REQ-AUTH-04")
+@allure.tag("REQ-AUTH-04", "DISC-11")
 def test_api_registration_existing_user(registered_user):
     """Повторная регистрация того же username — 400.
+
+    Это и сторона сервера расхождения DISC-11: на повтор email сервер отвечает 400 по Swagger, а не 409,
+    которого ждёт фронт (сторона UI — test_pw_duplicate_email_message).
 
     Повторяется РОВНО то тело, которое только что прошло регистрацию (200, require). Раз то же тело
     было валидным, отказ валидации исключён, и 400 может означать только повтор username. Поэтому
@@ -127,30 +130,6 @@ def test_api_registration_existing_user(registered_user):
     with allure.step("Проверка: 400"):
         assert response.status_code == 400, (
             f"Повторная регистрация: ожидали 400, получили {response.status_code} {response.text}"
-        )
-
-
-@pytest.mark.regression
-@allure.epic("API Testing")
-@allure.feature("Authentication")
-@allure.story("Frontend and API agreement")
-@allure.severity(allure.severity_level.NORMAL)
-@allure.tag("DISC-11", "REQ-AUTH-04")
-def test_api_duplicate_email_answers_400(shared_user):
-    """
-    Сторона сервера расхождения DISC-11: на повтор занятого email сервер отвечает 400, как объявляет Swagger,
-    а не 409, которого ждёт фронт (сторона UI — test_pw_duplicate_email_message). Email — общего
-    пользователя: отклонённая регистрация его не меняет, нового пользователя тест не создаёт. Пароль
-    проходит правила API, поэтому отказ может быть только из-за занятого email.
-    """
-    user = UserGenerator.get_random_user(email=shared_user.user.email)
-
-    with allure.step(f"Повторная регистрация занятого email {user.email}"):
-        response = _post(REGISTRATION_URL, user.to_api_payload())
-
-    with allure.step("Проверка: 400, а не 409"):
-        assert response.status_code == 400, (
-            f"Повтор занятого email: ожидали 400 (Swagger), получили {response.status_code} {response.text[:200]}"
         )
 
 

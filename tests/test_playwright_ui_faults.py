@@ -2,7 +2,8 @@
 Сбои бэкенда в формах и поиске (шаг 7d): REQ-UI-REG-05 (ответ 401, 500 и обрыв на регистрации),
 REQ-UI-CAR-02 (ошибка отправки машины — «Failed to submit car»), сторона UI расхождения DISC-11
 (409 при повторе email) и наблюдения OBS-12 (сбой поиска не обозначен), OBS-13 (после сбоя поиска
-остаётся прошлая выдача), OBS-14 (вход без предела ожидания ответа).
+остаётся прошлая выдача), OBS-14 (вход без предела ожидания ответа), OBS-15 (ответ 400 без message
+на регистрацию).
 
 Сбой внедряется в запрос, который экран действительно отправляет (Q-UI-27): статус из Swagger или 5xx
 с пустым телом (respond_empty), обрыв (abort), страница посредника (respond_proxy_page), задержка с обрывом
@@ -30,6 +31,7 @@ from pages.pw_search_page import PwSearchPage
 from utils.network_faults import (
     CARS,
     LOGIN,
+    REGISTER_400_EMPTY_PASSWORD,
     REGISTRATION,
     SEARCH,
     NetworkFaults,
@@ -98,6 +100,38 @@ def test_pw_registration_failure_message(page: Page, backend_write_guard, regist
         )
 
 
+# ---------------------------------------------------------------- OBS-15: 400 без message на регистрации
+
+
+@allure.epic("Playwright Testing")
+@allure.feature("Registration")
+@allure.story("Backend failure")
+@allure.title("Ответ 400 без message на регистрацию: в окне нет текста библиотеки")
+@observation("REGISTER_ERROR_LIBRARY_TEXT")
+@allure.tag("OBS-15")
+def test_pw_registration_400_without_message(page: Page, backend_write_guard):
+    """Тело — настоящий ответ сервера на пустой пароль (Q-API-16): поля message нет. Форма пустой пароль
+    не отправляет, поэтому ответ подменён; email фальшивый, запрос до бэкенда не доходит. Факт: окно
+    «Registration failed» с текстом axios «Request failed with status code 400» (Q-UI-31)."""
+    registration_page = PwRegistrationPage(page)
+    registration_page.open()
+    sent = NetworkFaults(page).respond_recorded(
+        REGISTRATION, "POST", 400, REGISTER_400_EMPTY_PASSWORD, source="Q-API-16"
+    )
+
+    with allure.step("Регистрация: запрос перехвачен, ответ 400 без message"):
+        registration_page.fill_form(UserGenerator.get_random_user())
+        send_and_settle(page, "POST", REGISTRATION_PATH, registration_page.submit)
+        require_intercepted(sent, f"POST {REGISTRATION_PATH}")
+        # Ветка 400 фронта показывает окно (Q-UI-31): без него проверять нечего
+        registration_page.dialog.wait_for(state="visible")
+
+    with allure.step("Проверка: в окне нет «Request failed with status code»"):
+        expect(registration_page.dialog, "Окно регистрации показывает внутренний текст библиотеки").not_to_contain_text(
+            "Request failed with status code"
+        )
+
+
 # ---------------------------------------------------------------- REQ-UI-CAR-02: форма машины
 
 
@@ -143,7 +177,7 @@ def test_pw_duplicate_email_message(page: Page, shared_user, backend_write_guard
     """
     Сторона UI расхождения DISC-11. У фронта для занятого email своё сообщение — role=alert «User with that
     email already exists», но только на ответ 409; Swagger 409 не объявляет, и сервер на повтор отвечает 400
-    (сторона сервера — test_api_duplicate_email_answers_400). Ответ настоящий: запрос пропускает allow_real,
+    (сторона сервера — test_api_registration_existing_user). Ответ настоящий: запрос пропускает allow_real,
     только если в нём email общего пользователя — отклонённая регистрация его не меняет и нового аккаунта
     не создаёт. Ответ 409 не подменяется. Факт: окно «Registration failed» с текстом сервера (Q-UI-08).
     """

@@ -86,6 +86,13 @@ OBSERVATIONS: dict[str, Observation] = {
             "не прерван (Q-UI-27, Q-UI-35)"
         ),
     ),
+    "REGISTER_ERROR_LIBRARY_TEXT": Observation(
+        ref="OBS-15",
+        description=(
+            "Ответ 400 на регистрацию без поля message: окно «Registration failed» показывает текст axios "
+            "«Request failed with status code 400» (Q-UI-31); сервер так отвечает на пустой пароль (Q-API-16)"
+        ),
+    ),
     "GUEST_OPENS_CAR_FORM": Observation(
         ref="OBS-06",
         description=(
