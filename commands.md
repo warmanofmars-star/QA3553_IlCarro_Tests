@@ -187,7 +187,7 @@ selenium [chrome,        │      │
   не зависит и идёт параллельно с ними.
 - `split-check` — собирает тесты без запуска и проверяет, что разбиение дополняющее.
 - `api-and-playwright` — `-m "not selenium"`, один раз, в Docker без Grid.
-- `selenium` — `-m "selenium"`, матрица из трёх браузеров через Selenium Grid.
+- `selenium` — `-m "selenium"`, матрица браузеров (задана в [`.github/workflows/tests.yml`](.github/workflows/tests.yml)) через Selenium Grid.
 - `report` — склеивает результаты, проверяет их на секреты (`scripts/scan_report_secrets.py`: находка —
   job красный, отчёт не генерируется и не публикуется), подтягивает историю с опубликованного отчёта, генерирует отчёт
   и сохраняет его артефактом `allure-report` (для PR — единственный способ его посмотреть:
