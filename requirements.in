@@ -1,0 +1,15 @@
+# Прямые зависимости проекта — исходник для lock-файла requirements.txt.
+# Версии правятся здесь; requirements.txt (всё дерево, включая транзитивные пакеты) генерирует
+# scripts/lock_requirements.sh в контейнере — руками его не правят (команда — в commands.md).
+pytest==9.1.1
+pytest-xdist==3.8.0
+pytest-rerunfailures==16.7
+pytest-playwright==0.9.0
+pytest-base-url==2.1.0
+allure-pytest==2.16.1
+playwright==1.63.0
+selenium==4.49.0
+requests==2.34.2
+Faker==40.39.0
+python-dotenv==1.2.3
+jsonschema==4.26.0
