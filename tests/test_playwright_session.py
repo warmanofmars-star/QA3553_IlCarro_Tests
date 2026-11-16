@@ -193,6 +193,7 @@ def test_pw_token_rejected_after_logout(page: Page, temp_user):
     """
     login_page = PwLoginPage(page)
     _login_with_diagnostics(page, login_page, temp_user.user)
+    # wait_for_function и wait_for_url — не expect(): им явно та же граница ожидания, что у expect() (PW_TIMEOUT)
     timeout_ms = login_page.expect_timeout
 
     # Токен этой сессии браузера: его и должен отозвать выход. В шаги и логи он не попадает

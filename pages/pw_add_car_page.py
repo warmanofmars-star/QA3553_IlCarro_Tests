@@ -82,7 +82,7 @@ class PwAddCarPage(PwBasePage):
     @allure.step("Проверка сброса формы (успешное добавление в БД)")
     def check_form_cleared(self):
         # Если поле очистилось, значит React принял ответ 200 OK от реального сервера
-        expect(self.make_input).to_be_empty(timeout=self.expect_timeout)
+        expect(self.make_input).to_be_empty()
 
     # for Playwright:
     @allure.step("Проверка появления ошибки отправки: {expected_text}")

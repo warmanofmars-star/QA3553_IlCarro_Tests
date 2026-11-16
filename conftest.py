@@ -9,6 +9,7 @@ from urllib.parse import urlsplit
 
 import allure
 import pytest
+from playwright.sync_api import expect
 from selenium.webdriver.support.events import EventFiringWebDriver
 
 from api.car_api import IlCarroAPI
@@ -54,6 +55,11 @@ def pytest_configure(config):
     """
     for name in NOISY_LOGGERS:
         logging.getLogger(name).setLevel(logging.WARNING)
+
+    # PW_TIMEOUT — единственная граница ожидания expect() Playwright во всём проекте: иначе у expect()
+    # было бы умолчание Playwright (5 с). Таймауты действий и переходов не задаёт — они остаются
+    # по умолчанию Playwright. Настройка живёт в процессе, поэтому её задаёт каждый процесс, включая воркеры xdist
+    expect.set_options(timeout=settings.pw_timeout_ms)
 
     # Живые логи в консоли включает настройка из config.py; явный --log-cli-level важнее
     if settings.enable_console_logs and config.getoption("log_cli_level") is None:
