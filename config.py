@@ -74,7 +74,7 @@ class Settings:
     video_dir: str | None  # где лежат видео сессий Grid (None — видео к отчёту не прикладываем)
 
     # --- Таймауты ---
-    pw_timeout_ms: int  # ожидания Playwright, миллисекунды
+    pw_timeout_ms: int  # таймаут ожиданий expect() Playwright, мс; действия и переходы — по умолчанию Playwright
 
     # --- Логи ---
     enable_console_logs: bool  # дублировать логи в консоль

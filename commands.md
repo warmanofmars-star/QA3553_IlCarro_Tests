@@ -27,7 +27,7 @@
 **Запуск с выбором конкретного браузера (`chrome`, `firefox`, `edge`):**
 `pytest tests/ -n 3 --browser_name=firefox --clean-alluredir --alluredir=allure-results`
 
-**Запуск по категориям (10 маркеров из `pytest.ini`; сколько тестов в отборе — `pytest -m <маркер> --collect-only -q`,
+**Запуск по категориям (маркеры — в `pytest.ini`; сколько тестов в отборе — `pytest -m <маркер> --collect-only -q`,
 последняя строка «N/M tests collected (K deselected)»):**
 - `pytest -m "smoke" -n 3` — критический путь (UI и API)
 - `pytest -m "regression" -n 3` — полный регресс (UI и API)
@@ -153,6 +153,7 @@ ruff check --fix .         # исправить то, что ruff умеет и�
 ruff format --check .      # только проверить форматирование (как в CI)
 ruff format .              # отформатировать
 ```
+Файлы открываются только с явным `encoding` (правило PLW1514 в `pyproject.toml`).
 
 **Секреты во всей истории git (как job Lint в CI):** gitleaks ставит сам pre-commit, отдельной
 установки не нужно; учитываются `.gitleaks.toml` и `.gitleaksignore`.
@@ -186,7 +187,7 @@ selenium [chrome,        │      │
   не зависит и идёт параллельно с ними.
 - `split-check` — собирает тесты без запуска и проверяет, что разбиение дополняющее.
 - `api-and-playwright` — `-m "not selenium"`, один раз, в Docker без Grid.
-- `selenium` — `-m "selenium"`, матрица из трёх браузеров через Selenium Grid.
+- `selenium` — `-m "selenium"`, матрица браузеров (задана в [`.github/workflows/tests.yml`](.github/workflows/tests.yml)) через Selenium Grid.
 - `report` — склеивает результаты, проверяет их на секреты (`scripts/scan_report_secrets.py`: находка —
   job красный, отчёт не генерируется и не публикуется), подтягивает историю с опубликованного отчёта, генерирует отчёт
   и сохраняет его артефактом `allure-report` (для PR — единственный способ его посмотреть:

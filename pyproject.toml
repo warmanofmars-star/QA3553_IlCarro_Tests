@@ -12,6 +12,11 @@ src = [".", "research"]
 extend-exclude = ["allure-results", "allure-report", "logs", "test-results"]
 
 [tool.ruff.lint]
+# PLW1514 в ruff 0.17.1 — preview-правило: без preview его не включить. explicit-preview-rules
+# ограничивает preview только правилами, названными в select поимённо, — остальные preview-правила
+# и preview-поведение групп ниже не включаются.
+preview = true
+explicit-preview-rules = true
 select = [
     "E", "W",   # pycodestyle: базовый стиль
     "F",        # pyflakes: неиспользуемые импорты и переменные, опечатки в именах
@@ -20,6 +25,7 @@ select = [
     "UP",       # pyupgrade: современный синтаксис для нашей версии Python
     "SIM",      # flake8-simplify: код, который можно записать проще
     "PT",       # flake8-pytest-style: стиль тестов pytest
+    "PLW1514",  # open()/read_text()/write_text() без encoding: на Windows по умолчанию не UTF-8
 ]
 
 [tool.ruff.lint.flake8-pytest-style]

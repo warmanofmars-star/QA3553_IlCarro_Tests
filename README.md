@@ -265,7 +265,7 @@ Setup: [`docs/jenkins-setup.md`](docs/jenkins-setup.md) *(in Russian)*.
 
 ## Code quality
 
-- **ruff** — linter and formatter, configured in [`pyproject.toml`](pyproject.toml) (target `py312`, line length 120).
+- **ruff** — linter and formatter, configured in [`pyproject.toml`](pyproject.toml) (target `py312`, line length 120). Files are opened only with an explicit `encoding` (rule PLW1514, enabled via preview).
 - **pre-commit** ([`.pre-commit-config.yaml`](.pre-commit-config.yaml)) runs before every commit: file
   hygiene (trailing whitespace, end of file, YAML and TOML syntax, merge-conflict markers, large files),
   `ruff-check`, `ruff-format` and **gitleaks**. Besides the built-in gitleaks rules, a custom rule in
