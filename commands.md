@@ -27,7 +27,7 @@
 **Запуск с выбором конкретного браузера (`chrome`, `firefox`, `edge`):**
 `pytest tests/ -n 3 --browser_name=firefox --clean-alluredir --alluredir=allure-results`
 
-**Запуск по категориям (10 маркеров из `pytest.ini`; сколько тестов в отборе — `pytest -m <маркер> --collect-only -q`,
+**Запуск по категориям (маркеры — в `pytest.ini`; сколько тестов в отборе — `pytest -m <маркер> --collect-only -q`,
 последняя строка «N/M tests collected (K deselected)»):**
 - `pytest -m "smoke" -n 3` — критический путь (UI и API)
 - `pytest -m "regression" -n 3` — полный регресс (UI и API)
