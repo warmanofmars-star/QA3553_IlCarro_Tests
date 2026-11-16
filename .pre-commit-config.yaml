@@ -1,7 +1,7 @@
 # Проверки, которые автоматически запускаются перед каждым `git commit`.
 #
 # Установка (один раз на машине, после клонирования репозитория):
-#     pip install -r requirements-dev.txt
+#     pip install -r requirements.txt -r requirements-dev.txt
 #     pre-commit install
 #
 # Ручной запуск на всех файлах — обязателен перед коммитом (см. CLAUDE.md):
@@ -32,7 +32,7 @@ repos:
 
   # Линтер и форматтер Python (настройки — в pyproject.toml)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.17.1                       # та же версия, что в requirements-dev.txt и job Lint
+    rev: v0.17.1                       # та же версия, что в requirements-dev.in (job Lint ставит её из lock-файла)
     hooks:
       - id: ruff-check
         args: [--fix]                  # исправимое — исправит сам, коммит всё равно остановится
@@ -41,7 +41,7 @@ repos:
   # Поиск секретов в добавляемых изменениях: токены, ключи API, пароли в формате .env
   # (своё правило — в .gitleaks.toml, исторические находки — в .gitleaksignore)
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.30.1                       # та же версия, что в job Lint
+    rev: v8.30.1                       # та же версия, что GITLEAKS_VERSION в job Lint
     hooks:
       - id: gitleaks
 

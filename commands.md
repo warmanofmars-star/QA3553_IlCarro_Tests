@@ -123,7 +123,7 @@
 ## 🧽 Качество кода: ruff, pre-commit, gitleaks
 **Установить инструменты и хуки (один раз после клонирования):**
 ```bash
-pip install -r requirements-dev.txt     # requirements.txt + ruff и pre-commit
+pip install -r requirements.txt -r requirements-dev.txt   # зависимости проекта + ruff и pre-commit
 pre-commit install                      # хуки в .git/hooks: запускаются на каждом git commit
 ```
 
@@ -165,8 +165,9 @@ gitleaks: `gitleaks git --redact -v .`
 с `password`/`token`/`secret` в имени; печатает только файл, поле и количество. Код 0 — чисто,
 1 — найдено, 2 — нет результатов.
 
-**Обновить версии хуков (осознанно, затем выровнять версии в requirements-dev.txt и job lint):**
-`pre-commit autoupdate`
+**Обновить версии хуков (осознанно, затем выровнять версии):** `pre-commit autoupdate`.
+Новый rev ruff — та же версия в `requirements-dev.in` и пересборка lock-файлов (ниже, «Обновить
+файл зависимостей проекта»); новый rev gitleaks — та же версия в `GITLEAKS_VERSION` job lint.
 
 ---
 
@@ -183,8 +184,8 @@ api-and-playwright ──────┼─► report ─► deploy (тольк�
 selenium [chrome,        │      │
           firefox, edge] ┘      └──────────────(что-то упало)──► notify-failure
 ```
-- `lint` — ruff check, ruff format --check и gitleaks по всей истории репозитория. От тестов
-  не зависит и идёт параллельно с ними.
+- `lint` — ruff check, ruff format --check, gitleaks по всей истории репозитория, матрица
+  трассируемости и актуальность lock-файлов зависимостей. От тестов не зависит и идёт параллельно с ними.
 - `split-check` — собирает тесты без запуска и проверяет, что разбиение дополняющее.
 - `api-and-playwright` — `-m "not selenium"`, один раз, в Docker без Grid.
 - `selenium` — `-m "selenium"`, матрица браузеров (задана в [`.github/workflows/tests.yml`](.github/workflows/tests.yml)) через Selenium Grid.
@@ -312,17 +313,28 @@ Prepare ─► API and Playwright ─► Selenium (Grid) ─► post: уборк
 **Отключить предупреждение Git о замене LF на CRLF в Windows:**
 `git config --global core.safecrlf false`
 
-**Обновить файл зависимостей проекта:** версии в `requirements.txt` правь вручную.
-`pip freeze` выгрузил бы и инструменты разработки (ruff, pre-commit) — им место в
-`requirements-dev.txt`; а `>` в PowerShell пишет файл в UTF-16, который git считает двоичным.
-
-**Обновить локальное окружение и проверить его** (после `git pull` или правки `requirements.txt`):
-```bash
-pip install -r requirements-dev.txt     # включает requirements.txt; приводит пакеты к зафиксированным версиям
-pip check                               # «No broken requirements found.» — конфликтов нет
+**Обновить файл зависимостей проекта:** прямые зависимости и их версии правятся в `requirements.in`
+(тесты) и `requirements-dev.in` (ruff, pre-commit). `requirements.txt` и `requirements-dev.txt` —
+lock-файлы со всем деревом пакетов: их генерирует `scripts/lock_requirements.sh` (pip-compile),
+руками их не правят. Скрипт работает только в контейнере с образом из `Dockerfile` — дерево
+разрешается для Linux и той же версии Python, что ставит образ (PowerShell, из корня проекта):
+```powershell
+$img = (Select-String -Path Dockerfile -Pattern '^FROM\s+(\S+)').Matches[0].Groups[1].Value
+docker run --rm -v "${PWD}:/src" -w /src $img bash scripts/lock_requirements.sh
+# поднять один транзитивный пакет:  ... bash scripts/lock_requirements.sh --upgrade-package urllib3
 ```
+Без `--upgrade`: остальные пакеты остаются на записанных версиях. Без хэшей: цель — воспроизводимое
+дерево версий, а хэши мешали бы слоям (`requirements-dev.txt` поверх `requirements.txt`) и Dependabot.
+Изменения `*.in` и lock-файлов коммить вместе: job Lint пересобирает lock-файлы тем же скриптом
+и падает, если они не совпали с репозиторием.
+
+**Обновить локальное окружение и проверить его** (после `git pull` или правки зависимостей):
+```bash
+pip install -r requirements.txt -r requirements-dev.txt   # приводит пакеты к версиям lock-файлов
+pip check                                                 # «No broken requirements found.» — конфликтов нет
+```
+Пакеты только для Windows (`colorama`, `cffi`, `pycparser`, `tzdata`) в lock-файлах нет — они
+разрешаются для Linux, — и на Windows `pip` ставит их сверх lock-файлов по маркерам зависимостей.
 `pip install` о конфликте версий только предупреждает, а `pip check` завершается с ошибкой
 и называет пакет, например `playwright 1.63.0 has requirement pyee<14,>=13, but you have pyee 14.0.0`.
 Тот же `pip check` идёт при сборке Docker-образа — с конфликтом образ не соберётся.
-Меняешь версию `playwright` или `pytest-playwright` — сверь и зафиксированные рядом `pyee`
-и `python-slugify` (комментарии в `requirements.txt`).

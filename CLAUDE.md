@@ -66,11 +66,11 @@ COMPOSE_PROFILES=chrome TEST_MARKER=smoke docker compose up --build --exit-code-
 
 ## Качество кода (ruff, pre-commit, gitleaks)
 
-Инструменты — в `requirements-dev.txt` (в Docker-образ не попадают), настройки ruff — `pyproject.toml`
+Инструменты — в `requirements-dev.in` (в Docker-образ не попадают), настройки ruff — `pyproject.toml`
 (`py312`, строка 120; `research/` и `scripts/` проверяются тоже).
 
 ```bash
-pip install -r requirements-dev.txt && pre-commit install   # один раз после клонирования
+pip install -r requirements.txt -r requirements-dev.txt && pre-commit install   # один раз после клонирования
 pre-commit run --all-files                                  # все хуки на всех файлах
 ruff check .            # линтер;  ruff check --fix .  — исправить исправимое
 ruff format .           # форматирование;  ruff format --check .  — только проверить
@@ -94,8 +94,15 @@ ruff format .           # форматирование;  ruff format --check .  
 - Хук `coverage-matrix` (local, `language: system`) — `python scripts/coverage_matrix.py --check` при
   изменениях в `tests/`, `data/`, `docs/requirements/`, `README.md`, `conftest.py`. Ему нужны зависимости
   проекта: коммить из окружения, где они установлены.
-- Версии ruff и gitleaks согласованы в трёх местах: `requirements-dev.txt`, `.pre-commit-config.yaml`
-  и job `lint` в `.github/workflows/tests.yml`. Меняешь одно — меняй все.
+- Версии согласованы попарно: ruff — `requirements-dev.in` и rev в `.pre-commit-config.yaml`
+  (job `lint` ставит ruff из lock-файла); gitleaks — rev в `.pre-commit-config.yaml` и `GITLEAKS_VERSION`
+  в job `lint`. Меняешь одно — меняй и второе.
+- **Зависимости правятся в `requirements.in` / `requirements-dev.in`.** `requirements.txt`
+  и `requirements-dev.txt` — lock-файлы (всё дерево, pip-compile); руками их не правят, генерирует
+  `scripts/lock_requirements.sh` — только в контейнере с образом из `Dockerfile` (команда —
+  в `commands.md`, «Обновить файл зависимостей проекта»). Установка —
+  `pip install -r requirements.txt -r requirements-dev.txt`, затем `pip check`. Без хэшей:
+  цель — воспроизводимое дерево версий, хэши мешали бы слою dev и Dependabot.
 
 ## CI (GitHub Actions, `.github/workflows/tests.yml`)
 
@@ -103,7 +110,8 @@ ruff format .           # форматирование;  ruff format --check .  
 PR отменяет предыдущий запуск того же PR; запуски на `main` не отменяются, а ждут в очереди. Jobs:
 
 - `lint` — ruff check, ruff format --check, gitleaks по всей истории, `scripts/coverage_matrix.py --check`
-  (матрица трассируемости; ради сбора тестов ставятся зависимости проекта, Python 3.14); от тестов
+  (матрица трассируемости; ради сбора тестов ставятся зависимости проекта, Python 3.14), актуальность
+  lock-файлов (`scripts/lock_requirements.sh` + `git diff --exit-code`); от тестов
   не зависит, идёт параллельно с ними;
 - `split-check` — `scripts/check_ci_split.py`: отборы `selenium` и `not selenium` не пусты,
   не пересекаются, в сумме дают весь набор;
