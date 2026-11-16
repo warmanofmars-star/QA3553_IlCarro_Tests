@@ -153,6 +153,7 @@ ruff check --fix .         # исправить то, что ruff умеет и�
 ruff format --check .      # только проверить форматирование (как в CI)
 ruff format .              # отформатировать
 ```
+Файлы открываются только с явным `encoding` (правило PLW1514 в `pyproject.toml`).
 
 **Секреты во всей истории git (как job Lint в CI):** gitleaks ставит сам pre-commit, отдельной
 установки не нужно; учитываются `.gitleaks.toml` и `.gitleaksignore`.
