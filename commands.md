@@ -315,7 +315,7 @@ Prepare ─► API and Playwright ─► Selenium (Grid) ─► post: уборк
 `git config --global core.safecrlf false`
 
 **Обновить файл зависимостей проекта:** прямые зависимости и их версии правятся в `requirements.in`
-(тесты) и `requirements-dev.in` (ruff, pre-commit). `requirements.txt` и `requirements-dev.txt` —
+(тесты) и `requirements-dev.in` (ruff, pre-commit, check-jsonschema). `requirements.txt` и `requirements-dev.txt` —
 lock-файлы со всем деревом пакетов: их генерирует `scripts/lock_requirements.sh` (pip-compile),
 руками их не правят. Скрипт работает только в контейнере с образом из `Dockerfile` — дерево
 разрешается для Linux и той же версии Python, что ставит образ (PowerShell, из корня проекта):
@@ -347,3 +347,47 @@ pip check                                                 # «No broken requirem
 `pip install` о конфликте версий только предупреждает, а `pip check` завершается с ошибкой
 и называет пакет, например `playwright 1.63.0 has requirement pyee<14,>=13, but you have pyee 14.0.0`.
 Тот же `pip check` идёт при сборке Docker-образа — с конфликтом образ не соберётся.
+
+## 📦 Dependabot: обновления зависимостей (`.github/dependabot.yml`)
+
+**Что приходит.** Один PR в месяц (первого числа) на все экосистемы сразу: pip (`requirements*.in`
+и lock-файлы), pre-commit (rev внешних хуков; local-хуки бот пропускает), GitHub Actions, Docker
+(`Dockerfile`), Docker Compose (образы Selenium Grid). Заголовок — `build(deps): …`. Одна группа и раз
+в месяц — потому что каждый PR запускает полный CI, а каждый прогон навсегда оставляет пользователей
+на общем бэкенде. Выдержка — 14 дней: версия моложе двух недель в PR не попадает. Для образа `python`
+— только патчи (3.14.x): переход на новую минорную Python — отдельное решение, не PR бота.
+Security updates (если они включены в настройках репозитория) — отдельные PR: вне расписания, без
+выдержки и без группировки с обычными обновлениями.
+
+**Как ревьюить PR бота** (ревьюит и сливает пользователь):
+1. CI зелёный — весь, включая `lint`: актуальность lock-файлов по пинам и проверку конфигов по схеме.
+   Dependabot пересобирает lock-файлы своей версией pip-tools — шапка и «# via» могут отличаться,
+   проверка сравнивает только пины.
+2. Список обновлений в описании PR — ожидаемые ли пакеты и версии.
+3. Даты выпуска (PyPI, Docker Hub, релизы на GitHub): **ловушка групп** — в группе выдержка
+   оценивается для группы, а не для каждого пакета, и PR может подтянуть пакет моложе 14 дней.
+   Такой пакет — не сливать, пока ему не исполнится две недели (или исключить его, см. ниже).
+4. Мажорные версии — читать changelog: ломающие изменения тесты могут и не задеть.
+
+**PR красный.** Чаще всего — lock-файлы (`lint`) или несовместимость версий (`pip check` при сборке
+образа). Починить на ветке PR: `git fetch origin`, `git switch <ветка PR>`, пересобрать lock-файлы
+в контейнере (команда — «Обновить файл зависимостей проекта» выше), закоммитить, push. После чужого
+коммита бот перестаёт сам перебазировать PR. Комментарии в PR:
+- `@dependabot rebase` — перебазировать PR;
+- `@dependabot recreate` — пересоздать PR заново, **затирая** все правки в нём (и твою починку).
+Чтобы бот мог перезаписывать ветку поверх твоих коммитов, в их сообщение добавляют `[dependabot skip]`.
+
+**Исключить зависимость.** Основной способ — `ignore` в `.github/dependabot.yml` (по задаче): видно
+в git, почему пакет не обновляется. Быстрый — комментарий в групповом PR (закрывает PR, условие
+хранится в настройках репозитория, а не в файле):
+- `@dependabot ignore ИМЯ` — не обновлять пакет; `@dependabot ignore ИМЯ major version` (или `minor`,
+  `patch`) — не обновлять эту часть версии;
+- `@dependabot show ИМЯ ignore conditions` — какие условия записаны; `@dependabot unignore ИМЯ` — снять.
+
+**Версии вне Dependabot** — бот их не видит, обновлять вручную:
+- `PIP_TOOLS_VERSION` в `scripts/lock_requirements.sh` — переменная shell, а не манифест;
+- `allure-commandline` в `.github/workflows/tests.yml` — ставится `npm install -g` без `package.json`;
+- минорная версия Python в `Dockerfile` — намеренно в `ignore` (патчи бот предлагает).
+
+Документация GitHub: «Dependabot options reference», «Configuring multi-ecosystem updates»,
+«Dependabot pull request comment commands».
