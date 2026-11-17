@@ -1,0 +1,9 @@
+-c requirements.txt
+# Зависимости для разработки — исходник для lock-файла requirements-dev.txt. Это слой поверх
+# requirements.txt: ставится вместе с ним (pip install -r requirements.txt -r requirements-dev.txt),
+# а -c выше не даёт общим транзитивным пакетам разойтись с версиями из requirements.txt.
+# В Docker-образ с тестами они не попадают — там нужен только requirements.txt.
+# gitleaks — не пакет Python: его ставит сам pre-commit (версия — в .pre-commit-config.yaml).
+# requirements-dev.txt генерирует scripts/lock_requirements.sh — руками его не правят.
+ruff==0.17.1          # та же версия, что rev в .pre-commit-config.yaml
+pre-commit==4.7.0

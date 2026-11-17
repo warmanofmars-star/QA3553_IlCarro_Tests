@@ -60,9 +60,10 @@ jobs:
     name: Lint
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    # ruff ставится из lock-файла requirements-dev.txt (версия — в requirements-dev.in,
+    # та же, что rev в .pre-commit-config.yaml); gitleaks — не пакет Python, его версия здесь
     env:
-      RUFF_VERSION: 0.17.1        # та же версия, что в requirements-dev.txt и .pre-commit-config.yaml
-      GITLEAKS_VERSION: 8.30.1    # та же версия, что в .pre-commit-config.yaml
+      GITLEAKS_VERSION: 8.30.1    # та же версия, что rev в .pre-commit-config.yaml
     steps:
       # Вся история, а не последний коммит: gitleaks проверяет каждый коммит репозитория
       - name: Скачиваем код проекта со всей историей
@@ -71,19 +72,25 @@ jobs:
           fetch-depth: 0
 
       # Python — тот же, что в Docker-образе с тестами: проверка матрицы собирает тесты,
-      # ей нужны зависимости проекта. ruff от версии интерпретатора не зависит (цель — в pyproject.toml)
+      # а проверка lock-файлов разрешает зависимости для этой версии Python.
+      # ruff от версии интерпретатора не зависит (цель — в pyproject.toml)
       - name: Ставим Python
         uses: actions/setup-python@v7
         with:
           python-version: '3.14'
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      # Один раз для всех шагов: ruff — из lock-файла requirements-dev.txt, зависимости проекта
+      # нужны матрице трассируемости
+      - name: Устанавливаем зависимости проекта и инструменты разработки
+        run: python -m pip install --quiet -r requirements.txt -r requirements-dev.txt
 
       # Оба шага выполняются, даже если первый упал: в логе видны все замечания сразу
       - name: Проверяем код линтером (ruff check)
-        run: |
-          python -m pip install --quiet "ruff==$RUFF_VERSION"
-          ruff check --output-format=github .    # замечания появятся прямо в diff PR
+        run: ruff check --output-format=github .    # замечания появятся прямо в diff PR
 
       - name: Проверяем форматирование (ruff format --check)
         if: ${{ !cancelled() }}
@@ -110,9 +117,21 @@ jobs:
       # браузеры и сеть не нужны
       - name: Проверяем матрицу трассируемости требований
         if: ${{ !cancelled() }}
+        run: python scripts/coverage_matrix.py --check
+
+      # requirements.txt и requirements-dev.txt генерируются из *.in. Если исходник изменили
+      # и не перекомпилировали (или поправили lock-файл руками), lock-файл в репозитории
+      # не соответствует исходнику — и CI с Docker ставил бы не то, что записано в *.in.
+      # Скрипт пересобирает lock-файлы тем же pip-compile; любой diff — красный Lint.
+      # Без --upgrade: при согласованных файлах pip-compile оставляет версии как есть
+      - name: Проверяем, что lock-файлы зависимостей актуальны
+        if: ${{ !cancelled() }}
         run: |
-          python -m pip install --quiet -r requirements.txt
-          python scripts/coverage_matrix.py --check
+          bash scripts/lock_requirements.sh
+          if ! git diff --exit-code -- requirements.txt requirements-dev.txt; then
+            echo "::error::Lock-файлы не соответствуют requirements.in / requirements-dev.in. Пересобери их в контейнере (commands.md, «Обновить файл зависимостей проекта»): docker run --rm -v \"\${PWD}:/src\" -w /src <образ из FROM в Dockerfile> bash scripts/lock_requirements.sh"
+            exit 1
+          fi
 
   # ==========================================
   # JOB 0: ПРОВЕРКА РАЗБИЕНИЯ (сбор тестов без запуска, около минуты)
