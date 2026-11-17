@@ -94,15 +94,19 @@ ruff format .           # форматирование;  ruff format --check .  
 - Хук `coverage-matrix` (local, `language: system`) — `python scripts/coverage_matrix.py --check` при
   изменениях в `tests/`, `data/`, `docs/requirements/`, `README.md`, `conftest.py`. Ему нужны зависимости
   проекта: коммить из окружения, где они установлены.
-- Версии согласованы попарно: ruff — `requirements-dev.in` и rev в `.pre-commit-config.yaml`
-  (job `lint` ставит ruff из lock-файла); gitleaks — rev в `.pre-commit-config.yaml` и `GITLEAKS_VERSION`
-  в job `lint`. Меняешь одно — меняй и второе.
+- Версия каждого инструмента записана в одном месте: ruff — только `requirements-dev.in` (хуки ruff —
+  `local`, `language: system`: ruff из окружения, поставленного из lock-файла, — коммить из активированного
+  venv; job `lint` ставит ruff из того же lock-файла); gitleaks — только rev в `.pre-commit-config.yaml`
+  (job `lint` читает версию оттуда, rev не вида `vX.Y.Z` — красный шаг). Дубли версий не заводи.
 - **Зависимости правятся в `requirements.in` / `requirements-dev.in`.** `requirements.txt`
   и `requirements-dev.txt` — lock-файлы (всё дерево, pip-compile); руками их не правят, генерирует
   `scripts/lock_requirements.sh` — только в контейнере с образом из `Dockerfile` (команда —
   в `commands.md`, «Обновить файл зависимостей проекта»). Установка —
   `pip install -r requirements.txt -r requirements-dev.txt`, затем `pip check`. Без хэшей:
   цель — воспроизводимое дерево версий, хэши мешали бы слою dev и Dependabot.
+  Актуальность lock-файлов проверяется по пинам «имя==версия», а не по тексту
+  (`scripts/lock_requirements.sh --check` → `scripts/compare_lock_pins.py`): шапка и «# via» зависят
+  от версии pip-tools, а Dependabot пересобирает своей. Версию pip-tools Dependabot не повторяем.
 
 ## CI (GitHub Actions, `.github/workflows/tests.yml`)
 
@@ -111,7 +115,7 @@ PR отменяет предыдущий запуск того же PR; запу
 
 - `lint` — ruff check, ruff format --check, gitleaks по всей истории, `scripts/coverage_matrix.py --check`
   (матрица трассируемости; ради сбора тестов ставятся зависимости проекта, Python 3.14), актуальность
-  lock-файлов (`scripts/lock_requirements.sh` + `git diff --exit-code`); от тестов
+  lock-файлов по пинам (`scripts/lock_requirements.sh --check`); от тестов
   не зависит, идёт параллельно с ними;
 - `split-check` — `scripts/check_ci_split.py`: отборы `selenium` и `not selenium` не пусты,
   не пересекаются, в сумме дают весь набор;

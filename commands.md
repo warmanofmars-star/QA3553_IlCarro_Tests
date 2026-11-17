@@ -165,9 +165,10 @@ gitleaks: `gitleaks git --redact -v .`
 с `password`/`token`/`secret` в имени; печатает только файл, поле и количество. Код 0 — чисто,
 1 — найдено, 2 — нет результатов.
 
-**Обновить версии хуков (осознанно, затем выровнять версии):** `pre-commit autoupdate`.
-Новый rev ruff — та же версия в `requirements-dev.in` и пересборка lock-файлов (ниже, «Обновить
-файл зависимостей проекта»); новый rev gitleaks — та же версия в `GITLEAKS_VERSION` job lint.
+**Обновить версии хуков (осознанно):** `pre-commit autoupdate`. Версия gitleaks — только rev
+в `.pre-commit-config.yaml`: job lint читает её оттуда. Хуки ruff — `local` (ruff из venv), их версия —
+только в `requirements-dev.in`: меняется там, затем пересборка lock-файлов (ниже, «Обновить файл
+зависимостей проекта») и `pip install -r requirements.txt -r requirements-dev.txt`.
 
 ---
 
@@ -185,7 +186,7 @@ selenium [chrome,        │      │
           firefox, edge] ┘      └──────────────(что-то упало)──► notify-failure
 ```
 - `lint` — ruff check, ruff format --check, gitleaks по всей истории репозитория, матрица
-  трассируемости и актуальность lock-файлов зависимостей. От тестов не зависит и идёт параллельно с ними.
+  трассируемости и актуальность lock-файлов зависимостей (по пинам). От тестов не зависит и идёт параллельно с ними.
 - `split-check` — собирает тесты без запуска и проверяет, что разбиение дополняющее.
 - `api-and-playwright` — `-m "not selenium"`, один раз, в Docker без Grid.
 - `selenium` — `-m "selenium"`, матрица браузеров (задана в [`.github/workflows/tests.yml`](.github/workflows/tests.yml)) через Selenium Grid.
@@ -325,8 +326,16 @@ docker run --rm -v "${PWD}:/src" -w /src $img bash scripts/lock_requirements.sh
 ```
 Без `--upgrade`: остальные пакеты остаются на записанных версиях. Без хэшей: цель — воспроизводимое
 дерево версий, а хэши мешали бы слоям (`requirements-dev.txt` поверх `requirements.txt`) и Dependabot.
-Изменения `*.in` и lock-файлов коммить вместе: job Lint пересобирает lock-файлы тем же скриптом
-и падает, если они не совпали с репозиторием.
+Изменения `*.in` и lock-файлов коммить вместе: job Lint запускает тот же скрипт с `--check` —
+компилирует `*.in` во временный каталог и сравнивает пины «имя==версия» с репозиторием
+(`scripts/compare_lock_pins.py`; шапка и «# via» не учитываются — они зависят от версии pip-tools,
+а Dependabot пересобирает своей). Расхождение — красный Lint со списком пакетов. Проверка подтверждает
+согласованность lock-файла с `*.in` (прямые пины, полное и непротиворечивое дерево, слой dev), а не то,
+что транзитивные версии — те, что pip-compile выбрал бы с нуля: любая совместимая версия — корректный
+lock-файл (так их поднимает и Dependabot). Проверить локально:
+```powershell
+docker run --rm -v "${PWD}:/src" -w /src $img bash scripts/lock_requirements.sh --check   # 0 — совпадают, 1 — нет
+```
 
 **Обновить локальное окружение и проверить его** (после `git pull` или правки зависимостей):
 ```bash
