@@ -55,18 +55,18 @@ services:
 
   chrome:
     <<: *node
-    image: selenium/node-chrome:155.0-20261010
+    image: selenium/node-chrome:4.51.0-20261010
     platform: linux/amd64
     profiles: [chrome]
 
   firefox:
     <<: *node
-    image: selenium/node-firefox:158.0-20261010
+    image: selenium/node-firefox:4.51.0-20261010
     profiles: [firefox]
 
   edge:
     <<: *node
-    image: selenium/node-edge:155.0.4283.45-20261010
+    image: selenium/node-edge:4.51.0-20261010
     platform: linux/amd64
     profiles: [edge]
 
