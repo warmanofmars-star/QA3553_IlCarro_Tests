@@ -107,6 +107,12 @@ ruff format .           # форматирование;  ruff format --check .  
   Актуальность lock-файлов проверяется по пинам «имя==версия», а не по тексту
   (`scripts/lock_requirements.sh --check` → `scripts/compare_lock_pins.py`): шапка и «# via» зависят
   от версии pip-tools, а Dependabot пересобирает своей. Версию pip-tools Dependabot не повторяем.
+- **Dependabot** (`.github/dependabot.yml`): одна группа на все экосистемы, раз в месяц, выдержка 14 дней,
+  Python — только патчи. Файл и версии в нём меняются только по задаче. **PR бота ревьюит и сливает
+  пользователь — агент их не сливает.** Как ревьюить и версии вне Dependabot — `commands.md`.
+- Конфиги GitHub проверяются по JSON-схемам, встроенным в check-jsonschema (версия — только
+  `requirements-dev.in`, сеть не нужна): хуки `check-dependabot` и `check-github-workflows`
+  (local, `language: system`) и те же шаги job `lint`.
 
 ## CI (GitHub Actions, `.github/workflows/tests.yml`)
 
@@ -115,8 +121,8 @@ PR отменяет предыдущий запуск того же PR; запу
 
 - `lint` — ruff check, ruff format --check, gitleaks по всей истории, `scripts/coverage_matrix.py --check`
   (матрица трассируемости; ради сбора тестов ставятся зависимости проекта, Python 3.14), актуальность
-  lock-файлов по пинам (`scripts/lock_requirements.sh --check`); от тестов
-  не зависит, идёт параллельно с ними;
+  lock-файлов по пинам (`scripts/lock_requirements.sh --check`), `.github/dependabot.yml` и workflow
+  по JSON-схемам (check-jsonschema); от тестов не зависит, идёт параллельно с ними;
 - `split-check` — `scripts/check_ci_split.py`: отборы `selenium` и `not selenium` не пусты,
   не пересекаются, в сумме дают весь набор;
 - `api-and-playwright` — `-m "not selenium"`, один раз, Docker без Grid;

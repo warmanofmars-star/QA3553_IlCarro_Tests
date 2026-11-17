@@ -1,0 +1,81 @@
+# Dependabot: обновления версий зависимостей проекта (настройки — docs.github.com,
+# «Dependabot options reference» и «Configuring multi-ecosystem updates»).
+# Как ревьюить PR бота и что делать, если он красный, — commands.md, раздел про Dependabot.
+# Файл и версии в нём меняются только по задаче; PR бота ревьюит и сливает пользователь.
+#
+# Версии вне Dependabot (бот их не видит — обновляются вручную):
+#   - PIP_TOOLS_VERSION в scripts/lock_requirements.sh — переменная shell, а не манифест;
+#   - allure-commandline в .github/workflows/tests.yml — npm без package.json;
+#   - минорная версия Python в Dockerfile — намеренно в ignore (см. запись docker ниже).
+version: 2
+
+# Одна группа на все экосистемы и раз в месяц. Причина — общий внешний бэкенд: каждый PR бота
+# запускает полный CI, а каждый прогон навсегда оставляет на бэкенде зарегистрированных
+# пользователей (удалить их нельзя). Без группы было бы 10–20 PR в месяц — по прогону на каждый.
+multi-ecosystem-groups:
+  dependencies:
+    schedule:
+      interval: "monthly"
+    # Заголовок и коммит — в стиле истории проекта: «build(deps): …» (Conventional Commits).
+    # commit-message у multi-ecosystem группы задаётся только на уровне группы
+    commit-message:
+      prefix: "build"
+      include: "scope"
+
+# У каждой записи: patterns ["*"] — все зависимости экосистемы идут в общую группу (patterns
+# обязателен для участника multi-ecosystem группы); расписание задаёт группа.
+#
+# cooldown 14 дней — политика проекта (Dockerfile: «не раньше чем через две недели после выхода»):
+# версия моложе двух недель в PR не попадает. Только
+# default-days: semver-*-days поддерживают не все экосистемы (docker, docker-compose,
+# github-actions, pre-commit — нет). Ловушка: в группе выдержка оценивается для группы,
+# а не для каждого пакета, — групповой PR может подтянуть пакет моложе 14 дней. Поэтому при ревью
+# PR бота сверяются даты выпуска. Security updates идут без выдержки и вне расписания.
+updates:
+  # requirements.in → requirements.txt и requirements-dev.in → requirements-dev.txt (pip-compile):
+  # бот правит пины в *.in и пересобирает lock-файлы
+  - package-ecosystem: "pip"
+    directory: "/"
+    patterns: ["*"]
+    multi-ecosystem-group: "dependencies"
+    cooldown:
+      default-days: 14
+
+  # rev внешних хуков (pre-commit-hooks, gitleaks); local-хуки (ruff, coverage-matrix) бот
+  # пропускает: их версии — в requirements-dev.in, это экосистема pip
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    patterns: ["*"]
+    multi-ecosystem-group: "dependencies"
+    cooldown:
+      default-days: 14
+
+  # Actions — на тегах (@v7), а не на SHA: все они первой стороны (actions/*)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    patterns: ["*"]
+    multi-ecosystem-group: "dependencies"
+    cooldown:
+      default-days: 14
+
+  # Базовый образ в Dockerfile
+  - package-ecosystem: "docker"
+    directory: "/"
+    patterns: ["*"]
+    multi-ecosystem-group: "dependencies"
+    cooldown:
+      default-days: 14
+    # Для python — только патчи: переход на новую минорную Python (3.14 → 3.15) меняет
+    # совместимость (ruff target py312, локальный Python, lock-файлы) — это отдельное осознанное
+    # решение, а не PR бота
+    ignore:
+      - dependency-name: "python"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+
+  # Образы Selenium Grid (хаб и узлы) в docker-compose.yml
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    patterns: ["*"]
+    multi-ecosystem-group: "dependencies"
+    cooldown:
+      default-days: 14

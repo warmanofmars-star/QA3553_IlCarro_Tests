@@ -7,3 +7,6 @@
 # requirements-dev.txt генерирует scripts/lock_requirements.sh — руками его не правят.
 ruff==0.17.1          # единственный источник версии: хуки ruff в .pre-commit-config.yaml — local, ruff из venv
 pre-commit==4.7.0
+# Проверка .github/dependabot.yml и .github/workflows/*.yml по схемам, встроенным в пакет
+# (хуки check-dependabot и check-github-workflows, шаг job Lint). Единственный источник версии.
+check-jsonschema==0.39.0
