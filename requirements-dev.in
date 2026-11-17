@@ -5,7 +5,7 @@
 # В Docker-образ с тестами они не попадают — там нужен только requirements.txt.
 # gitleaks — не пакет Python: его ставит сам pre-commit (версия — в .pre-commit-config.yaml).
 # requirements-dev.txt генерирует scripts/lock_requirements.sh — руками его не правят.
-ruff==0.17.1          # единственный источник версии: хуки ruff в .pre-commit-config.yaml — local, ruff из venv
+ruff==0.17.3          # единственный источник версии: хуки ruff в .pre-commit-config.yaml — local, ruff из venv
 pre-commit==4.7.0
 # Проверка .github/dependabot.yml и .github/workflows/*.yml по схемам, встроенным в пакет
 # (хуки check-dependabot и check-github-workflows, шаг job Lint). Единственный источник версии.
