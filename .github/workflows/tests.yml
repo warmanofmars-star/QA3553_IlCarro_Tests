@@ -158,6 +158,21 @@ jobs:
             exit 1
           fi
 
+      # Конфиги GitHub — по JSON-схемам, встроенным в check-jsonschema (версия — только
+      # в requirements-dev.in; схемы лежат в пакете, сеть не нужна). Те же проверки — хуки
+      # check-dependabot и check-github-workflows, но хук можно не установить, а job — нет.
+      # Опечатка в ключе или неверное значение иначе всплыли бы только на GitHub, уже после слияния
+      - name: Проверяем конфиг Dependabot по схеме
+        if: ${{ !cancelled() }}
+        run: check-jsonschema --builtin-schema vendor.dependabot .github/dependabot.yml
+
+      - name: Проверяем workflow GitHub Actions по схеме
+        if: ${{ !cancelled() }}
+        run: |
+          shopt -s nullglob
+          workflows=(.github/workflows/*.yml .github/workflows/*.yaml)
+          check-jsonschema --builtin-schema vendor.github-workflows "${workflows[@]}"
+
   # ==========================================
   # JOB 0: ПРОВЕРКА РАЗБИЕНИЯ (сбор тестов без запуска, около минуты)
   # ==========================================
