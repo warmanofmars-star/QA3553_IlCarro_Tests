@@ -122,14 +122,15 @@ jobs:
       # requirements.txt и requirements-dev.txt генерируются из *.in. Если исходник изменили
       # и не перекомпилировали (или поправили lock-файл руками), lock-файл в репозитории
       # не соответствует исходнику — и CI с Docker ставил бы не то, что записано в *.in.
-      # Скрипт пересобирает lock-файлы тем же pip-compile; любой diff — красный Lint.
+      # --check компилирует *.in во временный каталог и сравнивает пины «имя==версия», а не текст:
+      # шапка и пометки «# via» зависят от версии pip-tools, а Dependabot пересобирает lock-файлы
+      # своей. Рабочее дерево не меняется; расхождение печатается по пакетам — красный Lint.
       # Без --upgrade: при согласованных файлах pip-compile оставляет версии как есть
       - name: Проверяем, что lock-файлы зависимостей актуальны
         if: ${{ !cancelled() }}
         run: |
-          bash scripts/lock_requirements.sh
-          if ! git diff --exit-code -- requirements.txt requirements-dev.txt; then
-            echo "::error::Lock-файлы не соответствуют requirements.in / requirements-dev.in. Пересобери их в контейнере (commands.md, «Обновить файл зависимостей проекта»): docker run --rm -v \"\${PWD}:/src\" -w /src <образ из FROM в Dockerfile> bash scripts/lock_requirements.sh"
+          if ! bash scripts/lock_requirements.sh --check; then
+            echo "::error::Lock-файлы не соответствуют requirements.in / requirements-dev.in (расхождения — в логе выше). Пересобери их в контейнере (commands.md, «Обновить файл зависимостей проекта»): docker run --rm -v \"\${PWD}:/src\" -w /src <образ из FROM в Dockerfile> bash scripts/lock_requirements.sh"
             exit 1
           fi
 
