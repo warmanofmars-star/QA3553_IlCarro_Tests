@@ -11,6 +11,7 @@
   (Q-UI-20 … Q-UI-26, шаг 6.3b), `research/explore_ui_faults.py` (Q-UI-27 … Q-UI-40, шаг 7a, сбои бэкенда),
   `research/probe_logout_navigation.py` (Q-UI-41, URL после «Log out»),
   Q-UI-42 — без скрипта: лог CI и временная проба порчи диагностики,
+  Q-UI-43 — без скрипта: отчёт Allure и лог теста прогона CI на `main`,
   общие функции — `research/common.py`. Описание запуска — `research/README.md`.
 - Каждый скрипт запущен дважды (`--run 1`, `--run 2`). Скриншоты лежат в `research/evidence/` (в git не хранятся,
   создаются скриптом; имена указаны в вопросах).
@@ -1006,6 +1007,31 @@ Locator.click: Timeout 30000ms exceeded.
 - JS-ассеты хоста UI оборваны: клик прошёл, `TimeoutError` ожидания «Log out» через 30 с, в заметке «ответ HTTP 200,
   начало ответа через 170 мс после отправки» и `script …/assets/index-CIwwRVbQ.js: net::ERR_FAILED`;
 - без подмен — зелёный, заметок нет; `test_pw_login_success` в том же прогоне — зелёный.
+
+## Q-UI-43 Падение в CI: Chrome потерял процесс отрисовки при открытии `/login`
+
+**Как проверяли:** по отчёту Allure и логу теста прогона CI на `main` (запуск 44146758631, после слияния PR #33,
+2026-11-17, около 18:23 UTC, job Selenium, Chrome через Grid).
+
+Факт: `test_car_form_required_field[carClass-Car class]` [CHROME] — broken в фикстуре `shared_authenticated_driver`,
+на шаге «Открытие URL: '/login'» (8,5 с). Лог теста:
+
+```
+18:23:23  создание сессии в Grid
+18:23:23  переход на /login
+18:23:32  InvalidSessionIdException: session deleted as the browser has closed the connection
+          from disconnected: Unable to receive message from renderer
+          (chrome=155.0.8059.79)
+```
+
+- История теста на `main`: 13 из 14 passed.
+- Код с предыдущего зелёного прогона не менялся: PR #33 — только `.github/dependabot.yml` и `commands.md`.
+- Следующий прогон `main` (#107, после слияния PR #32) — 262: 201 passed / 61 xfailed. Сбой не повторился.
+
+**Не установлено:** причина. Версия — нехватка ресурсов раннера: три узла Chrome с записью видео плюс сами тесты;
+`shm_size: 2gb` у узлов в `docker-compose.yml` уже стоит. Версия не подтверждена.
+
+**Пересмотр:** если сбой повторится — замерить нагрузку раннера (прогон без записи видео или с двумя узлами).
 
 ## Фреймворк: одновременная запись журналов прогона
 
