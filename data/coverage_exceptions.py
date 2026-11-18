@@ -22,6 +22,8 @@
   * reason_en       — обязательно у любой записи, как reason: его перевод;
   * revisit_when_en — обязательно там же, где revisit_when: его перевод.
   Русский текст — оригинал: правка reason или revisit_when — в том же изменении правка перевода.
+  Проверка при импорте: в переводе те же опорные элементы, что в оригинале (_TRANSLATION_ANCHORS:
+  ссылки Q-…, ID пунктов, имена тестов, ключи реестров, пути /v1/…, русские тексты интерфейса в «…»).
 
 Поля исключений (harms_shared_env, blocked, unreachable):
   * revisit_when — обязательно: когда пересмотреть исключение, одной-двумя фразами. Без него запись
@@ -47,6 +49,8 @@ CLOSED_CATEGORIES). Категории остаются в реестре, чт�
 ID сверяются с requirements.md при импорте модуля, как в реестрах known_bugs.py и observations.py.
 """
 
+import re
+from collections import Counter
 from dataclasses import dataclass
 
 from data.requirement_ids import requirement_ids
@@ -236,6 +240,35 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
 }
 
 
+# Опорные элементы текста, которые перевод переносит без изменений: по ним сверяются reason с reason_en
+# и revisit_when с revisit_when_en. Правка оригинала без правки перевода (или наоборот) меняет их набор
+# и валит реестр, а не проходит молча. Каждый элемент считается с кратностью (мультисет)
+_TRANSLATION_ANCHORS = (
+    re.compile(r"\bQ-(?:API|UI)-\d+\b"),  # ссылки на исследование: Q-API-12, Q-UI-02
+    re.compile(r"\b(?:REQ|DISC|OBS)-[A-Z0-9]+(?:-[A-Z0-9]+)*\b"),  # ID пунктов: REQ-UI-CARPAGE-01, DISC-05
+    re.compile(r"\btest_\w+"),  # имена тестов: test_pw_car_card_opens_car_page
+    # Ключи реестров: BOOKING_NOT_PERSISTED. Подчёркивание обязательно — иначе ловились бы API, GET, CLAUDE
+    re.compile(r"\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b"),
+    re.compile(r"/v1/[\w/{}-]+"),  # пути эндпоинтов: /v1/cars/{id}; точка в конце предложения не входит
+    re.compile(r"«[^«»]*[А-Яа-яЁё][^«»]*»"),  # русские тексты интерфейса — в переводе байт в байт
+)
+
+
+def _anchors(text: str) -> Counter:
+    return Counter(match for pattern in _TRANSLATION_ANCHORS for match in pattern.findall(text))
+
+
+def _check_translation(item_id: str, field_name: str, original: str, translation: str) -> None:
+    """Перевод несёт те же опорные элементы, что и оригинал; иначе — ошибка реестра."""
+    expected, actual = _anchors(original), _anchors(translation)
+    if expected != actual:
+        raise ValueError(
+            f"Исключение покрытия {item_id!r}: {field_name}_en не согласован с {field_name}: "
+            f"в переводе нет {sorted((expected - actual).elements()) or '—'}, "
+            f"лишнее {sorted((actual - expected).elements()) or '—'}. Поправь перевод вместе с оригиналом."
+        )
+
+
 def _validate_registry() -> None:
     """Сверяет записи с requirements.md и правилами категорий. Вызывается один раз при импорте модуля."""
     known_ids = requirement_ids()
@@ -278,6 +311,8 @@ def _validate_registry() -> None:
                 f"Исключение покрытия {item_id!r}: не указан перевод условия пересмотра (revisit_when_en) — "
                 "он нужен английской матрице docs/requirements/traceability.en.md."
             )
+        _check_translation(item_id, "reason", entry.reason, entry.reason_en)
+        _check_translation(item_id, "revisit_when", entry.revisit_when, entry.revisit_when_en)
         if entry.basis and entry.category != UNREACHABLE:
             raise ValueError(f"Исключение покрытия {item_id!r}: basis указывается только для категории unreachable.")
         for ground in entry.basis:
