@@ -1,7 +1,7 @@
 """
 Матрица трассируемости требований: docs/requirements/traceability.md из тегов автотестов.
 
-    python scripts/coverage_matrix.py           # пересобрать матрицу и сводку в README.md
+    python scripts/coverage_matrix.py           # пересобрать матрицы и сводку в README.md
     python scripts/coverage_matrix.py --check   # ничего не писать, только проверить (CI, pre-commit)
 
 Матрицу не пишут руками. Источники правды:
@@ -9,6 +9,12 @@
   * теги @allure.tag("REQ-…") на тестах, в том числе в pytest.param(..., marks=allure.tag(...));
   * маркеры known_bug и observation — реестры data/known_bugs.py и data/observations.py;
   * data/coverage_exceptions.py — пункты без автотеста: исключения и запланированные тесты.
+
+Тот же рендер на английском — docs/requirements/traceability.en.md: формулировки и заголовки разделов —
+из перевода requirements.en.md, подписи статусов и категорий — английские подписи сводки README
+(STATUS_TITLES_EN, CATEGORY_TITLES_EN), причины исключений — reason_en / revisit_when_en. Это не перевод,
+а сгенерированный файл: пометки translation-of у него нет, scripts/check_translations.py пропускает его
+по имени. ID перевода не совпадают с оригиналом — данные не согласованы (код 2).
 
 Тесты НЕ запускаются: pytest только собирает их (как --collect-only), поэтому матрица показывает,
 ЧТО проверяет набор тестов, а не результат последнего прогона. Браузер, Grid и сеть не нужны.
@@ -23,7 +29,7 @@
     держалось исключение, убран из реестра — исключение пора пересмотреть;
   * тест под known_bug / observation без тега своих refs или с тегом сверх них;
   * xfail не из реестров.
-В режиме --check дополнительно (код 1): traceability.md или сводка в README.md устарели.
+В режиме --check дополнительно (код 1): traceability.md, traceability.en.md или сводка в README.md устарели.
 """
 
 import argparse
@@ -40,6 +46,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 MATRIX_PATH = ROOT / "docs" / "requirements" / "traceability.md"
+MATRIX_EN_PATH = ROOT / "docs" / "requirements" / "traceability.en.md"
 README_PATH = ROOT / "README.md"
 TESTS_DIR = "tests"
 
@@ -53,7 +60,12 @@ from data.coverage_exceptions import (  # noqa: E402
 )
 from data.known_bugs import KNOWN_BUGS  # noqa: E402
 from data.observations import OBSERVATIONS  # noqa: E402
-from data.requirement_ids import RequirementItem, requirement_items  # noqa: E402
+from data.requirement_ids import (  # noqa: E402
+    REQUIREMENTS_EN_FILE,
+    RequirementItem,
+    parse_requirement_items,
+    requirement_items,
+)
 
 README_START = "<!-- coverage:start -->"
 README_END = "<!-- coverage:end -->"
@@ -65,7 +77,8 @@ REQUIREMENT_TAG = re.compile(r"^(?:REQ|DISC|OBS)-")
 # Причина xfail из реестров начинается с ключа записи: "[NO_AUTH_403] …"
 REGISTRY_REASON = re.compile(r"^\[([A-Z0-9_]+)\]")
 # Конец первого предложения формулировки: точка, за которой начинается новое предложение
-SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-ZА-ЯЁ«`])")
+# («“» — для английского перевода, где кавычки английские)
+SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[A-ZА-ЯЁ«“`])")
 
 PREFIXES = ("REQ", "DISC", "OBS")
 
@@ -85,7 +98,7 @@ STATUS_TITLES = {
     EXCEPTION: "исключение",
     PLANNED_STATUS: "запланирован",
 }
-# Сводка в README.md — на английском, как весь README
+# Сводка в README.md — на английском, как весь README; те же подписи — в английской матрице
 STATUS_TITLES_EN = {
     COVERED: "Covered by a passing test",
     PARTIAL_STATUS: "Partly covered by a passing test, the rest is planned",
@@ -221,6 +234,27 @@ class Row:
         if self.exception is not None and self.exception.category == PLANNED:
             return PLANNED_STATUS
         return EXCEPTION
+
+
+def english_items(rows: list[Row]) -> tuple[dict[str, RequirementItem], list[str]]:
+    """
+    Пункты перевода requirements.en.md по ID для английской матрицы и несогласованности.
+
+    Порядок и состав строк матрицы задаёт оригинал; перевод даёт только формулировки и разделы.
+    Подробную сверку перевода (ссылки, код, статусы) делает scripts/check_translations.py — здесь
+    только то, без чего английскую матрицу не собрать: те же ID в том же порядке.
+    """
+    relative = REQUIREMENTS_EN_FILE.relative_to(ROOT).as_posix()
+    try:
+        items = parse_requirement_items(REQUIREMENTS_EN_FILE)
+    except (OSError, ValueError) as error:
+        return {}, [f"{relative}: перевод требований не разбирается: {error}"]
+    if [item.id for item in items] != [row.item.id for row in rows]:
+        return {}, [
+            f"{relative}: ID перевода не совпадают с requirements.md (состав или порядок) — английскую матрицу "
+            "не собрать. Подробности: python scripts/check_translations.py"
+        ]
+    return {item.id: item for item in items}, []
 
 
 def check_exception_bases() -> list[str]:
@@ -363,19 +397,53 @@ def _brief(text: str) -> str:
     for match in SENTENCE_END.finditer(text):
         head = text[: match.start()]
         # Точка внутри кавычек («Login failed. Try again») предложение не заканчивает
-        if head.count("«") == head.count("»"):
+        if head.count("«") == head.count("»") and head.count("“") == head.count("”"):
             return head
     return text
 
 
 class Renderer:
-    def __init__(self, rows: list[Row], tests: list[CollectedTest]) -> None:
+    """
+    Рендер матрицы. english=False — traceability.md (как раньше), english=True — traceability.en.md:
+    тот же порядок и те же статусы, а формулировки и разделы — из перевода (en_items), подписи —
+    английские подписи сводки README, причины исключений — reason_en / revisit_when_en.
+    """
+
+    def __init__(
+        self,
+        rows: list[Row],
+        tests: list[CollectedTest],
+        english: bool = False,
+        en_items: dict[str, RequirementItem] | None = None,
+    ) -> None:
         self.rows = rows
         self.tests = tests
+        self.english = english
+        self.en_items = en_items or {}
         self.params_total: dict[tuple[str, str], int] = {}
         for test in tests:
             key = (test.path, test.function)
             self.params_total[key] = self.params_total.get(key, 0) + 1
+
+    # ---------- язык ----------
+    def item(self, row: Row) -> RequirementItem:
+        """Пункт на языке матрицы: формулировка и раздел из оригинала или из перевода."""
+        return self.en_items[row.item.id] if self.english else row.item
+
+    def status_title(self, status: str) -> str:
+        return STATUS_TITLES_EN[status] if self.english else STATUS_TITLES[status]
+
+    def category_title(self, category: str) -> str:
+        return CATEGORY_TITLES_EN[category] if self.english else CATEGORY_TITLES[category]
+
+    def plan_title(self, pr: str) -> str:
+        return PLANNED_PRS_EN[pr] if self.english else PLANNED_PRS[pr]
+
+    def reason(self, exception) -> str:
+        return exception.reason_en if self.english else exception.reason
+
+    def revisit_when(self, exception) -> str:
+        return exception.revisit_when_en if self.english else exception.revisit_when
 
     # ---------- ячейки ----------
     def tests_cell(self, tests: list[CollectedTest]) -> str:
@@ -398,18 +466,18 @@ class Renderer:
     def registry_cell(row: Row) -> str:
         return ", ".join(f"`{key}`" for key in row.bugs + row.observations) or "—"
 
-    @staticmethod
-    def status_cell(row: Row) -> str:
+    def status_cell(self, row: Row) -> str:
         status = row.status
-        text = f"{ICONS[status]} {STATUS_TITLES[status]}"
+        text = f"{ICONS[status]} {self.status_title(status)}"
         if status == PLANNED_STATUS:
             return f"{text} (PR {row.exception.pr})"
         if row.is_partial:
             # Известный баг или наблюдение важнее «частично», но неполнота покрытия не теряется
             separator = " — " if status == PARTIAL_STATUS else "; "
-            return f"{text}{separator}не покрыто: {_cell(row.exception.reason)} (PR {row.exception.pr})"
+            not_covered = "not covered" if self.english else "не покрыто"
+            return f"{text}{separator}{not_covered}: {_cell(self.reason(row.exception))} (PR {row.exception.pr})"
         if status == EXCEPTION:
-            text += f": {CATEGORY_TITLES[row.exception.category]}"
+            text += f": {self.category_title(row.exception.category)}"
             if row.exception.blocked_by:
                 text += f" ({', '.join(row.exception.blocked_by)})"
         return text
@@ -417,6 +485,25 @@ class Renderer:
     # ---------- разделы ----------
     def summary(self) -> list[str]:
         categories, planned, partial = count_exceptions(self.rows)
+        if self.english:
+            return [
+                "## Summary",
+                "",
+                *_summary_table(self.rows, "Status", STATUS_TITLES_EN, "Total"),
+                "",
+                "- **Exceptions by category:** "
+                + "; ".join(f"{CATEGORY_TITLES_EN[category]} — {n}" for category, n in categories.items())
+                + ".",
+                "- **Planned:** "
+                + "; ".join(f"PR {pr} ({PLANNED_PRS_EN[pr]}) — {n}" for pr, n in planned.items())
+                + ".",
+                "- **Partly covered, to be completed:** "
+                + "; ".join(f"PR {pr} ({PLANNED_PRS_EN[pr]}) — {n}" for pr, n in partial.items())
+                + ".",
+                f"- **Known bugs:** {len(KNOWN_BUGS)} in the `data/known_bugs.py` registry; "
+                f"**observations:** {len(OBSERVATIONS)} in the `data/observations.py` registry.",
+                f"- **Automated tests:** {len(self.tests)}, each carries the tag of at least one item.",
+            ]
         lines = [
             "## Сводка",
             "",
@@ -438,63 +525,119 @@ class Renderer:
         return lines
 
     def requirement_sections(self) -> list[str]:
+        header = (
+            "| ID | Wording | Tests | Registry | Status |"
+            if self.english
+            else "| ID | Формулировка | Тесты | Реестр | Статус |"
+        )
         lines: list[str] = []
         section = None
         for row in self.rows:
-            if row.item.section != section:
-                section = row.item.section
-                lines += [
-                    "",
-                    f"### {section}",
-                    "",
-                    "| ID | Формулировка | Тесты | Реестр | Статус |",
-                    "|---|---|---|---|---|",
-                ]
+            item = self.item(row)
+            if item.section != section:
+                section = item.section
+                lines += ["", f"### {section}", "", header, "|---|---|---|---|---|"]
             lines.append(
-                f"| {row.item.id} | {_cell(_brief(row.item.text))} | {self.tests_cell(row.tests)} "
+                f"| {item.id} | {_cell(_brief(item.text))} | {self.tests_cell(row.tests)} "
                 f"| {self.registry_cell(row)} | {self.status_cell(row)} |"
             )
         return lines
 
     def exceptions_section(self) -> list[str]:
-        lines = [
-            "## Реестр исключений покрытия",
-            "",
-            "Реестр — `data/coverage_exceptions.py`. Исключения: теста не будет, пока не изменится приложение.",
-            "Запланированные: запись убирает тот PR, который добавляет тест. Частично покрытые: тест есть,",
-            "в таблице — что из пункта он не проверяет; запись убирает тот PR, который доберёт остальное.",
-            "",
-            "### Исключения",
-            "",
-            "| ID | Категория | Причина | Пересмотреть, когда |",
-            "|---|---|---|---|",
-        ]
+        if self.english:
+            lines = [
+                "## Coverage exception registry",
+                "",
+                "The registry is `data/coverage_exceptions.py`. Exceptions: there will be no test until",
+                "the application changes. Planned: the entry is removed by the PR that adds the test.",
+                "Partly covered: there is a test, the table shows what of the item it does not check;",
+                "the entry is removed by the PR that completes the rest.",
+                "",
+                "### Exceptions",
+                "",
+                "| ID | Category | Reason | Revisit when |",
+                "|---|---|---|---|",
+            ]
+        else:
+            lines = [
+                "## Реестр исключений покрытия",
+                "",
+                "Реестр — `data/coverage_exceptions.py`. Исключения: теста не будет, пока не изменится приложение.",
+                "Запланированные: запись убирает тот PR, который добавляет тест. Частично покрытые: тест есть,",
+                "в таблице — что из пункта он не проверяет; запись убирает тот PR, который доберёт остальное.",
+                "",
+                "### Исключения",
+                "",
+                "| ID | Категория | Причина | Пересмотреть, когда |",
+                "|---|---|---|---|",
+            ]
         for row in self.rows:
             if row.status == EXCEPTION:
-                category = CATEGORY_TITLES[row.exception.category]
+                category = self.category_title(row.exception.category)
                 # Основание в подписи: blocked_by у blocked, basis у unreachable (валидатор не даёт оба сразу)
                 grounds = row.exception.blocked_by + row.exception.basis
                 if grounds:
                     category += f": {', '.join(grounds)}"
                 lines.append(
-                    f"| {row.item.id} | {category} | {_cell(row.exception.reason)} "
-                    f"| {_cell(row.exception.revisit_when)} |"
+                    f"| {row.item.id} | {category} | {_cell(self.reason(row.exception))} "
+                    f"| {_cell(self.revisit_when(row.exception))} |"
                 )
 
-        for pr, title in PLANNED_PRS.items():
-            lines += ["", f"### Запланировано: PR {pr} ({title})", "", "| ID | Что проверит тест |", "|---|---|"]
+        for pr in PLANNED_PRS:
+            if self.english:
+                lines += ["", f"### Planned: PR {pr} ({self.plan_title(pr)})", "", "| ID | What the test will check |"]
+            else:
+                lines += ["", f"### Запланировано: PR {pr} ({self.plan_title(pr)})", "", "| ID | Что проверит тест |"]
+            lines.append("|---|---|")
             for row in self.rows:
                 if row.status == PLANNED_STATUS and row.exception.pr == pr:
-                    lines.append(f"| {row.item.id} | {_cell(row.exception.reason)} |")
+                    lines.append(f"| {row.item.id} | {_cell(self.reason(row.exception))} |")
 
-        lines += ["", "### Покрыто частично", "", "| ID | Что не покрыто | PR |", "|---|---|---|"]
+        if self.english:
+            lines += ["", "### Partly covered", "", "| ID | Not covered | PR |", "|---|---|---|"]
+        else:
+            lines += ["", "### Покрыто частично", "", "| ID | Что не покрыто | PR |", "|---|---|---|"]
         for row in self.rows:
             if row.is_partial and row.tests:
-                lines.append(f"| {row.item.id} | {_cell(row.exception.reason)} | {row.exception.pr} |")
+                lines.append(f"| {row.item.id} | {_cell(self.reason(row.exception))} | {row.exception.pr} |")
         return lines
 
-    def render(self) -> str:
-        lines = [
+    def header(self) -> list[str]:
+        if self.english:
+            return [
+                "# Requirements traceability matrix",
+                "",
+                "> **Generated by `scripts/coverage_matrix.py`, do not edit.**",
+                "> Items and wording come from [`requirements.en.md`](requirements.en.md), the English translation",
+                "> of [`requirements.md`](requirements.md) (here — the first sentence of an item); coverage comes",
+                "> from the `@allure.tag` tags on tests and the `known_bug` and `observation` markers; a missing",
+                "> test — from the `data/coverage_exceptions.py` registry.",
+                "> Regenerate: `python scripts/coverage_matrix.py`.",
+                "> CI and pre-commit check that it is up to date: `python scripts/coverage_matrix.py --check`.",
+                "> The same matrix in Russian: [`traceability.md`](traceability.md).",
+                "",
+                "The matrix shows what the test suite checks, not the result of a run. The “Actual behaviour” column",
+                "in `requirements.en.md` is a research snapshot, not an automation status.",
+                "",
+                "Statuses:",
+                "",
+                f"- {ICONS[COVERED]} **{STATUS_TITLES_EN[COVERED]}** — the item has a test, and it passes;",
+                f"- {ICONS[PARTIAL_STATUS]} **{STATUS_TITLES_EN[PARTIAL_STATUS]}** — the test passes but does",
+                "  not check the whole item: what is not covered and in which PR it will come — in the “Status”",
+                "  column (the `data/coverage_exceptions.py` registry, category `partial`);",
+                f"- {ICONS[BUG]} **{STATUS_TITLES_EN[BUG]}** — the defect is recorded in `data/known_bugs.py`;",
+                "  the entry key is in the “Registry” column;",
+                f"- {ICONS[OBSERVED]} **{STATUS_TITLES_EN[OBSERVED]}** — the test records behaviour from",
+                "  `data/observations.py`;",
+                f"- {ICONS[EXCEPTION]} **{STATUS_TITLES_EN[EXCEPTION]}** — there will be no test until the application",
+                "  changes;",
+                f"- {ICONS[PLANNED_STATUS]} **{STATUS_TITLES_EN[PLANNED_STATUS]}** — the PR in which the test will",
+                "  appear is given.",
+                "",
+                "“Covered” means that the assert of at least one test checks the item as it is written",
+                "in `requirements.en.md`; if only a part is checked, the item is recorded as partly covered.",
+            ]
+        return [
             "# Матрица трассируемости требований",
             "",
             "> **Файл сгенерирован `scripts/coverage_matrix.py`, руками не править.**",
@@ -521,10 +664,15 @@ class Renderer:
             "",
             "«Покрыт» значит, что assert хотя бы одного теста проверяет пункт так, как он записан",
             "в `requirements.md`; если проверена только часть, пункт записан как частично покрытый.",
+        ]
+
+    def render(self) -> str:
+        lines = [
+            *self.header(),
             "",
             *self.summary(),
             "",
-            "## Требования и тесты",
+            "## Requirements and tests" if self.english else "## Требования и тесты",
             *self.requirement_sections(),
             "",
             *self.exceptions_section(),
@@ -595,6 +743,8 @@ def main() -> int:
 
     tests = collect_tests()
     rows, problems = build_rows(tests)
+    en_items, en_problems = english_items(rows)
+    problems += en_problems
     if problems:
         print(f"ОШИБКА: теги тестов, реестры и requirements.md не согласованы ({len(problems)}):", file=sys.stderr)
         for problem in problems:
@@ -603,6 +753,7 @@ def main() -> int:
 
     targets = {
         MATRIX_PATH: Renderer(rows, tests).render(),
+        MATRIX_EN_PATH: Renderer(rows, tests, english=True, en_items=en_items).render(),
         README_PATH: replace_readme_block(_read(README_PATH), render_readme_block(rows, tests)),
     }
 
