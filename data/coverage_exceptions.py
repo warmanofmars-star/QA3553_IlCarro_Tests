@@ -147,8 +147,7 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
         reason=(
             "PUT /v1/user/profile фронт отправляет только после успешной загрузки профиля, а GET /v1/user/profile "
             "всегда заканчивается сбоем (Q-UI-27, Q-UI-33). Подменять ответ эндпоинта вне Swagger нельзя "
-            "(правило подмены, CLAUDE.md). Пока GET /v1/user/profile не отвечает успешно; если начнёт — "
-            "исключение пересматривается"
+            "(правило подмены, CLAUDE.md)"
         ),
         # basis пуст: зарегистрированного дефекта, который точно следит за сбоем GET /v1/user/profile, нет
         revisit_when=(

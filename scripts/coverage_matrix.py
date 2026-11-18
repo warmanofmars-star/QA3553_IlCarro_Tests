@@ -472,8 +472,10 @@ class Renderer:
         for row in self.rows:
             if row.status == EXCEPTION:
                 category = CATEGORY_TITLES[row.exception.category]
-                if row.exception.blocked_by:
-                    category += f": {', '.join(row.exception.blocked_by)}"
+                # Основание в подписи: blocked_by у blocked, basis у unreachable (валидатор не даёт оба сразу)
+                grounds = row.exception.blocked_by + row.exception.basis
+                if grounds:
+                    category += f": {', '.join(grounds)}"
                 lines.append(
                     f"| {row.item.id} | {category} | {_cell(row.exception.reason)} "
                     f"| {_cell(row.exception.revisit_when)} |"
