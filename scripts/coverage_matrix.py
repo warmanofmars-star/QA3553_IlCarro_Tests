@@ -19,6 +19,8 @@
   * ID без теста и без записи в исключениях;
   * ID и с тестом, и с записью в исключениях (исключение — только для пункта без теста);
   * запись planned или partial: после шага 6.3b матрица закрыта, долгов в ней быть не может;
+  * основание исключения (blocked_by, basis) не среди refs известных багов: дефект, на котором
+    держалось исключение, убран из реестра — исключение пора пересмотреть;
   * тест под known_bug / observation без тега своих refs или с тегом сверх них;
   * xfail не из реестров.
 В режиме --check дополнительно (код 1): traceability.md или сводка в README.md устарели.
@@ -221,6 +223,28 @@ class Row:
         return EXCEPTION
 
 
+def check_exception_bases() -> list[str]:
+    """
+    Основания исключений, которые больше не держатся на известном баге.
+
+    Строгий xfail следит за дефектом: дефект починили — XPASS — запись убирают из data/known_bugs.py.
+    Здесь эта цепочка доходит до исключений: без проверки они пережили бы свой дефект навсегда.
+    """
+    live_refs = {ref for bug in KNOWN_BUGS.values() for ref in bug.refs}
+    problems = []
+    for item_id, entry in COVERAGE_EXCEPTIONS.items():
+        for field_name, grounds in (("blocked_by", entry.blocked_by), ("basis", entry.basis)):
+            for ground in grounds:
+                if ground not in live_refs:
+                    problems.append(
+                        f"{item_id}: основание {ground} ({field_name}) в data/coverage_exceptions.py — не среди refs "
+                        "известных багов data/known_bugs.py. Основание закрыто — пересмотри исключение: напиши тест "
+                        f"на {item_id} и убери запись или, если пункт всё ещё нельзя проверить, запиши новое основание "
+                        "(согласуй с пользователем)"
+                    )
+    return problems
+
+
 def build_rows(tests: list[CollectedTest]) -> tuple[list[Row], list[str]]:
     """Строки матрицы и список несогласованностей (пустой — данные в порядке)."""
     rows = {item.id: Row(item) for item in requirement_items()}
@@ -285,6 +309,7 @@ def build_rows(tests: list[CollectedTest]) -> tuple[list[Row], list[str]]:
                 f"{row.item.id}: нет ни теста с таким тегом, ни записи в data/coverage_exceptions.py. "
                 "Поставь тег на тест, который проверяет пункт, или запиши причину отсутствия теста"
             )
+    problems += check_exception_bases()
     return list(rows.values()), problems
 
 
@@ -441,15 +466,20 @@ class Renderer:
             "",
             "### Исключения",
             "",
-            "| ID | Категория | Причина |",
-            "|---|---|---|",
+            "| ID | Категория | Причина | Пересмотреть, когда |",
+            "|---|---|---|---|",
         ]
         for row in self.rows:
             if row.status == EXCEPTION:
                 category = CATEGORY_TITLES[row.exception.category]
-                if row.exception.blocked_by:
-                    category += f": {', '.join(row.exception.blocked_by)}"
-                lines.append(f"| {row.item.id} | {category} | {_cell(row.exception.reason)} |")
+                # Основание в подписи: blocked_by у blocked, basis у unreachable (валидатор не даёт оба сразу)
+                grounds = row.exception.blocked_by + row.exception.basis
+                if grounds:
+                    category += f": {', '.join(grounds)}"
+                lines.append(
+                    f"| {row.item.id} | {category} | {_cell(row.exception.reason)} "
+                    f"| {_cell(row.exception.revisit_when)} |"
+                )
 
         for pr, title in PLANNED_PRS.items():
             lines += ["", f"### Запланировано: PR {pr} ({title})", "", "| ID | Что проверит тест |", "|---|---|"]
