@@ -14,9 +14,10 @@ This is a learning project from a QA automation course. It was later reworked st
 first the requirements were reconstructed, then the tests were made to check them honestly.
 
 The requirements and the traceability matrix are in English: the requirements are a translation of the Russian
-original, checked against it on every commit, and the English matrix is generated like the Russian one.
-Working documents, the research log and the Jenkins setup guide are still in Russian; such links are marked
-*(in Russian)*.
+original, checked against it by a pre-commit hook and in CI, and the English matrix is generated like the Russian one.
+Working documents, the research log, the guide to the requirements folder
+([`docs/requirements/README.md`](docs/requirements/README.md) *(in Russian)*) and the Jenkins setup guide are still
+in Russian; such links are marked *(in Russian)*.
 
 ---
 

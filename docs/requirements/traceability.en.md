@@ -18,7 +18,8 @@ Statuses:
 - 🟡 **Partly covered by a passing test, the rest is planned** — the test passes but does
   not check the whole item: what is not covered and in which PR it will come — in the “Status”
   column (the `data/coverage_exceptions.py` registry, category `partial`);
-- 🐞 **Covered, the test hits a known bug (strict xfail)** — the defect is recorded in `data/known_bugs.py`;
+- 🐞 **Covered, the test hits a known bug (strict xfail)** — the test exists and runs into a defect recorded in
+  `data/known_bugs.py`;
   the entry key is in the “Registry” column;
 - 👁 **Covered as an observation (strict xfail)** — the test records behaviour from
   `data/observations.py`;
@@ -66,7 +67,7 @@ in `requirements.en.md`; if only a part is checked, the item is recorded as part
 
 | ID | Wording | Tests | Registry | Status |
 |---|---|---|---|---|
-| REQ-CAR-01 | An authorized user adds a car: 200 and `message`; the car appears in the owner's `/v1/cars/my`. | `test_api_car.py::test_api_add_car_success`<br>`test_api_car.py::test_api_car_lifecycle` | — | ✅ Covered by a passing test |
+| REQ-CAR-01 | An authenticated user adds a car: 200 and `message`; the car appears in the owner's `/v1/cars/my`. | `test_api_car.py::test_api_add_car_success`<br>`test_api_car.py::test_api_car_lifecycle` | — | ✅ Covered by a passing test |
 | REQ-CAR-02 | Required `CarDto` fields (`serialNumber`, `manufacture`, `model`, `year`, `fuel`, `seats`, `carClass`, `pricePerDay`, `city`): without them or with an empty value — 400. | `test_api_mutations.py::test_api_car_mutations` — `[lambda_mutation-400-Удаление обязательного поля (manufacture)-False]`; `[lambda_mutation-400-Пустая строка вместо значения (model)-False]`; `[lambda_mutation-400-Null вместо строки (carClass)-False]`<br>`test_api_mutations.py::test_api_car_required_field` | — | ✅ Covered by a passing test |
 | REQ-CAR-03 | A value of the wrong type (for example, `seats` as a string) — 400, not a server error. | `test_api_mutations.py::test_api_car_mutations` — `[lambda_mutation-400-Строка вместо числа (seats)-True]` | `WRONG_TYPE_500` | 🐞 Covered, the test hits a known bug (strict xfail) |
 | REQ-CAR-04 | The car owner is determined by the token; `owner` and `bookedPeriods` from the request body are ignored. | `test_api_mutations.py::test_api_car_mass_assignment` | — | ✅ Covered by a passing test |
@@ -81,7 +82,7 @@ in `requirements.en.md`; if only a part is checked, the item is recorded as part
 
 | ID | Wording | Tests | Registry | Status |
 |---|---|---|---|---|
-| REQ-SEARCH-01 | Search is available without authorization. | `test_api_search.py::test_api_search_without_token` | — | ✅ Covered by a passing test |
+| REQ-SEARCH-01 | Search is available without authentication. | `test_api_search.py::test_api_search_without_token` | — | ✅ Covered by a passing test |
 | REQ-SEARCH-02 | Search returns only cars of the given city. | `test_api_search.py::test_api_search_only_requested_city` | — | ✅ Covered by a passing test |
 | REQ-SEARCH-03 | A car whose booking period overlaps the requested one is not returned. | — | — | ⚪ No test — exception with a recorded reason: blocked by another defect (REQ-BOOK-01) |
 
@@ -91,13 +92,13 @@ in `requirements.en.md`; if only a part is checked, the item is recorded as part
 |---|---|---|---|---|
 | REQ-BOOK-01 | A successful booking (200) is saved: the period with the booker's email appears in the car's `bookedPeriods`. | `test_api_car.py::test_api_car_booking_flow` | `BOOKING_NOT_PERSISTED` | 🐞 Covered, the test hits a known bug (strict xfail) |
 | REQ-BOOK-02 | Booking a non-existent car — 404. | `test_api_car.py::test_api_book_nonexistent_car` | `BOOKING_UNKNOWN_CAR_200` | 🐞 Covered, the test hits a known bug (strict xfail) |
-| REQ-BOOK-03 | Booking requires authorization. | `test_api_car.py::test_api_book_without_token` | — | ✅ Covered by a passing test |
+| REQ-BOOK-03 | Booking requires authentication. | `test_api_car.py::test_api_book_without_token` | — | ✅ Covered by a passing test |
 
 ### 1.5 Cities (CITY)
 
 | ID | Wording | Tests | Registry | Status |
 |---|---|---|---|---|
-| REQ-CITY-01 | `/v1/cars/cities` is available without authorization and returns a list of `{city, lat, lng}`. | `test_dictionaries.py::test_api_cities_list` | — | ✅ Covered by a passing test |
+| REQ-CITY-01 | `/v1/cars/cities` is available without authentication and returns a list of `{city, lat, lng}`. | `test_dictionaries.py::test_api_cities_list` | — | ✅ Covered by a passing test |
 
 ### 1.6 Security and protocol (SEC)
 
@@ -115,7 +116,7 @@ in `requirements.en.md`; if only a part is checked, the item is recorded as part
 
 | ID | Wording | Tests | Registry | Status |
 |---|---|---|---|---|
-| REQ-UI-REG-01 | The fields are validated before submission: Name, Last name, Email (format), Password (at least 6, a letter and a digit), consent to the terms. | `test_registration.py::test_registration_negative_fields`<br>`test_registration.py::test_registration_without_check_box` | — | ✅ Covered by a passing test |
+| REQ-UI-REG-01 | The fields are validated before submission: Name, Last name, Email (format), Password (at least 6 characters, a letter and a digit), consent to the terms. | `test_registration.py::test_registration_negative_fields`<br>`test_registration.py::test_registration_without_check_box` | — | ✅ Covered by a passing test |
 | REQ-UI-REG-02 | After a successful registration — the “Registered” / “You are logged in success” dialog; the user is logged in. | `test_registration.py::test_registration_success` | — | ✅ Covered by a passing test |
 | REQ-UI-REG-03 | On a 400 response the “Registration failed” dialog shows the server's error text. | `test_registration.py::test_registration_existing_user`<br>`test_registration.py::test_registration_password_rejected_by_api` | `PASSWORD_RULES_MISMATCH` | 🐞 Covered, the test hits a known bug (strict xfail) |
 | REQ-UI-REG-04 | A guest sees a “Sign up” link in the navigation; it leads to the registration form `/register`. | `test_registration.py::test_navigation_to_registration` | — | ✅ Covered by a passing test |
@@ -170,7 +171,7 @@ in `requirements.en.md`; if only a part is checked, the item is recorded as part
 
 | ID | Wording | Tests | Registry | Status |
 |---|---|---|---|---|
-| DISC-01 | Password rules: the frontend — at least 6, a letter and a digit; Swagger and the API — at least 8, an uppercase letter, a lowercase letter, a digit, a special character is required; the API error text says a special character “may” be used (Can contain). | `test_registration.py::test_registration_password_rejected_by_api` | `PASSWORD_RULES_MISMATCH` | 🐞 Covered, the test hits a known bug (strict xfail) |
+| DISC-01 | Password rules: the frontend — at least 6 characters, a letter and a digit; Swagger and the API — at least 8 characters, an uppercase letter, a lowercase letter, a digit, a special character is required; the API error text says a special character “may” be used (Can contain). | `test_registration.py::test_registration_password_rejected_by_api` | `PASSWORD_RULES_MISMATCH` | 🐞 Covered, the test hits a known bug (strict xfail) |
 | DISC-02 | Cities: 54 in the frontend, 37 in the API, 22 in common. | `test_dictionaries.py::test_frontend_backend_cities_mapping` | `CITIES_MISMATCH` | 🐞 Covered, the test hits a known bug (strict xfail) |
 | DISC-03 | Email case inside the API: registration converts the email to lowercase (a repeat with a different case — “User already exists”), login does not (an email with capital letters — 401). | `test_api_auth.py::test_api_login_email_case` | `LOGIN_EMAIL_CASE_SENSITIVE` | 🐞 Covered, the test hits a known bug (strict xfail) |
 | DISC-04 | The car form fields Gear, WD, Doors (and `features` in the form state) are missing from `CarDto`; the frontend collects them and does not send them. | `test_playwright_car_form.py::test_pw_car_form_sends_gear_wd_doors` | `CAR_FORM_FIELDS_NOT_SENT` | 🐞 Covered, the test hits a known bug (strict xfail) |
@@ -186,38 +187,38 @@ in `requirements.en.md`; if only a part is checked, the item is recorded as part
 
 | ID | Wording | Tests | Registry | Status |
 |---|---|---|---|---|
-| OBS-01 | Search is case-sensitive to the city: `tel aviv` — 0 cars. | `test_playwright_search.py::test_pw_search_city_case_insensitive` | `SEARCH_CITY_CASE_SENSITIVE` | 👁 Covered as an observation (strict xfail) |
+| OBS-01 | Search is case-sensitive in the city name: `tel aviv` — 0 cars. | `test_playwright_search.py::test_pw_search_city_case_insensitive` | `SEARCH_CITY_CASE_SENSITIVE` | 👁 Covered as an observation (strict xfail) |
 | OBS-02 | Search and booking accept past dates and an end before the start. | `test_api_dates.py::test_api_meaningless_dates_rejected` | `INVALID_DATES_ACCEPTED` | 👁 Covered as an observation (strict xfail) |
 | OBS-03 | The API accepts meaningless car values: `seats` 0, a price of 0 and −5, `year` “abc” and “2999”, `fuel` “banana”. | `test_api_mutations.py::test_api_car_mutations` — `[lambda_mutation-400-Отрицательная цена-False]` | `NONSENSE_CAR_VALUES` | 👁 Covered as an observation (strict xfail) |
 | OBS-04 | An empty search result is not indicated in any way: there is no “nothing found” message. | `test_playwright_search.py::test_pw_empty_search_announced` | `SEARCH_OUTCOME_NOT_SHOWN` | 👁 Covered as an observation (strict xfail) |
 | OBS-05 | After a 401 there is no redirect to the login page; “Log out” stays in the navigation although the token has been removed. | `test_playwright_backend_faults.py::test_pw_search_401_hides_logout`<br>`test_playwright_session.py::test_pw_401_redirects_to_login`<br>`test_playwright_session.py::test_pw_401_hides_logout` | `STALE_SESSION_UI_AFTER_401` | 👁 Covered as an observation (strict xfail) |
 | OBS-06 | The add-car form opens for a guest; the submission ends with “Failed to submit car”. | `test_playwright_ui_observations.py::test_pw_guest_redirected_from_car_form` | `GUEST_OPENS_CAR_FORM` | 👁 Covered as an observation (strict xfail) |
-| OBS-07 | “Failed to submit car” does not explain the cause: an unsupported city, an empty city, no authorization — the text is the same. | `test_playwright_ui_observations.py::test_pw_car_submit_error_names_cause` | `CAR_SUBMIT_ERROR_WITHOUT_CAUSE` | 👁 Covered as an observation (strict xfail) |
+| OBS-07 | “Failed to submit car” does not explain the cause: an unsupported city, an empty city, not logged in — the text is the same. | `test_playwright_ui_observations.py::test_pw_car_submit_error_names_cause` | `CAR_SUBMIT_ERROR_WITHOUT_CAUSE` | 👁 Covered as an observation (strict xfail) |
 | OBS-08 | The price on screen is rounded: 1234.56 is shown as “1234.6”. | `test_playwright_search.py::test_pw_card_price_matches_saved` | `CARD_PRICE_ROUNDED` | 👁 Covered as an observation (strict xfail) |
 | OBS-09 | After registration the URL stays `/register`. | `test_playwright_ui_observations.py::test_pw_registration_leaves_register_url` | `REGISTER_URL_UNCHANGED` | 👁 Covered as an observation (strict xfail) |
 | OBS-10 | The “previous month” button in the calendar is enabled but does nothing. | `test_calendar.py::test_calendar_prev_month_disabled_in_current_month` | `PREV_MONTH_BUTTON_ENABLED` | 👁 Covered as an observation (strict xfail) |
 | OBS-11 | The interface is in English, but the car and profile pages show Russian texts: «Не удалось загрузить машину» (“Failed to load the car”), «Загрузка...» (“Loading...”), «Мой профиль» (“My profile”). | `test_playwright_ui_observations.py::test_pw_page_texts_in_english` | `RUSSIAN_TEXTS_IN_ENGLISH_UI` | 👁 Covered as an observation (strict xfail) |
-| OBS-12 | A failed search request — an error response (500), a dropped connection, a proxy page (502) — is not indicated on screen in any way: there are no messages, the button says “Yalla!” again. | `test_playwright_ui_faults.py::test_pw_search_failure_announced` | `SEARCH_FAILURE_NOT_SHOWN` | 👁 Covered as an observation (strict xfail) |
-| OBS-13 | After a failed search the screen keeps the results of the previous successful search, including those for another city and dates, without any mark: the form and the URL already show the new city and dates, while the cards do not show their city and dates. | `test_playwright_ui_faults.py::test_pw_failed_search_drops_stale_results` | `STALE_RESULTS_AFTER_FAILED_SEARCH` | 👁 Covered as an observation (strict xfail) |
-| OBS-14 | Login has no limit on waiting for the response: 35 s after the form is submitted the button says “Loading...”, there is no message, the frontend does not abort the request. | `test_playwright_ui_faults.py::test_pw_login_wait_bounded` | `LOGIN_WAIT_UNBOUNDED` | 👁 Covered as an observation (strict xfail) |
+| OBS-12 | A failed search request — an error response (500), a dropped connection, a proxy page (502) — is not indicated on screen in any way: there are no messages, the button is back to “Yalla!”. | `test_playwright_ui_faults.py::test_pw_search_failure_announced` | `SEARCH_FAILURE_NOT_SHOWN` | 👁 Covered as an observation (strict xfail) |
+| OBS-13 | After a failed search the screen keeps the results of the previous successful search, including those for another city and dates, without any mark: the form and the URL already show the new city and dates, while a card does not show which city and dates it belongs to. | `test_playwright_ui_faults.py::test_pw_failed_search_drops_stale_results` | `STALE_RESULTS_AFTER_FAILED_SEARCH` | 👁 Covered as an observation (strict xfail) |
+| OBS-14 | Login has no limit on waiting for the response: 35 s after the form is submitted the button says “Loading...”, there is no message, the request has not been aborted by the frontend. | `test_playwright_ui_faults.py::test_pw_login_wait_bounded` | `LOGIN_WAIT_UNBOUNDED` | 👁 Covered as an observation (strict xfail) |
 | OBS-15 | On a 400 response without a `message` field the registration dialog shows the library's internal text “Request failed with status code 400”. | `test_playwright_ui_faults.py::test_pw_registration_400_without_message` | `REGISTER_ERROR_LIBRARY_TEXT` | 👁 Covered as an observation (strict xfail) |
 
 ## Coverage exception registry
 
 The registry is `data/coverage_exceptions.py`. Exceptions: there will be no test until
 the application changes. Planned: the entry is removed by the PR that adds the test.
-Partly covered: there is a test, the table shows what of the item it does not check;
+Partly covered: there is a test, the table shows which part of the item the test does not check;
 the entry is removed by the PR that completes the rest.
 
 ### Exceptions
 
 | ID | Category | Reason | Revisit when |
 |---|---|---|---|
-| REQ-SEARCH-03 | blocked by another defect: REQ-BOOK-01 | Bookings are not saved, bookedPeriods is empty for every car in the system (Q-API-12): there is no way to create a booked car for the search check | Bookings start being saved: test_api_car_booking_flow (BOOKING_NOT_PERSISTED) gives XPASS, the bug entry is removed — --check names this exception |
+| REQ-SEARCH-03 | blocked by another defect: REQ-BOOK-01 | Bookings are not saved, bookedPeriods is empty for every car in the system (Q-API-12): there is no way to create a booked car for the search check | Bookings start being saved: test_api_car_booking_flow (BOOKING_NOT_PERSISTED) gives XPASS, the bug entry is removed — `coverage_matrix.py --check` will list this exception |
 | REQ-SEC-07 | the check would harm the shared backend | Checking the size limit means uploading large data to the shared backend and downloading the search results of a large city (Tel Aviv — about 18 MB). The fact is recorded by the research: Q-UI-06, Q-API-02 | A dedicated test environment replaces the shared backend: there large uploads and large search results can be checked |
-| REQ-UI-CARPAGE-02 | the feature is unreachable: REQ-UI-CARPAGE-01 | The “Rent now!!” button is on the car page, and the page does not open: «Не удалось загрузить машину» (“Failed to load the car”) (REQ-UI-CARPAGE-01, Q-UI-02) | The car page starts showing data: test_pw_car_card_opens_car_page (CAR_PAGE_NOT_LOADED) gives XPASS, the bug entry is removed — --check names this exception |
-| DISC-06 | the feature is unreachable: REQ-UI-CARPAGE-01 | The frontend side — the message «Бронирование пока не реализовано в API» (“Booking is not implemented in the API yet”) — is on the car page, which does not open (REQ-UI-CARPAGE-01). The API side is checked by REQ-BOOK-01 and REQ-BOOK-02 | The car page starts showing data: test_pw_car_card_opens_car_page (CAR_PAGE_NOT_LOADED) gives XPASS, the bug entry is removed — --check names this exception |
-| DISC-09 | blocked by another defect: DISC-05 | The fields the car page reads are visible only in the response of GET /v1/cars/{id}, and this endpoint has no contract (DISC-05): on the backend it answers 403, in the browser it is aborted (Q-UI-01, Q-UI-19). We do not substitute the response of a non-existent endpoint — its body would have to be invented. Agreed with the project author | GET /v1/cars/{id} appears in Swagger: test_pw_car_page_request_is_documented gives XPASS. The FRONTEND_CALLS_UNDOCUMENTED_ENDPOINTS entry covers two endpoints (DISC-05): while the profile is not fixed too, --check will not name this exception — revisit on the XPASS |
+| REQ-UI-CARPAGE-02 | the feature is unreachable: REQ-UI-CARPAGE-01 | The “Rent now!!” button is on the car page, and the page does not open: «Не удалось загрузить машину» (“Failed to load the car”) (REQ-UI-CARPAGE-01, Q-UI-02) | The car page starts showing data: test_pw_car_card_opens_car_page (CAR_PAGE_NOT_LOADED) gives XPASS, the bug entry is removed — `coverage_matrix.py --check` will list this exception |
+| DISC-06 | the feature is unreachable: REQ-UI-CARPAGE-01 | The frontend side — the message «Бронирование пока не реализовано в API» (“Booking is not implemented in the API yet”) — is on the car page, which does not open (REQ-UI-CARPAGE-01). The API side is checked by REQ-BOOK-01 and REQ-BOOK-02 | The car page starts showing data: test_pw_car_card_opens_car_page (CAR_PAGE_NOT_LOADED) gives XPASS, the bug entry is removed — `coverage_matrix.py --check` will list this exception |
+| DISC-09 | blocked by another defect: DISC-05 | The fields the car page reads are visible only in the response of GET /v1/cars/{id}, and this endpoint has no contract (DISC-05): on the backend it answers 403, in the browser the request is dropped with no response status (Q-UI-01, Q-UI-19). We do not substitute the response of a non-existent endpoint — its body would have to be invented. Agreed with the project author | GET /v1/cars/{id} appears in Swagger: test_pw_car_page_request_is_documented gives XPASS. The FRONTEND_CALLS_UNDOCUMENTED_ENDPOINTS entry covers two endpoints (DISC-05): until the profile endpoint is fixed as well, `coverage_matrix.py --check` will not list this exception — revisit on the XPASS |
 | DISC-10 | the feature is unreachable | The frontend sends PUT /v1/user/profile only after the profile has loaded successfully, and GET /v1/user/profile always ends in a failure (Q-UI-27, Q-UI-33). Substituting the response of an endpoint outside Swagger is not allowed (the response substitution rule, CLAUDE.md) | Not tracked automatically: the exception rests on the failure of GET /v1/user/profile (Q-UI-27, Q-UI-33), while test_pw_profile_page_request_is_documented (DISC-05) checks whether the request is described in Swagger, not whether the response succeeds. Revisit if GET /v1/user/profile starts answering successfully |
 
 ### Planned: PR 6.2 (API)

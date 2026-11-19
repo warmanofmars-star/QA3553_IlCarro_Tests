@@ -142,7 +142,7 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
         ),
         revisit_when_en=(
             "Bookings start being saved: test_api_car_booking_flow (BOOKING_NOT_PERSISTED) gives XPASS, "
-            "the bug entry is removed — --check names this exception"
+            "the bug entry is removed — `coverage_matrix.py --check` will list this exception"
         ),
     ),
     "REQ-UI-CARPAGE-02": CoverageException(
@@ -162,7 +162,7 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
         ),
         revisit_when_en=(
             "The car page starts showing data: test_pw_car_card_opens_car_page (CAR_PAGE_NOT_LOADED) "
-            "gives XPASS, the bug entry is removed — --check names this exception"
+            "gives XPASS, the bug entry is removed — `coverage_matrix.py --check` will list this exception"
         ),
     ),
     "DISC-06": CoverageException(
@@ -183,7 +183,7 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
         ),
         revisit_when_en=(
             "The car page starts showing data: test_pw_car_card_opens_car_page (CAR_PAGE_NOT_LOADED) "
-            "gives XPASS, the bug entry is removed — --check names this exception"
+            "gives XPASS, the bug entry is removed — `coverage_matrix.py --check` will list this exception"
         ),
     ),
     "DISC-10": CoverageException(
@@ -227,14 +227,15 @@ COVERAGE_EXCEPTIONS: dict[str, CoverageException] = {
         ),
         reason_en=(
             "The fields the car page reads are visible only in the response of GET /v1/cars/{id}, and this endpoint "
-            "has no contract (DISC-05): on the backend it answers 403, in the browser it is aborted (Q-UI-01, "
-            "Q-UI-19). We do not substitute the response of a non-existent endpoint — its body would have to be "
-            "invented. Agreed with the project author"
+            "has no contract (DISC-05): on the backend it answers 403, in the browser the request is dropped "
+            "with no response status (Q-UI-01, Q-UI-19). We do not substitute the response of a non-existent "
+            "endpoint — its body would have to be invented. Agreed with the project author"
         ),
         revisit_when_en=(
             "GET /v1/cars/{id} appears in Swagger: test_pw_car_page_request_is_documented gives XPASS. "
-            "The FRONTEND_CALLS_UNDOCUMENTED_ENDPOINTS entry covers two endpoints (DISC-05): while the profile "
-            "is not fixed too, --check will not name this exception — revisit on the XPASS"
+            "The FRONTEND_CALLS_UNDOCUMENTED_ENDPOINTS entry covers two endpoints (DISC-05): until the profile "
+            "endpoint is fixed as well, `coverage_matrix.py --check` will not list this exception — "
+            "revisit on the XPASS"
         ),
     ),
 }

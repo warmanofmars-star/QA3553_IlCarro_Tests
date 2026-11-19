@@ -349,6 +349,7 @@ python scripts/coverage_matrix.py --check   # проверить: это зап�
   | базовый прогон | baseline run | исследование; лог исследования | research; research log |
   | сборка на <дата> | build of <date> | обрыв соединения | dropped connection |
   | окно (диалог) | dialog | выдача поиска | search results |
+  | авторизованный (с токеном); без авторизации | authenticated; without authentication | права на чужой объект (BOLA, 403, названия OWASP) | authorization |
   | гость; залогиненный | guest; logged-in user | страница посредника | proxy page |
 
 - **Новое исключение покрытия** — сразу с `reason_en` и `revisit_when_en` (пустые — ошибка реестра).
