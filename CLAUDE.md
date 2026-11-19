@@ -121,7 +121,8 @@ PR отменяет предыдущий запуск того же PR; запу
 
 - `lint` — ruff check, ruff format --check, gitleaks по всей истории, `scripts/coverage_matrix.py --check`
   (матрица трассируемости; ради сбора тестов ставятся зависимости проекта, Python 3.14), актуальность
-  lock-файлов по пинам (`scripts/lock_requirements.sh --check`), `.github/dependabot.yml` и workflow
+  lock-файлов по пинам (`scripts/lock_requirements.sh --check`), английские переводы по оригиналам
+  (`scripts/check_translations.py`), `.github/dependabot.yml` и workflow
   по JSON-схемам (check-jsonschema); от тестов не зависит, идёт параллельно с ними;
 - `split-check` — `scripts/check_ci_split.py`: отборы `selenium` и `not selenium` не пусты,
   не пересекаются, в сумме дают весь набор;
@@ -267,11 +268,11 @@ Environment дополняет Jenkinsfile (`JenkinsBrowser`, `JenkinsMarker`,
 
 ## Трассируемость требований
 
-Матрица `docs/requirements/traceability.md` и сводка в `README.md` (между `<!-- coverage:start -->`
+Матрицы `docs/requirements/traceability.md` и `traceability.en.md` и сводка в `README.md` (между `<!-- coverage:start -->`
 и `<!-- coverage:end -->`) **генерируются, руками их не правят.** Источник правды — теги тестов и реестры.
 
 ```bash
-python scripts/coverage_matrix.py           # пересобрать матрицу и сводку в README.md
+python scripts/coverage_matrix.py           # пересобрать обе матрицы и сводку в README.md
 python scripts/coverage_matrix.py --check   # проверить: это запускают job Lint и хук pre-commit
 ```
 
@@ -302,9 +303,58 @@ python scripts/coverage_matrix.py --check   # проверить: это зап�
   тест без тегов; тег с несуществующим ID; ID без теста и без записи в исключениях; ID и с тестом, и с записью;
   запись `planned` или `partial`; основание исключения (`blocked_by`, `basis`) не среди refs известных багов;
   тест под `known_bug` / `observation` без тега своих refs или с лишним тегом; xfail не из реестров;
-  устаревшие `traceability.md` или сводка в `README.md`. Проверку не обходи: исправь теги или реестр.
+  перевод `requirements.en.md` с другим составом или порядком ID; устаревшие `traceability.md`,
+  `traceability.en.md` или сводка в `README.md`. Проверку не обходи: исправь теги или реестр.
 - Статусы в матрице — о том, что проверяет набор, а не о результате прогона. «Покрыт» — пункт
   проверен так, как записан. Колонка «Факт» в `requirements.md` — снимок исследования.
+
+## Английские версии документов
+
+Проект идёт в портфолио: README на английском, требования и матрица — тоже. **Русский — оригинал,**
+английский — перевод в файле `*.en.md` рядом с оригиналом. Сейчас переведены `docs/requirements/requirements.md`
+(→ `requirements.en.md`); английская матрица `traceability.en.md` не переводится, а генерируется.
+Рабочие документы (`commands.md`, `CLAUDE.md`, `research/README.md`) не переводятся.
+
+- **Первая строка перевода — пометка** `<!-- translation-of: <путь оригинала> sha256:<12 hex> -->`;
+  отпечаток — `python scripts/check_translations.py --print-hash <оригинал>`. Проверка
+  `scripts/check_translations.py` (хук pre-commit и шаг Lint) падает, если оригинал изменился, а отпечаток нет;
+  `*.en.md` без пометки — ошибка. У `requirements.en.md` ещё и сверка по смыслу: те же ID в том же порядке,
+  те же ссылки Q-… и код в `обратных кавычках` в каждой строке, тот же статус «Факта» у REQ.
+- **Правка оригинала с переводом → в том же изменении правка перевода и отпечатка.** Отпечаток обновляется
+  только вместе с текстом перевода: обновить его, не переведя изменение, — обойти проверку.
+- **Без изменений переносятся:** ID, коды источников (SW, RFC, OWASP, FE, EXP), ссылки Q-…, всё
+  в `обратных кавычках`, URL, английские тексты интерфейса. Кавычки перевода — “…” (на них опирается
+  краткая формулировка в матрице).
+- **Русские тексты интерфейса приложения — данные, а не формулировки:** в переводе строка остаётся
+  в «ёлочках» байт в байт как в оригинале, перевод — сразу после неё в скобках:
+  «Не удалось загрузить машину» (“Failed to load the car”). Так — только строки, подтверждённые кодом
+  как реальный текст UI (локатор, тест или бандл фронтенда); остальное переводится как обычный текст.
+  Проверка: «…» с кириллицей в переводе должна дословно быть в оригинале, кириллица вне «…» — ошибка.
+- **Словари.** Статусы «Факта» — только словарь `STATUSES` в `scripts/check_translations.py` (пять статусов
+  легенды; «по коду» — основание факта, а не статус; ID без статуса в оригинале — `NO_STATUS_IN_ORIGINAL`).
+  Статусы покрытия и категории исключений — `STATUS_TITLES_EN` и `CATEGORY_TITLES_EN`
+  в `scripts/coverage_matrix.py`. Второй копии этих словарей не заводи. Остальные термины:
+
+  | Русский | English | Русский | English |
+  |---|---|---|---|
+  | Факт (колонка) | Actual behaviour | известный баг | known bug |
+  | Требование | Requirement | наблюдение | observation |
+  | Формулировка | Wording | расхождение источников | discrepancy between sources |
+  | Источник / Источники | Source / Sources | строгий xfail | strict xfail |
+  | Суть | Issue | общий бэкенд | shared backend |
+  | Последствие | Consequence | подмена ответа; подменённый ответ | response substitution; substituted response |
+  | Источник ожидания | Source of the expectation | реестр | registry |
+  | по коду | from the code | исключение покрытия | coverage exception |
+  | проба | probe | пересмотреть, когда | revisit when |
+  | базовый прогон | baseline run | исследование; лог исследования | research; research log |
+  | сборка на <дата> | build of <date> | обрыв соединения | dropped connection |
+  | окно (диалог) | dialog | выдача поиска | search results |
+  | авторизованный (с токеном); без авторизации | authenticated; without authentication | права на чужой объект (BOLA, 403, названия OWASP) | authorization |
+  | гость; залогиненный | guest; logged-in user | страница посредника | proxy page |
+
+- **Новое исключение покрытия** — сразу с `reason_en` и `revisit_when_en` (пустые — ошибка реестра).
+- **Матрицы генерируются, руками не правятся.** `traceability.en.md` — не перевод: пометки у неё нет,
+  `check_translations.py` пропускает её по имени (`GENERATED`).
 
 ## Как работать над задачей
 

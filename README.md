@@ -13,7 +13,11 @@ in Docker with Selenium Grid 4 (Chrome, Firefox, Edge), in GitHub Actions and in
 This is a learning project from a QA automation course. It was later reworked step by step:
 first the requirements were reconstructed, then the tests were made to check them honestly.
 
-Project documentation other than this README is written in Russian; such links are marked *(in Russian)*.
+The requirements and the traceability matrix are in English: the requirements are a translation of the Russian
+original, checked against it by a pre-commit hook and in CI, and the English matrix is generated like the Russian one.
+Working documents, the research log, the guide to the requirements folder
+([`docs/requirements/README.md`](docs/requirements/README.md) *(in Russian)*) and the Jenkins setup guide are still
+in Russian; such links are marked *(in Russian)*.
 
 ---
 
@@ -36,7 +40,8 @@ from the fixtures a test uses (`driver` / `shared_authenticated_driver` and `pag
 - **Requirements reconstructed without an SRS.** IlCarro has no specification. Expected results are
   taken from sources ranked by strength: the Swagger contract, HTTP RFC 9110 and OWASP, the frontend
   code, and — weakest — observed behaviour. The result is
-  [`docs/requirements/requirements.md`](docs/requirements/requirements.md) *(in Russian)*: every item has an ID
+  [`docs/requirements/requirements.en.md`](docs/requirements/requirements.en.md) (the Russian original:
+  [`requirements.md`](docs/requirements/requirements.md)): every item has an ID
   (`REQ-…` requirement, `DISC-…` discrepancy between sources, `OBS-…` observation), a source and a dated
   "actual behaviour" column. The facts behind it are in
   [`research-log.md`](docs/requirements/research-log.md) *(in Russian)*, produced by the scripts in
@@ -48,7 +53,8 @@ from the fixtures a test uses (`driver` / `shared_authenticated_driver` and `pag
   does not exist breaks test collection. Plain `pytest.mark.xfail` and `pytest.skip` are not used in tests.
 - **A traceability matrix generated from the tests.** Nobody writes it by hand:
   [`scripts/coverage_matrix.py`](scripts/coverage_matrix.py) collects the `@allure.tag` IDs and the registries and
-  produces [`docs/requirements/traceability.md`](docs/requirements/traceability.md) *(in Russian)*. Every ID
+  produces [`docs/requirements/traceability.en.md`](docs/requirements/traceability.en.md) (and the Russian
+  [`traceability.md`](docs/requirements/traceability.md)). Every ID
   either has a test or a recorded reason why it has none; CI fails if the matrix is out of date
   (see [Requirements traceability](#requirements-traceability)).
 - **Tests check the state of the data, not only the response.** For example, booking answers
@@ -133,8 +139,9 @@ All 170 tests reference at least one ID (a test without one fails the check).
 <!-- coverage:end -->
 
 The full matrix — every ID with its tests, registry key and status, plus the list of exceptions and
-planned tests with reasons — is [`docs/requirements/traceability.md`](docs/requirements/traceability.md)
-*(in Russian)*. It shows what the suite checks, not the result of a run: tests are only collected.
+planned tests with reasons — is [`docs/requirements/traceability.en.md`](docs/requirements/traceability.en.md)
+(the same matrix in Russian: [`traceability.md`](docs/requirements/traceability.md)). It shows what the suite
+checks, not the result of a run: tests are only collected.
 
 ```bash
 python scripts/coverage_matrix.py           # regenerate the matrix and the table above
@@ -176,7 +183,7 @@ the versions Dependabot does not track: [`commands.md`](commands.md) *(in Russia
 ```text
 api/            API client (requests.Session)
 data/           test data generator; registries: known bugs, observations, coverage exceptions
-docs/           reconstructed requirements, traceability matrix, Swagger, research log, Jenkins setup (in Russian)
+docs/           requirements and traceability matrix (English, Russian original), Swagger, research log and Jenkins setup (in Russian)
 drivers/        WebDriver factory: local browsers or Selenium Grid, Grid readiness check, session video
 models/         Car and User dataclasses with API payload serialization
 pages/          Page Objects for Selenium and Playwright
@@ -248,7 +255,7 @@ and manually (`workflow_dispatch` with an optional `test_marker`). Jobs:
 
 | Job | What it does |
 |---|---|
-| `lint` | `ruff check`, `ruff format --check`, gitleaks over the whole git history, [`scripts/coverage_matrix.py --check`](scripts/coverage_matrix.py): the traceability matrix is consistent and up to date, and the lock files match `requirements*.in` (`scripts/lock_requirements.sh --check` compiles them into a temporary directory and compares `name==version` pins, not text), `.github/dependabot.yml` and the workflows pass their JSON schemas (`check-jsonschema` built-in schemas); runs in parallel with the tests |
+| `lint` | `ruff check`, `ruff format --check`, gitleaks over the whole git history, [`scripts/coverage_matrix.py --check`](scripts/coverage_matrix.py): the traceability matrix is consistent and up to date, [`scripts/check_translations.py`](scripts/check_translations.py): the English translations match their Russian originals, and the lock files match `requirements*.in` (`scripts/lock_requirements.sh --check` compiles them into a temporary directory and compares `name==version` pins, not text), `.github/dependabot.yml` and the workflows pass their JSON schemas (`check-jsonschema` built-in schemas); runs in parallel with the tests |
 | `split-check` | [`scripts/check_ci_split.py`](scripts/check_ci_split.py): the `selenium` and `not selenium` selections are non-empty, do not overlap and together cover all tests |
 | `api-and-playwright` | `-m "not selenium"` once, in Docker without the Grid |
 | `selenium` | `-m "selenium"`, matrix chrome / firefox / edge, each in Docker Compose with the Grid |
@@ -285,6 +292,12 @@ Setup: [`docs/jenkins-setup.md`](docs/jenkins-setup.md) *(in Russian)*.
   when tests, registries, requirements or the README change (it needs the project's Python environment).
   `check-dependabot` and `check-github-workflows` validate `.github/dependabot.yml` and the workflows
   against the schemas built into `check-jsonschema` (no network needed).
+- **Translations are checked against their originals.** Each English translation (`*.en.md`) starts with a hidden
+  `translation-of` marker holding a fingerprint of its Russian original;
+  [`scripts/check_translations.py`](scripts/check_translations.py) (pre-commit hook and CI `lint` step) fails when
+  the original changed and the translation did not. For the requirements it also compares the two files row by row:
+  the same IDs in the same order, the same research references, the same code fragments and the same status
+  of the "actual behaviour" column.
 - Each tool version has a single source. ruff: only [`requirements-dev.in`](requirements-dev.in) — the pre-commit hooks are `local` and run ruff from the virtual environment installed from the lock file, as does the CI `lint` job. gitleaks: only the `rev` in `.pre-commit-config.yaml` — the CI `lint` job reads it from there and scans the whole history.
 - `pip check` runs during the Docker image build, so incompatible package versions fail the build.
 - **No secrets in the public report.** Steps that handle a password do not take it as an `@allure.step`
@@ -314,7 +327,7 @@ pre-commit run --all-files    # check the whole project
 
 ## Plans
 
-Done: steps 6.1–6.3b — the [traceability matrix](docs/requirements/traceability.md) and tests for all its
+Done: steps 6.1–6.3b — the [traceability matrix](docs/requirements/traceability.en.md) and tests for all its
 items. Every item has a test or an exception with a recorded reason; the matrix check rejects planned and
 partly covered items.
 

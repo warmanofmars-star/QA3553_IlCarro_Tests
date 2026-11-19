@@ -96,3 +96,13 @@ repos:
         # README.md и conftest.py — сверх tests/, data/ и docs/requirements/: в README лежит
         # сводка, а conftest.py влияет на сбор тестов
         files: ^(tests/|data/|docs/requirements/|scripts/coverage_matrix\.py$|conftest\.py$|README\.md$)
+      # Английские переводы (*.en.md) согласованы с русскими оригиналами: отпечаток оригинала
+      # в пометке translation-of, у requirements.en.md — те же ID, ссылки Q-…, код и статусы «Факта».
+      # Запуск на любой .md: перевод устаревает от правки оригинала, а не от правки самого перевода.
+      # language: system, как coverage-matrix: скрипт импортирует data/requirement_ids.py проекта
+      - id: check-translations
+        name: English translations match their originals
+        entry: python scripts/check_translations.py
+        language: system
+        pass_filenames: false
+        files: (\.md$|^scripts/check_translations\.py$|^data/requirement_ids\.py$)
