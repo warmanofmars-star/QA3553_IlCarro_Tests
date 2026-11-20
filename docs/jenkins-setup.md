@@ -45,8 +45,8 @@ Jenkins — тот же, что для Phonebook: контейнер `jenkins-ma
 ## 2. Создать job
 
 1. Dashboard → **New Item** → имя, например `IlCarro_Docker_Tests` → тип **Pipeline** → OK.
-   Имя войдёт в имя compose-проекта сборки (`ilcarro-jenkins-ilcarro-docker-tests-<номер>`),
-   ограничений на него нет — Jenkinsfile сам приводит его к допустимому виду.
+   Имя войдёт в имя compose-проекта сборки (`ilcarro-jenkins-ilcarro-docker-tests-<N>`, `<N>` — номер
+   сборки), ограничений на него нет — Jenkinsfile сам приводит его к допустимому виду.
 2. Раздел **Triggers** — поставь галочку **GitHub hook trigger for GITScm polling**.
 3. Раздел **Pipeline**:
    - Definition: **Pipeline script from SCM**;
@@ -66,18 +66,21 @@ Jenkins — тот же, что для Phonebook: контейнер `jenkins-ma
 1. Нажми **Build Now**. Первая сборка идёт с параметрами по умолчанию: `chrome`, все тесты.
    Первый раз она дольше обычного: собирается образ с тестами, скачиваются образы Selenium Grid.
 2. Открой сборку → **Console Output** и проверь:
-   - в стадии `Prepare` — блок «Параметры сборки» (браузер, маркер, имя compose-проекта
+   - в стадии `Prepare` — блок `Параметры сборки` (браузер, маркер, имя compose-проекта
      `ilcarro-jenkins-…`) и строка `Docker Compose version …` — версия не ниже 2.24.4;
    - в каждой части — строка `Отбор: -m "not selenium" | браузер: chrome | …` и `-m "selenium"`;
    - после каждой части — `Параметры в контейнере подтверждены: SeleniumBrowser=chrome, MarkerFilter=…`;
-   - в конце — уборка: `docker compose down` удаляет контейнеры, сеть, том и образ **только**
-     с префиксом `ilcarro-jenkins-…`.
+   - в конце — уборка: `docker compose down -v --remove-orphans` удаляет контейнеры, сеть и тома
+     **только** проекта этой сборки (`ilcarro-jenkins-…`). Образ с тестами остаётся намеренно — это кэш
+     слоёв для следующей сборки; отдельный шаг удаляет только его старые безымянные версии
+     (по метке `ilcarro.jenkins.image`).
 3. Цвет сборки: синяя/зелёная — все тесты прошли; **жёлтая (UNSTABLE)** — есть упавшие тесты
-   (известные баги в отчёте — xfailed, они сборку не красят); **красная (FAILURE)** — сбой запуска
-   или не дошедший до контейнера параметр.
+   (известные баги в отчёте — xfailed, они сборку не красят); **красная (FAILURE)** — сбой запуска,
+   не дошедший до контейнера параметр или секреты в результатах тестов (тогда отчёт Allure
+   не публикуется).
 4. На странице сборки — ссылка **Allure Report**. В блоке **Environment** — `JenkinsBrowser`
-   и `SeleniumBrowser` с одинаковым значением, `JenkinsBuild`, `MarkerFilter`
-   (`not selenium; selenium` для полного прогона).
+   и `SeleniumBrowser` с одинаковым значением, `JenkinsMarker` (параметр `TEST_MARKER`),
+   `JenkinsBuild`, `MarkerFilter` (`not selenium; selenium` для полного прогона).
 5. Проверь, что после сборки не осталось контейнеров: `docker ps -a --filter "name=ilcarro-jenkins"` —
    пусто.
 6. Теперь **Build with Parameters** → `BROWSER=firefox` → в отчёте и логе должно быть `firefox`.
@@ -113,6 +116,7 @@ Jenkins — тот же, что для Phonebook: контейнер `jenkins-ma
 | `Cannot connect to the Docker daemon` | контейнер Jenkins запущен без `/var/run/docker.sock` или не от root — compose-файл Jenkins в Phonebook |
 | `Параметр BROWSER=… не дошёл до контейнера` | сборка красная намеренно: тесты шли не в том браузере — пришли лог сборки |
 | `не отобрано ни одного теста` | ошибка в выражении отбора; с заданным маркером пустая часть допустима |
+| `ВНИМАНИЕ: в результатах найдены секреты` | сборка красная, отчёт не опубликован намеренно: сканер выше в логе называет файл и поле — убери секрет из кода |
 | Нет ссылки Allure Report | плагин Allure или установка Allure Commandline (раздел 1) |
 | Сборка не стартует от push | Recent Deliveries вебхука в GitHub, жив ли туннель ngrok, галочка триггера в job |
 | Остались контейнеры после сборки | `docker ps -a --filter "name=ilcarro-jenkins"`; команда уборки — в `commands.md` |

@@ -1,4 +1,4 @@
-<!-- translation-of: docs/requirements/README.md sha256:c1647dada281 -->
+<!-- translation-of: docs/requirements/README.md sha256:cf789c09971b -->
 # IlCarro requirements
 
 > Russian original: [README.md](README.md)
@@ -38,7 +38,7 @@ A test is tagged with an ID from `requirements.md`:
 def test_booking_is_saved(...): ...
 ```
 
-If there is no suitable ID, nobody makes one up: it is first added to `requirements.md` (the user decides).
+If there is no suitable ID, nobody makes one up: it is first added to `requirements.md` (the project author decides).
 
 ## Traceability matrix
 
@@ -54,7 +54,7 @@ Each item has one of these statuses:
 
 | Status | What it means |
 |--------|------------|
-| Covered by a passing test | there is a test, it passes and checks the item as it is written |
+| Covered by a passing test | there is a test, it passes and checks the item as it is written. The matrix does not run tests: “passes” is the suite's expectation that CI checks — on a green `main` every such test has passed, otherwise the run is red |
 | Partly covered by a passing test, the rest is planned | there is a test and it passes, but it checks part of the item; what is not covered and in which plan step it will appear — a `partial` entry in `data/coverage_exceptions.py` |
 | Covered, the test hits a known bug (strict xfail) | there is a test and it runs into a defect from `data/known_bugs.py` (strict xfail) |
 | Covered as an observation (strict xfail) | the test records behaviour from `data/observations.py` (strict xfail) |
@@ -98,4 +98,4 @@ From strongest to weakest. In a conflict the higher source wins.
 4. **Research of the actual behaviour** — the weakest source. The application's behaviour by itself does not
    prove that it is correct: it can be used as a hypothesis, but not as a reference.
 
-If no source defines a behaviour, the test does not assert it, and the question is raised with the user.
+If no source defines a behaviour, the test does not assert it, and the question is raised with the project author.

@@ -1,4 +1,4 @@
-<!-- translation-of: docs/jenkins-setup.md sha256:548689d909c7 -->
+<!-- translation-of: docs/jenkins-setup.md sha256:e9d85cda2ca7 -->
 # Setting up Jenkins for IlCarro
 
 > Russian original: [jenkins-setup.md](jenkins-setup.md)
@@ -46,8 +46,8 @@ an installation (Phonebook already has one). The Jenkinsfile does not refer to i
 ## 2. Create the job
 
 1. Dashboard → **New Item** → a name, for example `IlCarro_Docker_Tests` → type **Pipeline** → OK.
-   The name becomes part of the build's compose project name (`ilcarro-jenkins-ilcarro-docker-tests-<номер>`, ending with the build number);
-   there are no restrictions on it — the Jenkinsfile converts it to a valid form itself.
+   The name becomes part of the build's compose project name (`ilcarro-jenkins-ilcarro-docker-tests-<N>`, where `<N>` is the build
+   number); there are no restrictions on it — the Jenkinsfile converts it to a valid form itself.
 2. In the **Triggers** section, tick **GitHub hook trigger for GITScm polling**.
 3. In the **Pipeline** section:
    - Definition: **Pipeline script from SCM**;
@@ -67,18 +67,21 @@ during the first build. Before it the button is called **Build Now**, after it �
 1. Click **Build Now**. The first build runs with the default parameters: `chrome`, all tests.
    The first time it takes longer than usual: the test image is built and the Selenium Grid images are downloaded.
 2. Open the build → **Console Output** and check:
-   - in the `Prepare` stage — the «Параметры сборки» (“Build parameters”) block (browser, marker, compose project name
+   - in the `Prepare` stage — the `Параметры сборки` (“Build parameters”) block (browser, marker, compose project name
      `ilcarro-jenkins-…`) and the line `Docker Compose version …` — the version is 2.24.4 or newer;
    - in each part — the line `Отбор: -m "not selenium" | браузер: chrome | …` (“Selection: … | browser: …”) and `-m "selenium"`;
    - after each part — `Параметры в контейнере подтверждены: SeleniumBrowser=chrome, MarkerFilter=…` (“Parameters confirmed in the container”);
-   - at the end — the cleanup: `docker compose down` removes the containers, network, volume and image **only**
-     with the `ilcarro-jenkins-…` prefix.
+   - at the end — the cleanup: `docker compose down -v --remove-orphans` removes the containers, network
+     and volumes of **only** this build's project (`ilcarro-jenkins-…`). The test image stays on purpose — it is
+     the layer cache for the next build; a separate step removes only its old untagged versions
+     (by the `ilcarro.jenkins.image` label).
 3. Build colour: blue/green — all tests passed; **yellow (UNSTABLE)** — there are failed tests
-   (known bugs in the report are xfailed, they do not colour the build); **red (FAILURE)** — a launch failure
-   or a parameter that did not reach the container.
+   (known bugs in the report are xfailed, they do not colour the build); **red (FAILURE)** — a launch failure,
+   a parameter that did not reach the container, or secrets in the test results (then the Allure report
+   is not published).
 4. The build page has an **Allure Report** link. The **Environment** block shows `JenkinsBrowser`
-   and `SeleniumBrowser` with the same value, `JenkinsBuild`, `MarkerFilter`
-   (`not selenium; selenium` for a full run).
+   and `SeleniumBrowser` with the same value, `JenkinsMarker` (the `TEST_MARKER` parameter),
+   `JenkinsBuild`, `MarkerFilter` (`not selenium; selenium` for a full run).
 5. Check that no containers are left after the build: `docker ps -a --filter "name=ilcarro-jenkins"` —
    empty.
 6. Now **Build with Parameters** → `BROWSER=firefox` → the report and the log must show `firefox`.
@@ -114,6 +117,7 @@ in the webhooks of **both** repositories (IlCarro and Phonebook).
 | `Cannot connect to the Docker daemon` | the Jenkins container was started without `/var/run/docker.sock` or not as root — the Jenkins compose file in Phonebook |
 | `Параметр BROWSER=… не дошёл до контейнера` (“the BROWSER parameter did not reach the container”) | the build is red on purpose: the tests ran in the wrong browser — send the build log |
 | `не отобрано ни одного теста` (“no tests selected”) | an error in the selection expression; with a marker set, an empty part is allowed |
+| `ВНИМАНИЕ: в результатах найдены секреты` (“WARNING: secrets found in the results”) | the build is red and the report is not published on purpose: the scanner output above it in the log names the file and the field — remove the secret from the code |
 | No Allure Report link | the Allure plugin or the Allure Commandline installation (section 1) |
 | A push does not start a build | the webhook's Recent Deliveries in GitHub, whether the ngrok tunnel is alive, the trigger checkbox in the job |
 | Containers are left after the build | `docker ps -a --filter "name=ilcarro-jenkins"`; the cleanup command — in `commands.md` *(in Russian)* |
