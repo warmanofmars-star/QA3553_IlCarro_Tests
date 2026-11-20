@@ -106,3 +106,13 @@ repos:
         language: system
         pass_filenames: false
         files: (\.md$|^scripts/check_translations\.py$|^data/requirement_ids\.py$)
+      # Образы selenium/* в docker-compose*.yml — на одном теге релиза Grid 4 (4.x.y-ГГГГММДД):
+      # Dependabot уже дважды уводил узлы на теги версий браузеров (PR #32, #34).
+      # pass_filenames: false — согласованность тегов проверяется по всем compose-файлам сразу.
+      # language: system — скрипт на stdlib, но запускается тем же python, что и соседние хуки
+      - id: check-selenium-images
+        name: Selenium images share one Grid 4 tag
+        entry: python scripts/check_selenium_images.py
+        language: system
+        pass_filenames: false
+        files: (^docker-compose.*\.ya?ml$|^scripts/check_selenium_images\.py$)

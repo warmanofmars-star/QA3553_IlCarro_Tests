@@ -151,6 +151,13 @@ jobs:
         if: ${{ !cancelled() }}
         run: python scripts/check_translations.py
 
+      # Образы selenium/* в docker-compose*.yml — на одном теге релиза Grid 4 (4.x.y-ГГГГММДД).
+      # Dependabot уводил узлы на теги версий браузеров (PR #32, #34), а откат браузера тесты
+      # не ловят: в #34 Chrome и Firefox на браузерах 99.x прошли зелёными. Только stdlib
+      - name: Проверяем, что образы Selenium на одном теге Grid 4
+        if: ${{ !cancelled() }}
+        run: python scripts/check_selenium_images.py
+
       # requirements.txt и requirements-dev.txt генерируются из *.in. Если исходник изменили
       # и не перекомпилировали (или поправили lock-файл руками), lock-файл в репозитории
       # не соответствует исходнику — и CI с Docker ставил бы не то, что записано в *.in.
