@@ -1,7 +1,7 @@
-<!-- translation-of: docs/requirements/requirements.md sha256:b736477609af -->
+<!-- translation-of: docs/requirements/requirements.md sha256:15720feba2ac -->
 # Reconstructed IlCarro requirements
 
-Draft v9, 2026-11-15. Change history — in the [Russian original](requirements.md).
+Draft v10, 2026-11-19. Change history — in the [Russian original](requirements.md).
 The Russian original is authoritative; this file is its English translation.
 
 IlCarro has no SRS, so the requirements are reconstructed from the sources listed below. Facts about the
@@ -23,7 +23,7 @@ application's behaviour are in `research-log.md` *(in Russian)* (references like
 only SW, RFC and OWASP apply. So the form rule “price ≥ 1” does not make it an error that the API
 accepts a price of 0: this is a discrepancy between sources (the DISC section), not a violation of an API requirement.
 
-**The “Actual behaviour” column** is a snapshot as of 2026-11-05 with a reference to a research question:
+**The “Actual behaviour” column** is a snapshot of the research of 2026-11-05 … 2026-11-13 with a reference to a research question (the date of a probe is in `research-log.md`):
 
 - *met* — the behaviour matches the requirement;
 - *partly* — the checked part is met, the rest is not verified (stated what exactly);
@@ -143,7 +143,7 @@ Below they are given without the hash: `Register`, `Login`, `LetCarWork`, `Searc
 | ID | Requirement | Source | Actual behaviour |
 |---|---|---|---|
 | REQ-UI-CAR-01 | The fields marked with `*` are validated before submission: City, Make, Model, Year, Fuel, Seats (≥ 1), Car class, Car registration number, Price (≥ 1). | FE: `LetCarWork` (the `*` markers and the validation schema) | **violated** for City: the `*` marker is there, but the validation schema has no such field — Submit is enabled, the form is sent with `city: ""` (Q-UI-04, Q-UI-20). The other fields are met: empty — Submit is disabled, “Required” under the field; Seats and Price below 1 — Submit is disabled (Q-UI-20) |
-| REQ-UI-CAR-02 | A successful submission — “Car submitted successfully” and the form is cleared; an error — “Failed to submit car”. | FE: `LetCarWork` | partly: “Failed to submit car” on an error is met (a 400 response — Q-UI-03, Q-UI-04; 500 and a dropped connection — Q-UI-32); after a 200 response the form is cleared, but the text “Car submitted successfully” does not appear on screen (Q-UI-15, the response was substituted) |
+| REQ-UI-CAR-02 | A successful submission — “Car submitted successfully” and the form is cleared; an error — “Failed to submit car”. | FE: `LetCarWork` | **violated** for a successful submission: after a 200 response the form is cleared, but the text “Car submitted successfully” does not appear on screen (Q-UI-15, the response was substituted). “Failed to submit car” on an error is met (a 400 response — Q-UI-03, Q-UI-04; 500 and a dropped connection — Q-UI-32) |
 | REQ-UI-CAR-03 | The Fuel value is sent to the API in lowercase: `petrol`, `diesel`, `hybrid`, `electric`. | FE: `LetCarWork` | met (Q-UI-05, Q-UI-15: all four values) |
 | REQ-UI-CAR-04 | The photo — as a link or as a file; a file is sent in the `image` field as a data URL (base64). | FE: `LetCarWork` | met (a file — Q-UI-06, Q-UI-16; a link goes to `image` as entered — Q-UI-16); consequences — REQ-SEC-07 |
 | REQ-UI-CAR-05 | On a 401 response to the car form submission, the UI does not show the user the error text from the server response. | OWASP: ASVS 4.0.3 V7.4.1 (Error Handling: a generic message on error); FE: `LetCarWork` | met: a real 401 response with a JWT parser text — only “Failed to submit car” on screen (Q-UI-34) |
@@ -186,7 +186,7 @@ registry references it by ID.
 |---|---|---|---|
 | DISC-01 | Password rules: the frontend — at least 6 characters, a letter and a digit; Swagger and the API — at least 8 characters, an uppercase letter, a lowercase letter, a digit, a special character is required; the API error text says a special character “may” be used (Can contain). | FE: `Register`; SW; EXP (Q-API-07) | The form accepts a password that the API rejects; the user sees `"[object Object]"` (Q-UI-07) |
 | DISC-02 | Cities: 54 in the frontend, 37 in the API, 22 in common. Different spellings: `Beersheba` / `Beer Sheva`, `Kiryat …` / `Qiryat …`, `Ra'anana` / `Raanana`. | FE: `CityAutocomplete`; EXP (Q-API-03) | A car cannot be added in 32 cities from the autocomplete — “Failed to submit car” (Q-UI-03); search in them is silently empty (Q-UI-12); 15 API cities are unreachable from the interface |
-| DISC-03 | Email case inside the API: registration converts the email to lowercase (a repeat with a different case — “User already exists”), login does not (an email with capital letters — 401). | EXP (Q-API-06) | Through the API a user cannot log in with the same email they registered with. The interface hides this by converting the email to lowercase on login (Q-UI-09) |
+| DISC-03 | Email case inside the API: registration converts the email to lowercase (a repeat with a different case — “User already exists”), login does not (an email with capital letters — 401). | EXP (Q-API-06) | Through the API a user whose email contains capital letters cannot log in with the email exactly as entered at registration — only in lowercase. The interface hides this by converting the email to lowercase on login (Q-UI-09) |
 | DISC-04 | The car form fields Gear, WD, Doors (and `features` in the form state) are missing from `CarDto`; the frontend collects them and does not send them. | FE: `LetCarWork`; SW: `CarDto` | What the user entered is silently lost (Q-UI-05, Q-UI-15) |
 | DISC-05 | The frontend calls endpoints that exist neither in Swagger nor on the backend: `GET /v1/cars/{id}`, `GET /v1/user/profile`. | FE: `cars`, `CarDetails`, `Profile`; SW; EXP (Q-API-08) | The car page does not work (Q-UI-01). `GET /v1/cars/{id}` and `GET /v1/user/profile` answer 403 (Q-API-08); in the browser the car and profile requests end with `net::ERR_FAILED` (Q-UI-01, Q-UI-18, Q-UI-19). `PUT /v1/user/profile` — DISC-10 |
 | DISC-06 | Booking: Swagger describes the endpoint; the frontend considers it not implemented: «Бронирование пока не реализовано в API» (“Booking is not implemented in the API yet”); the API answers with success and saves nothing. | SW; FE: `CarDetails`; EXP (Q-API-01) | See REQ-BOOK-01, REQ-BOOK-02 |
