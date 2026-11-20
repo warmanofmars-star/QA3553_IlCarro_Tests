@@ -46,7 +46,7 @@ volumes:
 
 services:
   selenium-hub:
-    image: selenium/hub:4.51.0-20261010
+    image: selenium/hub:4.52.0-20261101
     ports:
       # Grid UI и подключение с хоста (локальный запуск с USE_GRID=true).
       # Порт хоста настраивается: два стенда на общем 4444 роняют друг друга.
@@ -55,18 +55,18 @@ services:
 
   chrome:
     <<: *node
-    image: selenium/node-chrome:4.51.0-20261010
+    image: selenium/node-chrome:4.52.0-20261101
     platform: linux/amd64
     profiles: [chrome]
 
   firefox:
     <<: *node
-    image: selenium/node-firefox:4.51.0-20261010
+    image: selenium/node-firefox:4.52.0-20261101
     profiles: [firefox]
 
   edge:
     <<: *node
-    image: selenium/node-edge:4.51.0-20261010
+    image: selenium/node-edge:4.52.0-20261101
     platform: linux/amd64
     profiles: [edge]
 

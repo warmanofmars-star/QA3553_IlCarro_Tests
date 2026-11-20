@@ -75,7 +75,7 @@ rpds-py==2026.9.1
     #   referencing
 ruamel-yaml==0.19.1
     # via check-jsonschema
-ruff==0.17.3
+ruff==0.17.4
     # via -r requirements-dev.in
 urllib3==2.8.0
     # via
