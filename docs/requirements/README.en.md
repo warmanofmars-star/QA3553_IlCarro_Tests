@@ -1,4 +1,4 @@
-<!-- translation-of: docs/requirements/README.md sha256:482f1416669e -->
+<!-- translation-of: docs/requirements/README.md sha256:c1647dada281 -->
 # IlCarro requirements
 
 > Russian original: [README.md](README.md)
@@ -11,12 +11,14 @@ are kept in git: this is our own work, not course material (unlike Phonebook).
 | File | What it is |
 |------|---------|
 | `api-docs.json` | Swagger (OpenAPI 3.0.1) of the IlCarro backend, `info.version` = `v1.0.0` |
-| `requirements.md` | Reconstructed requirements: each has an ID, a source and an “Actual behaviour” column (a snapshot of the behaviour on the date it was checked). English translation: [requirements.en.md](requirements.en.md) |
+| `requirements.md` | Reconstructed requirements: each has an ID, a source and an “Actual behaviour” column (a snapshot of the behaviour on the date it was checked) |
+| `requirements.en.md` | English translation of `requirements.md`; checked against the original by `scripts/check_translations.py` |
 | `changelog.md` | Version history of `requirements.md`; a working document, not translated |
 | `research-log.md` | Research log: what was sent and what came back, without judgements. Questions `Q-API-NN` and `Q-UI-NN`; the “Actual behaviour” column refers to them |
-| `traceability.md` | Traceability matrix: for each ID — the tests, the registry key and the coverage status. **Generated** by `scripts/coverage_matrix.py`, never edited by hand. English version: [traceability.en.md](traceability.en.md) (also generated) |
+| `traceability.md` | Traceability matrix: for each ID — the tests, the registry key and the coverage status. **Generated** by `scripts/coverage_matrix.py`, never edited by hand |
+| `traceability.en.md` | The same matrix in English. **Generated** by `scripts/coverage_matrix.py` together with `traceability.md`, not a translation |
 
-The log is produced by the scripts in `research/` (how to run them: `research/README.md`, *in Russian*).
+The log is produced by the scripts in `research/` (how to run them is described in `research/README.md`).
 Requirements are derived from the sources below; judgements are made in `requirements.md`, not in the log.
 
 ## Categories of findings and test tags

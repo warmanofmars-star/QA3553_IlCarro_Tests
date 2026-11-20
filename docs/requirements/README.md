@@ -11,9 +11,11 @@
 |------|---------|
 | `api-docs.json` | Swagger (OpenAPI 3.0.1) бэкенда IlCarro, `info.version` = `v1.0.0` |
 | `requirements.md` | Реконструированные требования: у каждого есть ID, источник и колонка «Факт» (снимок поведения на дату проверки) |
+| `requirements.en.md` | Английский перевод `requirements.md`; сверяется с оригиналом `scripts/check_translations.py` |
 | `changelog.md` | История изменений `requirements.md` по версиям; рабочий документ, не переводится |
 | `research-log.md` | Лог исследования: что отправили и что получили, без оценок. Вопросы `Q-API-NN` и `Q-UI-NN`; на них ссылается колонка «Факт» |
 | `traceability.md` | Матрица трассируемости: для каждого ID — тесты, ключ реестра и статус покрытия. **Генерируется** `scripts/coverage_matrix.py`, руками не правится |
+| `traceability.en.md` | Та же матрица на английском. **Генерируется** `scripts/coverage_matrix.py` вместе с `traceability.md`, не перевод |
 
 Лог создают скрипты из `research/` (запуск описан в `research/README.md`). Требования выводятся
 из источников ниже, оценки делаются в `requirements.md`, а не в логе.
