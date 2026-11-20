@@ -1,7 +1,7 @@
-<!-- translation-of: docs/requirements/requirements.md sha256:15720feba2ac -->
+<!-- translation-of: docs/requirements/requirements.md sha256:fd2a2d716f1f -->
 # Reconstructed IlCarro requirements
 
-Draft v10, 2026-11-19. Change history — in the [Russian original](requirements.md).
+Draft v10, 2026-11-19. Change history — in [changelog.md](changelog.md) *(in Russian)*.
 The Russian original is authoritative; this file is its English translation.
 
 IlCarro has no SRS, so the requirements are reconstructed from the sources listed below. Facts about the

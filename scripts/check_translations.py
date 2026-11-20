@@ -15,10 +15,22 @@
 Что проверяется:
   1. Каждый *.en.md в репозитории (отслеживаемый или новый, не из .gitignore) несёт пометку, оригинал
      из пометки существует, отпечаток совпадает. Оригинал изменили, а перевод нет — расхождение.
-  2. Перевод не содержит непереведённого русского текста: кириллица допустима только в «ёлочках»,
-     и каждая такая строка должна дословно встречаться в оригинале. Это тексты интерфейса приложения
-     на русском (данные, а не формулировки): в переводе они остаются как есть, перевод — рядом в скобках.
-  3. Для requirements.en.md — сверка по смыслу с requirements.md, построчно по разбору таблиц из
+  2. Код переносится байт в байт — для каждого перевода с пометкой:
+     - мультисет фрагментов в `обратных кавычках` во всём документе (вне блоков ```) совпадает
+       с оригиналом: код не переводят и не теряют;
+     - блоки ```: то же число, тот же порядок, тот же язык после ```, то же содержимое после удаления
+       комментариев. Комментарий — # или // в начале строки или после пробела и до конца строки
+       (поэтому https:// и ${#var} комментарием не считаются); строки, ставшие пустыми, и хвостовые
+       пробелы не сравниваются. Комментарии в блоках переводятся, поэтому НЕ сверяются — это задумано:
+       правка одного комментария в переводе проверку не роняет. Цена правила — текст « # …» или « // …»
+       внутри строкового литерала тоже считается комментарием (с обеих сторон одинаково).
+  3. Перевод не содержит непереведённого русского текста: кириллица допустима только в «ёлочках»
+     и в `обратных кавычках`. Строка в «ёлочках» с кириллицей должна дословно встречаться в оригинале:
+     это тексты интерфейса приложения на русском (данные, а не формулировки) — в переводе они остаются
+     как есть, перевод — рядом в скобках. Код в кавычках сверяет с оригиналом правило 2 (например,
+     сообщения Jenkinsfile в консоли). В блоках ``` кириллица — ошибка: код совпадает с оригиналом,
+     а комментарии переведены.
+  4. Для requirements.en.md — сверка по смыслу с requirements.md, построчно по разбору таблиц из
      data/requirement_ids.py: те же ID в том же порядке; у каждой строки тот же набор ссылок
      Q-API-NN / Q-UI-NN и тот же мультисет фрагментов в `обратных кавычках`; у REQ — тот же статус
      колонки «Факт» (словарь STATUSES ниже). У DISC вместо «Факта» «Последствие», у OBS в «Факте» —
@@ -74,6 +86,9 @@ MARKER = re.compile(r"^<!-- translation-of: (?P<path>\S+) sha256:(?P<hash>[0-9a-
 MARKER_START = "<!-- translation-of:"
 Q_REF = re.compile(r"\bQ-(?:API|UI)-\d+\b")
 CODE = re.compile(r"`([^`]*)`")
+FENCE = re.compile(r"^\s*```(?P<lang>.*)$")
+# Комментарий в блоке кода: # или // в начале строки или после пробела — до конца строки
+BLOCK_COMMENT = re.compile(r"(?:^|\s)(?:#|//).*$")
 CYRILLIC = re.compile(r"[А-Яа-яЁё]")
 GUILLEMETS = re.compile(r"«[^«»]*»")
 
@@ -139,12 +154,87 @@ def check_marker(translation: str) -> tuple[list[str], str | None]:
     return [], original
 
 
+# ==========================================
+# Разбор Markdown: проза и блоки кода
+# ==========================================
+def split_fences(path: str) -> tuple[list[tuple[int, str, bool]], list[tuple[int, str, list[str]]]]:
+    """Строки документа с признаком «внутри блока ```» и сами блоки: (строка начала, язык, содержимое)."""
+    lines: list[tuple[int, str, bool]] = []
+    blocks: list[tuple[int, str, list[str]]] = []
+    current: tuple[int, str, list[str]] | None = None
+    for number, line in enumerate((ROOT / path).read_text(encoding="utf-8").splitlines(), start=1):
+        fence = FENCE.match(line)
+        if fence and current is None:
+            current = (number, fence["lang"].strip(), [])
+            lines.append((number, line, True))
+        elif fence and not fence["lang"].strip():
+            blocks.append(current)
+            current = None
+            lines.append((number, line, True))
+        elif current is not None:
+            current[2].append(line)
+            lines.append((number, line, True))
+        else:
+            lines.append((number, line, False))
+    if current is not None:
+        raise FormatError(f"{path}:{current[0]}: блок ``` не закрыт")
+    return lines, blocks
+
+
+def _code_without_comments(content: list[str]) -> list[str]:
+    stripped = (BLOCK_COMMENT.sub("", line).rstrip() for line in content)
+    return [line for line in stripped if line.strip()]
+
+
+def check_code(translation: str, original: str) -> list[str]:
+    """Код в `обратных кавычках` и блоки ``` перевода совпадают с оригиналом (комментарии блоков — нет)."""
+    ru_lines, ru_blocks = split_fences(original)
+    en_lines, en_blocks = split_fences(translation)
+    problems = []
+    ru_code = Counter(code for _, line, in_block in ru_lines if not in_block for code in CODE.findall(line))
+    en_code = Counter(code for _, line, in_block in en_lines if not in_block for code in CODE.findall(line))
+    if ru_code != en_code:
+        problems.append(
+            f"{translation}: код в `обратных кавычках` не совпадает с оригиналом {original}: "
+            f"нет {sorted((ru_code - en_code).elements())}, лишний {sorted((en_code - ru_code).elements())}. "
+            "Код переносится байт в байт"
+        )
+    if len(ru_blocks) != len(en_blocks):
+        problems.append(f"{translation}: блоков ``` {len(en_blocks)}, а в оригинале {original} — {len(ru_blocks)}")
+    for position, (ru, en) in enumerate(zip(ru_blocks, en_blocks, strict=False), start=1):
+        where = f"{translation}:{en[0]}: блок ``` №{position} (в оригинале — строка {ru[0]})"
+        if ru[1] != en[1]:
+            problems.append(f"{where}: язык {en[1] or 'не указан'!r}, а в оригинале {ru[1] or 'не указан'!r}")
+        ru_code_lines, en_code_lines = _code_without_comments(ru[2]), _code_without_comments(en[2])
+        if ru_code_lines != en_code_lines:
+            diff = next(
+                (pair for pair in zip(ru_code_lines, en_code_lines, strict=False) if pair[0] != pair[1]),
+                (f"{len(ru_code_lines)} строк кода", f"{len(en_code_lines)} строк кода"),
+            )
+            problems.append(
+                f"{where}: код без комментариев отличается от оригинала: {diff[1]!r} вместо {diff[0]!r}. "
+                "Команды переносятся байт в байт, переводятся только комментарии"
+            )
+    return problems
+
+
+# ==========================================
+# Кириллица
+# ==========================================
 def check_cyrillic(translation: str, original: str | None) -> list[str]:
-    """Кириллица в переводе — только в «ёлочках», и такая строка дословно есть в оригинале."""
+    """Кириллица в переводе — только в «ёлочках» (дословно из оригинала) и в `обратных кавычках`."""
     original_text = (ROOT / original).read_text(encoding="utf-8") if original else ""
     problems = []
-    lines = (ROOT / translation).read_text(encoding="utf-8").splitlines()
-    for number, line in enumerate(lines, start=1):
+    for number, line, in_block in split_fences(translation)[0]:
+        if in_block:
+            if leftover := CYRILLIC.search(line):
+                problems.append(
+                    f"{translation}:{number}: русский текст в блоке ``` (с позиции {leftover.start() + 1}) — "
+                    "комментарии в блоках переводятся, код в оригинале кириллицы не содержит"
+                )
+            continue
+        # Код в кавычках сверяет с оригиналом check_code; без оригинала (нет пометки) он не исключается
+        line = CODE.sub("", line) if original else line
         for quoted in GUILLEMETS.findall(line):
             if CYRILLIC.search(quoted) and quoted not in original_text:
                 problems.append(
@@ -266,6 +356,8 @@ def check_all() -> int:
         marker_problems, original = check_marker(translation)
         problems += marker_problems
         problems += check_cyrillic(translation, original)
+        if original is not None:
+            problems += check_code(translation, original)
         expected_original = REQUIREMENTS_PAIRS.get(translation)
         if expected_original is not None:
             if original is not None and original != expected_original:
