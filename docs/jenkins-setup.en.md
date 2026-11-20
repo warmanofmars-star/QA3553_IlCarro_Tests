@@ -60,7 +60,7 @@ an installation (Phonebook already has one). The Jenkinsfile does not refer to i
 4. **Save**.
 
 Do not add the `BROWSER` and `TEST_MARKER` parameters by hand: Jenkins reads them from the Jenkinsfile
-during the first build. Before it the button is called **Build Now**, after it — **Build with Parameters**.
+during the first build. Until then the button is labelled **Build Now**; afterwards, **Build with Parameters**.
 
 ## 3. First build
 
@@ -85,13 +85,13 @@ during the first build. Before it the button is called **Build Now**, after it �
 5. Check that no containers are left after the build: `docker ps -a --filter "name=ilcarro-jenkins"` —
    empty.
 6. Now **Build with Parameters** → `BROWSER=firefox` → the report and the log must show `firefox`.
-   This guards against the Phonebook lesson, where the browser choice was once silently ignored.
+   This guards against repeating a Phonebook problem, where the browser choice was once silently ignored.
 
 ## 4. GitHub webhook
 
 The ngrok tunnel is the same as for Phonebook (`ngrok http 8080`). If it is already running, a new one
-is not needed: one address receives webhooks from both repositories, and Jenkins finds the job by the repository
-URL itself.
+is not needed: one address receives webhooks from both repositories, and Jenkins itself matches the job by
+repository URL.
 
 1. Copy the HTTPS address from the ngrok console, for example `https://abcd-1234.ngrok-free.app`.
 2. GitHub → the IlCarro repository → **Settings → Webhooks → Add webhook**:
@@ -100,7 +100,7 @@ URL itself.
    - Secret: empty;
    - Which events: **Just the push event**;
    - Active: ✓ → **Add webhook**.
-3. GitHub sends a test ping right away: in the list of webhooks it must have a green tick
+3. GitHub sends a test ping right away: in the list of webhooks, the new webhook must show a green tick
    (Recent Deliveries → response 200).
 4. Check: after the next push to `main` (for example, merging a PR) the job gets a new build
    with the cause “Started by GitHub push”. Pushes to other branches reach Jenkins too, but do not start
@@ -115,7 +115,7 @@ in the webhooks of **both** repositories (IlCarro and Phonebook).
 |---|---|
 | `yaml: unknown tag !reset` / `!override` | an old Docker Compose in the Jenkins image — rebuild the image (section 0) |
 | `Cannot connect to the Docker daemon` | the Jenkins container was started without `/var/run/docker.sock` or not as root — the Jenkins compose file in Phonebook |
-| `Параметр BROWSER=… не дошёл до контейнера` (“the BROWSER parameter did not reach the container”) | the build is red on purpose: the tests ran in the wrong browser — send the build log |
+| `Параметр BROWSER=… не дошёл до контейнера` (“the BROWSER parameter did not reach the container”) | the build is red on purpose: the tests ran in the wrong browser — attach the build log when reporting the problem |
 | `не отобрано ни одного теста` (“no tests selected”) | an error in the selection expression; with a marker set, an empty part is allowed |
 | `ВНИМАНИЕ: в результатах найдены секреты` (“WARNING: secrets found in the results”) | the build is red and the report is not published on purpose: the scanner output above it in the log names the file and the field — remove the secret from the code |
 | No Allure Report link | the Allure plugin or the Allure Commandline installation (section 1) |
