@@ -18,7 +18,7 @@ Statuses:
   The matrix does not run tests: “passes” is the suite's expectation that CI checks — on a green
   `main` every such test has passed, otherwise the run is red;
 - 🟡 **Partly covered by a passing test, the rest is planned** — the test passes but does
-  not check the whole item: what is not covered and in which PR it will come — in the “Status”
+  not check the whole item: what is not covered and at which step it will come — in the “Status”
   column (the `data/coverage_exceptions.py` registry, category `partial`);
 - 🐞 **Covered, the test hits a known bug (strict xfail)** — the test exists and runs into a defect recorded in
   `data/known_bugs.py`;
@@ -27,7 +27,7 @@ Statuses:
   `data/observations.py`;
 - ⚪ **No test — exception with a recorded reason** — there will be no test until the application
   changes;
-- 🕓 **No test yet — planned** — the PR in which the test will
+- 🕓 **No test yet — planned** — the step at which the test will
   appear is given.
 
 “Covered” means that the assert of at least one test checks the item as it is written
@@ -46,8 +46,6 @@ in `requirements.en.md`; if only a part is checked, the item is recorded as part
 | **Total** | 56 | 11 | 15 | 82 |
 
 - **Exceptions by category:** the check would harm the shared backend — 1; blocked by another defect — 2; the feature is unreachable — 3.
-- **Planned:** PR 6.2 (API) — 0; PR 6.3a (UI: request interception and session) — 0; PR 6.3b (UI: the rest and observations) — 0.
-- **Partly covered, to be completed:** PR 6.2 (API) — 0; PR 6.3a (UI: request interception and session) — 0; PR 6.3b (UI: the rest and observations) — 0.
 - **Known bugs:** 22 in the `data/known_bugs.py` registry; **observations:** 15 in the `data/observations.py` registry.
 - **Automated tests:** 170, each carries the tag of at least one item.
 
@@ -222,23 +220,3 @@ the entry is removed by the PR that completes the rest.
 | DISC-06 | the feature is unreachable: REQ-UI-CARPAGE-01 | The frontend side — the message «Бронирование пока не реализовано в API» (“Booking is not implemented in the API yet”) — is on the car page, which does not open (REQ-UI-CARPAGE-01). The API side is checked by REQ-BOOK-01 and REQ-BOOK-02 | The car page starts showing data: test_pw_car_card_opens_car_page (CAR_PAGE_NOT_LOADED) gives XPASS, the bug entry is removed — `coverage_matrix.py --check` will list this exception |
 | DISC-09 | blocked by another defect: DISC-05 | The fields the car page reads are visible only in the response of GET /v1/cars/{id}, and this endpoint has no contract (DISC-05): on the backend it answers 403, in the browser the request is dropped with no response status (Q-UI-01, Q-UI-19). We do not substitute the response of a non-existent endpoint — its body would have to be invented. Agreed with the project author | GET /v1/cars/{id} appears in Swagger: test_pw_car_page_request_is_documented gives XPASS. The FRONTEND_CALLS_UNDOCUMENTED_ENDPOINTS entry covers two endpoints (DISC-05): until the profile endpoint is fixed as well, `coverage_matrix.py --check` will not list this exception — revisit on the XPASS |
 | DISC-10 | the feature is unreachable | The frontend sends PUT /v1/user/profile only after the profile has loaded successfully, and GET /v1/user/profile always ends in a failure (Q-UI-27, Q-UI-33). Substituting the response of an endpoint outside Swagger is not allowed (the response substitution rule, CLAUDE.md) | Not tracked automatically: the exception rests on the failure of GET /v1/user/profile (Q-UI-27, Q-UI-33), while test_pw_profile_page_request_is_documented (DISC-05) checks whether the request is described in Swagger, not whether the response succeeds. Revisit if GET /v1/user/profile starts answering successfully |
-
-### Planned: PR 6.2 (API)
-
-| ID | What the test will check |
-|---|---|
-
-### Planned: PR 6.3a (UI: request interception and session)
-
-| ID | What the test will check |
-|---|---|
-
-### Planned: PR 6.3b (UI: the rest and observations)
-
-| ID | What the test will check |
-|---|---|
-
-### Partly covered
-
-| ID | Not covered | PR |
-|---|---|---|

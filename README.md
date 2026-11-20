@@ -134,7 +134,7 @@ The table is generated — do not edit it by hand:
 | 🕓 No test yet — planned | 0 | 0 | 0 | 0 |
 | **Total** | 56 | 11 | 15 | 82 |
 
-Exceptions: the check would harm the shared backend — 1; blocked by another defect — 2; the feature is unreachable — 3. Planned: 0 in step 6.2 (API), 0 in step 6.3a (UI: request interception and session), 0 in step 6.3b (UI: the rest and observations). The rest of the partly covered items: 0 in step 6.2, 0 in step 6.3a, 0 in step 6.3b.
+Exceptions: the check would harm the shared backend — 1; blocked by another defect — 2; the feature is unreachable — 3.
 All 170 tests reference at least one ID (a test without one fails the check).
 <!-- coverage:end -->
 

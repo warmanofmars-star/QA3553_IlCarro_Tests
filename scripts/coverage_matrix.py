@@ -373,6 +373,11 @@ def count_exceptions(rows: list[Row]) -> tuple[dict[str, int], dict[str, int], d
     return categories, planned, partial
 
 
+def _nonzero(counts: dict[str, int]) -> dict[str, int]:
+    """Только ненулевые счётчики: строка «— 0» в отчёте — шум (раздел пуст, говорить не о чем)."""
+    return {key: n for key, n in counts.items() if n}
+
+
 def _summary_table(rows: list[Row], header: str, titles: dict[str, str], total_title: str) -> list[str]:
     counts = count_statuses(rows)
     lines = [f"| {header} | REQ | DISC | OBS | {total_title} |", "|---|---:|---:|---:|---:|"]
@@ -469,13 +474,15 @@ class Renderer:
     def status_cell(self, row: Row) -> str:
         status = row.status
         text = f"{ICONS[status]} {self.status_title(status)}"
+        # Номер — шаг плана (так шаги названы в CLAUDE.md и README), а не номер pull request
+        step = f"({'step' if self.english else 'шаг'} {row.exception.pr})" if row.exception else ""
         if status == PLANNED_STATUS:
-            return f"{text} (PR {row.exception.pr})"
+            return f"{text} {step}"
         if row.is_partial:
             # Известный баг или наблюдение важнее «частично», но неполнота покрытия не теряется
             separator = " — " if status == PARTIAL_STATUS else "; "
             not_covered = "not covered" if self.english else "не покрыто"
-            return f"{text}{separator}{not_covered}: {_cell(self.reason(row.exception))} (PR {row.exception.pr})"
+            return f"{text}{separator}{not_covered}: {_cell(self.reason(row.exception))} {step}"
         if status == EXCEPTION:
             text += f": {self.category_title(row.exception.category)}"
             if row.exception.blocked_by:
@@ -484,44 +491,47 @@ class Renderer:
 
     # ---------- разделы ----------
     def summary(self) -> list[str]:
-        categories, planned, partial = count_exceptions(self.rows)
-        if self.english:
-            return [
-                "## Summary",
-                "",
-                *_summary_table(self.rows, "Status", STATUS_TITLES_EN, "Total"),
-                "",
-                "- **Exceptions by category:** "
-                + "; ".join(f"{CATEGORY_TITLES_EN[category]} — {n}" for category, n in categories.items())
-                + ".",
-                "- **Planned:** "
-                + "; ".join(f"PR {pr} ({PLANNED_PRS_EN[pr]}) — {n}" for pr, n in planned.items())
-                + ".",
-                "- **Partly covered, to be completed:** "
-                + "; ".join(f"PR {pr} ({PLANNED_PRS_EN[pr]}) — {n}" for pr, n in partial.items())
-                + ".",
+        categories, planned, partial = (_nonzero(counts) for counts in count_exceptions(self.rows))
+        en = self.english
+        step = "step" if en else "шаг"
+        lines = [
+            "## Summary" if en else "## Сводка",
+            "",
+            *_summary_table(
+                self.rows, *(("Status", STATUS_TITLES_EN, "Total") if en else ("Статус", STATUS_TITLES, "Всего"))
+            ),
+            "",
+        ]
+        if categories:
+            lines.append(
+                ("- **Exceptions by category:** " if en else "- **Исключения по категориям:** ")
+                + "; ".join(f"{self.category_title(category)} — {n}" for category, n in categories.items())
+                + "."
+            )
+        if planned:
+            lines.append(
+                ("- **Planned:** " if en else "- **Запланировано:** ")
+                + "; ".join(f"{step} {pr} ({self.plan_title(pr)}) — {n}" for pr, n in planned.items())
+                + "."
+            )
+        if partial:
+            lines.append(
+                ("- **Partly covered, to be completed:** " if en else "- **Покрыто частично, доработка:** ")
+                + "; ".join(f"{step} {pr} ({self.plan_title(pr)}) — {n}" for pr, n in partial.items())
+                + "."
+            )
+        if en:
+            lines += [
                 f"- **Known bugs:** {len(KNOWN_BUGS)} in the `data/known_bugs.py` registry; "
                 f"**observations:** {len(OBSERVATIONS)} in the `data/observations.py` registry.",
                 f"- **Automated tests:** {len(self.tests)}, each carries the tag of at least one item.",
             ]
-        lines = [
-            "## Сводка",
-            "",
-            *_summary_table(self.rows, "Статус", STATUS_TITLES, "Всего"),
-            "",
-            "- **Исключения по категориям:** "
-            + "; ".join(f"{CATEGORY_TITLES[category]} — {n}" for category, n in categories.items())
-            + ".",
-            "- **Запланировано:** "
-            + "; ".join(f"PR {pr} ({PLANNED_PRS[pr]}) — {n}" for pr, n in planned.items())
-            + ".",
-            "- **Покрыто частично, доработка:** "
-            + "; ".join(f"PR {pr} ({PLANNED_PRS[pr]}) — {n}" for pr, n in partial.items())
-            + ".",
-            f"- **Известные баги:** {len(KNOWN_BUGS)} в реестре `data/known_bugs.py`; "
-            f"**наблюдения:** {len(OBSERVATIONS)} в реестре `data/observations.py`.",
-            f"- **Автотесты:** {len(self.tests)}, у каждого есть тег хотя бы одного пункта.",
-        ]
+        else:
+            lines += [
+                f"- **Известные баги:** {len(KNOWN_BUGS)} в реестре `data/known_bugs.py`; "
+                f"**наблюдения:** {len(OBSERVATIONS)} в реестре `data/observations.py`.",
+                f"- **Автотесты:** {len(self.tests)}, у каждого есть тег хотя бы одного пункта.",
+            ]
         return lines
 
     def requirement_sections(self) -> list[str]:
@@ -552,12 +562,8 @@ class Renderer:
                 "the application changes. Planned: the entry is removed by the PR that adds the test.",
                 "Partly covered: there is a test, the table shows which part of the item the test does not check;",
                 "the entry is removed by the PR that completes the rest.",
-                "",
-                "### Exceptions",
-                "",
-                "| ID | Category | Reason | Revisit when |",
-                "|---|---|---|---|",
             ]
+            exceptions_header = ["### Exceptions", "", "| ID | Category | Reason | Revisit when |", "|---|---|---|---|"]
         else:
             lines = [
                 "## Реестр исключений покрытия",
@@ -565,12 +571,16 @@ class Renderer:
                 "Реестр — `data/coverage_exceptions.py`. Исключения: теста не будет, пока не изменится приложение.",
                 "Запланированные: запись убирает тот PR, который добавляет тест. Частично покрытые: тест есть,",
                 "в таблице — что из пункта он не проверяет; запись убирает тот PR, который доберёт остальное.",
-                "",
+            ]
+            exceptions_header = [
                 "### Исключения",
                 "",
                 "| ID | Категория | Причина | Пересмотреть, когда |",
                 "|---|---|---|---|",
             ]
+        # Пустые разделы не выводим: после шага 6.3b planned и partial — ошибка --check, их таблицы были бы пусты
+        if any(row.status == EXCEPTION for row in self.rows):
+            lines += ["", *exceptions_header]
         for row in self.rows:
             if row.status == EXCEPTION:
                 category = self.category_title(row.exception.category)
@@ -584,22 +594,30 @@ class Renderer:
                 )
 
         for pr in PLANNED_PRS:
+            planned = [row for row in self.rows if row.status == PLANNED_STATUS and row.exception.pr == pr]
+            if not planned:
+                continue
             if self.english:
-                lines += ["", f"### Planned: PR {pr} ({self.plan_title(pr)})", "", "| ID | What the test will check |"]
+                lines += [
+                    "",
+                    f"### Planned: step {pr} ({self.plan_title(pr)})",
+                    "",
+                    "| ID | What the test will check |",
+                ]
             else:
-                lines += ["", f"### Запланировано: PR {pr} ({self.plan_title(pr)})", "", "| ID | Что проверит тест |"]
+                lines += ["", f"### Запланировано: шаг {pr} ({self.plan_title(pr)})", "", "| ID | Что проверит тест |"]
             lines.append("|---|---|")
-            for row in self.rows:
-                if row.status == PLANNED_STATUS and row.exception.pr == pr:
-                    lines.append(f"| {row.item.id} | {_cell(self.reason(row.exception))} |")
+            for row in planned:
+                lines.append(f"| {row.item.id} | {_cell(self.reason(row.exception))} |")
 
-        if self.english:
-            lines += ["", "### Partly covered", "", "| ID | Not covered | PR |", "|---|---|---|"]
-        else:
-            lines += ["", "### Покрыто частично", "", "| ID | Что не покрыто | PR |", "|---|---|---|"]
-        for row in self.rows:
-            if row.is_partial and row.tests:
-                lines.append(f"| {row.item.id} | {_cell(self.reason(row.exception))} | {row.exception.pr} |")
+        partial = [row for row in self.rows if row.is_partial and row.tests]
+        if partial:
+            if self.english:
+                lines += ["", "### Partly covered", "", "| ID | Not covered | Step |", "|---|---|---|"]
+            else:
+                lines += ["", "### Покрыто частично", "", "| ID | Что не покрыто | Шаг |", "|---|---|---|"]
+        for row in partial:
+            lines.append(f"| {row.item.id} | {_cell(self.reason(row.exception))} | {row.exception.pr} |")
         return lines
 
     def header(self) -> list[str]:
@@ -625,7 +643,7 @@ class Renderer:
                 "  The matrix does not run tests: “passes” is the suite's expectation that CI checks — on a green",
                 "  `main` every such test has passed, otherwise the run is red;",
                 f"- {ICONS[PARTIAL_STATUS]} **{STATUS_TITLES_EN[PARTIAL_STATUS]}** — the test passes but does",
-                "  not check the whole item: what is not covered and in which PR it will come — in the “Status”",
+                "  not check the whole item: what is not covered and at which step it will come — in the “Status”",
                 "  column (the `data/coverage_exceptions.py` registry, category `partial`);",
                 f"- {ICONS[BUG]} **{STATUS_TITLES_EN[BUG]}** — the test exists and runs into a defect recorded in",
                 "  `data/known_bugs.py`;",
@@ -634,7 +652,7 @@ class Renderer:
                 "  `data/observations.py`;",
                 f"- {ICONS[EXCEPTION]} **{STATUS_TITLES_EN[EXCEPTION]}** — there will be no test until the application",
                 "  changes;",
-                f"- {ICONS[PLANNED_STATUS]} **{STATUS_TITLES_EN[PLANNED_STATUS]}** — the PR in which the test will",
+                f"- {ICONS[PLANNED_STATUS]} **{STATUS_TITLES_EN[PLANNED_STATUS]}** — the step at which the test will",
                 "  appear is given.",
                 "",
                 "“Covered” means that the assert of at least one test checks the item as it is written",
@@ -658,14 +676,14 @@ class Renderer:
             "  «проходит» — ожидание набора, которое проверяет CI: на зелёном `main` каждый такой тест прошёл,",
             "  иначе прогон красный;",
             f"- {ICONS[PARTIAL_STATUS]} **частично** — тест есть и проходит, но проверяет не весь пункт:",
-            "  что не покрыто и в каком PR это появится — в колонке «Статус» (реестр",
+            "  что не покрыто и на каком шаге это появится — в колонке «Статус» (реестр",
             "  `data/coverage_exceptions.py`, категория `partial`);",
             f"- {ICONS[BUG]} **покрыт как известный баг** — тест есть и упирается в дефект из `data/known_bugs.py`",
             "  (строгий xfail); ключ записи — в колонке «Реестр»;",
             f"- {ICONS[OBSERVED]} **покрыт как наблюдение** — тест фиксирует поведение из `data/observations.py`",
             "  (строгий xfail);",
             f"- {ICONS[EXCEPTION]} **исключение** — теста нет и не будет, пока не изменится приложение;",
-            f"- {ICONS[PLANNED_STATUS]} **запланирован** — теста пока нет, указан PR, в котором он появится.",
+            f"- {ICONS[PLANNED_STATUS]} **запланирован** — теста пока нет, указан шаг, на котором он появится.",
             "",
             "«Покрыт» значит, что assert хотя бы одного теста проверяет пункт так, как он записан",
             "в `requirements.md`; если проверена только часть, пункт записан как частично покрытый.",
@@ -689,16 +707,24 @@ class Renderer:
 # Markdown: сводка в README.md
 # ==========================================
 def render_readme_block(rows: list[Row], tests: list[CollectedTest]) -> str:
-    categories, planned, partial = count_exceptions(rows)
-    exceptions = "; ".join(f"{CATEGORY_TITLES_EN[category]} — {n}" for category, n in categories.items())
-    plans = ", ".join(f"{n} in step {pr} ({PLANNED_PRS_EN[pr]})" for pr, n in planned.items())
-    partly = ", ".join(f"{n} in step {pr}" for pr, n in partial.items())
-    lines = [
-        *_summary_table(rows, "Status", STATUS_TITLES_EN, "Total"),
-        "",
-        f"Exceptions: {exceptions}. Planned: {plans}. The rest of the partly covered items: {partly}.",
-        f"All {len(tests)} tests reference at least one ID (a test without one fails the check).",
-    ]
+    categories, planned, partial = (_nonzero(counts) for counts in count_exceptions(rows))
+    sentences = []
+    if categories:
+        sentences.append(
+            "Exceptions: " + "; ".join(f"{CATEGORY_TITLES_EN[category]} — {n}" for category, n in categories.items())
+        )
+    if planned:
+        sentences.append(
+            "Planned: " + ", ".join(f"{n} in step {pr} ({PLANNED_PRS_EN[pr]})" for pr, n in planned.items())
+        )
+    if partial:
+        sentences.append(
+            "The rest of the partly covered items: " + ", ".join(f"{n} in step {pr}" for pr, n in partial.items())
+        )
+    lines = [*_summary_table(rows, "Status", STATUS_TITLES_EN, "Total"), ""]
+    if sentences:
+        lines.append(". ".join(sentences) + ".")
+    lines.append(f"All {len(tests)} tests reference at least one ID (a test without one fails the check).")
     return "\n".join(lines)
 
 
