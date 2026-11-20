@@ -14,7 +14,9 @@ in `requirements.en.md` is a research snapshot, not an automation status.
 
 Statuses:
 
-- ✅ **Covered by a passing test** — the item has a test, and it passes;
+- ✅ **Covered by a passing test** — the item has a test, and it passes.
+  The matrix does not run tests: “passes” is the suite's expectation that CI checks — on a green
+  `main` every such test has passed, otherwise the run is red;
 - 🟡 **Partly covered by a passing test, the rest is planned** — the test passes but does
   not check the whole item: what is not covered and in which PR it will come — in the “Status”
   column (the `data/coverage_exceptions.py` registry, category `partial`);
