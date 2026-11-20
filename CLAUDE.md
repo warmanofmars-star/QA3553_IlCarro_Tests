@@ -122,7 +122,9 @@ PR отменяет предыдущий запуск того же PR; запу
 - `lint` — ruff check, ruff format --check, gitleaks по всей истории, `scripts/coverage_matrix.py --check`
   (матрица трассируемости; ради сбора тестов ставятся зависимости проекта, Python 3.14), актуальность
   lock-файлов по пинам (`scripts/lock_requirements.sh --check`), английские переводы по оригиналам
-  (`scripts/check_translations.py`), `.github/dependabot.yml` и workflow
+  (`scripts/check_translations.py`), образы `selenium/*` в `docker-compose*.yml` — на одном теге
+  Grid 4 `4.x.y-<дата>` (`scripts/check_selenium_images.py`, тот же хук pre-commit; мажор Selenium —
+  вручную, вместе с правилом в `dependabot.yml`), `.github/dependabot.yml` и workflow
   по JSON-схемам (check-jsonschema); от тестов не зависит, идёт параллельно с ними;
 - `split-check` — `scripts/check_ci_split.py`: отборы `selenium` и `not selenium` не пусты,
   не пересекаются, в сумме дают весь набор;
