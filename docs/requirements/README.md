@@ -1,5 +1,7 @@
 # Требования к IlCarro
 
+> English version: [README.en.md](README.en.md)
+
 У IlCarro нет SRS и STD. Эта папка — источник ожидаемых результатов для тестов. Файлы здесь
 хранятся в git: это наша работа, а не материал курса (в отличие от Phonebook).
 

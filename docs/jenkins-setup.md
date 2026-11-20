@@ -1,5 +1,7 @@
 # Настройка Jenkins для IlCarro
 
+> English version: [jenkins-setup.en.md](jenkins-setup.en.md)
+
 Пошаговая инструкция: как подключить IlCarro к уже работающему Jenkins из Phonebook.
 Как устроен сам пайплайн — в [`commands.md`](../commands.md), раздел «CI: Jenkins».
 
