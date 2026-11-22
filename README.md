@@ -303,7 +303,7 @@ Setup: [`docs/jenkins-setup.en.md`](docs/jenkins-setup.en.md).
   the same IDs in the same order, the same research references, the same code fragments and the same status
   of the "actual behaviour" column. The English summary of the research log carries a `summary-of` marker instead:
   it is not a translation, so it is checked only for the fingerprint, for research references and inline code that
-  exist in the log, and for untranslated Russian text.
+  exist in the log, and for untranslated Russian text (a quoted Russian title must match a section of the log).
 - Each tool version has a single source. ruff: only [`requirements-dev.in`](requirements-dev.in) — the pre-commit hooks are `local` and run ruff from the virtual environment installed from the lock file, as does the CI `lint` job. gitleaks: only the `rev` in `.pre-commit-config.yaml` — the CI `lint` job reads it from there and scans the whole history.
 - `pip check` runs during the Docker image build, so incompatible package versions fail the build.
 - **No secrets in the public report.** Steps that handle a password do not take it as an `@allure.step`

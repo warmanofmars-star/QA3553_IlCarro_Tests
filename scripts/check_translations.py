@@ -47,7 +47,9 @@
   - отпечаток оригинала совпадает (правило 1): правка оригинала требует пересмотра сводки;
   - каждая ссылка Q-API-NN / Q-UI-NN сводки есть в оригинале;
   - каждый фрагмент в `обратных кавычках` сводки (вне блоков ```) есть среди фрагментов оригинала;
-  - кириллица — по правилу 3, как у перевода.
+  - кириллица — по правилу 3, как у перевода, с одним дополнением: «…» с кириллицей проходит ещё и тогда,
+    когда текст внутри «ёлочек» дословно совпадает с заголовком раздела оригинала (`## …`) — так сводка
+    ссылается на раздел журнала без ID Q-…, и проверка подтверждает, что раздел есть.
 Мультисет кода, блоки ``` и сверка ID и статусов (правила 2 и 4) к сводке не применяются.
 
 Сгенерированные файлы на английском (GENERATED) — не переводы: у них нет пометки, проверка их
@@ -106,6 +108,7 @@ FENCE = re.compile(r"^\s*```(?P<lang>.*)$")
 BLOCK_COMMENT = re.compile(r"(?:^|\s)(?:#|//).*$")
 CYRILLIC = re.compile(r"[А-Яа-яЁё]")
 GUILLEMETS = re.compile(r"«[^«»]*»")
+HEADING = re.compile(r"^#{1,6}\s+(?P<title>.+?)\s*$")
 
 FIX_HINT = (
     "Обнови перевод по изменениям оригинала, затем отпечаток: python scripts/check_translations.py --print-hash {orig}"
@@ -269,9 +272,20 @@ def check_summary(summary: str, original: str) -> list[str]:
 # ==========================================
 # Кириллица
 # ==========================================
-def check_cyrillic(translation: str, original: str | None) -> list[str]:
-    """Кириллица в переводе — только в «ёлочках» (дословно из оригинала) и в `обратных кавычках`."""
+def _headings(path: str) -> set[str]:
+    """Заголовки разделов документа (`# …` … `###### …`) вне блоков ```."""
+    return {
+        match["title"] for _, line, in_block in split_fences(path)[0] if not in_block and (match := HEADING.match(line))
+    }
+
+
+def check_cyrillic(translation: str, original: str | None, *, summary: bool = False) -> list[str]:
+    """Кириллица в переводе — только в «ёлочках» (дословно из оригинала) и в `обратных кавычках`.
+
+    У сводки «…» может быть ещё и ссылкой на раздел оригинала: текст внутри — заголовок раздела байт в байт.
+    """
     original_text = (ROOT / original).read_text(encoding="utf-8") if original else ""
+    section_titles = _headings(original) if original and summary else set()
     problems = []
     for number, line, in_block in split_fences(translation)[0]:
         if in_block:
@@ -284,10 +298,11 @@ def check_cyrillic(translation: str, original: str | None) -> list[str]:
         # Код в кавычках сверяет с оригиналом check_code; без оригинала (нет пометки) он не исключается
         line = CODE.sub("", line) if original else line
         for quoted in GUILLEMETS.findall(line):
-            if CYRILLIC.search(quoted) and quoted not in original_text:
+            if CYRILLIC.search(quoted) and quoted not in original_text and quoted[1:-1] not in section_titles:
                 problems.append(
                     f"{translation}:{number}: {quoted} — такой строки нет в оригинале. В «ёлочках» на русском "
                     "остаются только тексты интерфейса, байт в байт как в оригинале"
+                    + (", или, у сводки, заголовок раздела оригинала байт в байт (без «»)" if summary else "")
                 )
         rest = GUILLEMETS.sub("", line)
         if leftover := CYRILLIC.search(rest):
@@ -403,7 +418,7 @@ def check_all() -> int:
             continue
         marker_problems, original, kind = check_marker(translation)
         problems += marker_problems
-        problems += check_cyrillic(translation, original)
+        problems += check_cyrillic(translation, original, summary=kind == SUMMARY)
         if original is not None:
             problems += check_summary(translation, original) if kind == SUMMARY else check_code(translation, original)
         expected_original = REQUIREMENTS_PAIRS.get(translation)
