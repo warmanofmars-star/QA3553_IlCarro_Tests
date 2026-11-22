@@ -17,7 +17,8 @@ The requirements, the guide to the requirements folder
 ([`docs/requirements/README.en.md`](docs/requirements/README.en.md)), the Jenkins setup guide and the traceability
 matrix are in English. For these documents Russian is the original: the English versions are translations, checked against their
 originals by a pre-commit hook and in CI, and the English matrix is generated like the Russian one.
-Working documents and the research log are still in Russian; such links are marked *(in Russian)*.
+Working documents and the research log are still in Russian; such links are marked *(in Russian)*. The research log
+has an English summary: [`research-summary.en.md`](docs/requirements/research-summary.en.md).
 
 ---
 
@@ -44,7 +45,8 @@ from the fixtures a test uses (`driver` / `shared_authenticated_driver` and `pag
   [`requirements.md`](docs/requirements/requirements.md)): every item has an ID
   (`REQ-…` requirement, `DISC-…` discrepancy between sources, `OBS-…` observation), a source and a dated
   "actual behaviour" column. The facts behind it are in
-  [`research-log.md`](docs/requirements/research-log.md) *(in Russian)*, produced by the scripts in
+  [`research-log.md`](docs/requirements/research-log.md) *(in Russian;
+  [English summary](docs/requirements/research-summary.en.md))*, produced by the scripts in
   [`research/`](research/README.md) *(in Russian)*. Tests reference these IDs with `@allure.tag`.
 - **Known bugs and observations live in registries.** Expected failures are declared only through
   [`data/known_bugs.py`](data/known_bugs.py) (`@known_bug("KEY")`, references to `REQ-…` / `DISC-…`) and
@@ -183,7 +185,7 @@ the versions Dependabot does not track: [`commands.md`](commands.md) *(in Russia
 ```text
 api/            API client (requests.Session)
 data/           test data generator; registries: known bugs, observations, coverage exceptions
-docs/           requirements, traceability matrix and Jenkins setup (English, Russian original), Swagger, research log (in Russian)
+docs/           requirements, traceability matrix and Jenkins setup (English, Russian original), Swagger, research log (in Russian, with an English summary)
 drivers/        WebDriver factory: local browsers or Selenium Grid, Grid readiness check, session video
 models/         Car and User dataclasses with API payload serialization
 pages/          Page Objects for Selenium and Playwright
@@ -299,7 +301,9 @@ Setup: [`docs/jenkins-setup.en.md`](docs/jenkins-setup.en.md).
   match the original (comments in code blocks are translated and not compared), and Russian text is allowed only
   in quoted application or console strings. For the requirements it also compares the two files row by row:
   the same IDs in the same order, the same research references, the same code fragments and the same status
-  of the "actual behaviour" column.
+  of the "actual behaviour" column. The English summary of the research log carries a `summary-of` marker instead:
+  it is not a translation, so it is checked only for the fingerprint, for research references and inline code that
+  exist in the log, and for untranslated Russian text.
 - Each tool version has a single source. ruff: only [`requirements-dev.in`](requirements-dev.in) — the pre-commit hooks are `local` and run ruff from the virtual environment installed from the lock file, as does the CI `lint` job. gitleaks: only the `rev` in `.pre-commit-config.yaml` — the CI `lint` job reads it from there and scans the whole history.
 - `pip check` runs during the Docker image build, so incompatible package versions fail the build.
 - **No secrets in the public report.** Steps that handle a password do not take it as an `@allure.step`

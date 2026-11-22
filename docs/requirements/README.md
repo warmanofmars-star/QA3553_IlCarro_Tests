@@ -14,6 +14,7 @@
 | `requirements.en.md` | Английский перевод `requirements.md`; сверяется с оригиналом `scripts/check_translations.py` |
 | `changelog.md` | История изменений `requirements.md` по версиям; рабочий документ, не переводится |
 | `research-log.md` | Лог исследования: что отправили и что получили, без оценок. Вопросы `Q-API-NN` и `Q-UI-NN`; на них ссылается колонка «Факт» |
+| `research-summary.en.md` | Английская сводка `research-log.md` для читателя портфолио: ключевые факты со ссылками Q-…, не перевод. Сверяется с журналом `scripts/check_translations.py` (пометка `summary-of`) |
 | `traceability.md` | Матрица трассируемости: для каждого ID — тесты, ключ реестра и статус покрытия. **Генерируется** `scripts/coverage_matrix.py`, руками не правится |
 | `traceability.en.md` | Та же матрица на английском. **Генерируется** `scripts/coverage_matrix.py` вместе с `traceability.md`, не перевод |
 
