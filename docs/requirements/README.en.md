@@ -1,4 +1,4 @@
-<!-- translation-of: docs/requirements/README.md sha256:cf789c09971b -->
+<!-- translation-of: docs/requirements/README.md sha256:fd84e18d7275 -->
 # IlCarro requirements
 
 > Russian original: [README.md](README.md)
@@ -14,12 +14,13 @@ are kept in git: this is our own work, not course material (unlike Phonebook).
 | `requirements.md` | Reconstructed requirements: each has an ID, a source and an “Actual behaviour” column (a snapshot of the behaviour on the date it was checked) |
 | `requirements.en.md` | English translation of `requirements.md`; checked against the original by `scripts/check_translations.py` |
 | `changelog.md` *(in Russian)* | Change history of `requirements.md`, by version; a working document, not translated |
-| `research-log.md` *(in Russian)* | Research log: what was sent and what came back, without judgements. Questions `Q-API-NN` and `Q-UI-NN`; the “Actual behaviour” column refers to them |
+| `research-log.md` *(in Russian)* | Research log: what was sent and what came back, without assessments. Questions `Q-API-NN` and `Q-UI-NN`; the “Actual behaviour” column refers to them |
+| `research-summary.en.md` | English summary of `research-log.md` for portfolio readers: the key facts with Q-… references, not a translation. Checked against the log by `scripts/check_translations.py` (`summary-of` marker) |
 | `traceability.md` | Traceability matrix: for each ID — the tests, the registry key and the coverage status. **Generated** by `scripts/coverage_matrix.py`, never edited by hand |
 | `traceability.en.md` | The same matrix in English. **Generated** by `scripts/coverage_matrix.py` together with `traceability.md`, not a translation |
 
 The log is produced by the scripts in `research/` (how to run them is described in `research/README.md` *(in Russian)*).
-Requirements are derived from the sources below; judgements are made in `requirements.md`, not in the log.
+Requirements are derived from the sources below; assessments are made in `requirements.md`, not in the log.
 
 ## Categories of findings and test tags
 
