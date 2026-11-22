@@ -7,7 +7,7 @@
 ## What was researched and why
 
 The research log records the actual behaviour of IlCarro, plus one question about the test framework itself: what was
-sent and what came back, without assessments (the requirement candidates are the exception, see below); assessments
+sent and what came back, without assessments (two places are the exception, see below); assessments
 are made later from higher-ranked sources. Backend questions are Q-API-01 … Q-API-21, web UI questions
 Q-UI-01 … Q-UI-43. The backend is shared: data that other users change, such as car counts, varies
 (Q-API-02, Q-API-12).
@@ -136,8 +136,9 @@ is about the test framework, not the application. A local run with `-n 2` on Win
 
 ## From facts to requirements
 
-The log records facts. The exception is the section «Шаг 7a: кандидаты в требования» (“Step 7a: requirement
-candidates”): proposals, not decisions, some of them worded as assessments. The decisions are in
+The log records facts, with two exceptions. The section «Шаг 7a: кандидаты в требования» (“Step 7a: requirement
+candidates”) holds proposals, not decisions, some of them worded as assessments; Q-UI-42 also states that the
+test's wait was correct. The decisions are in
 [requirements.en.md](requirements.en.md), whose “Actual behaviour” column links back to these Q-… IDs.
 
 ## How to reproduce
