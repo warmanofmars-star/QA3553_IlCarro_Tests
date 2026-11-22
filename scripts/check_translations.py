@@ -13,7 +13,8 @@
 текст даёт один отпечаток на Windows (CRLF при checkout) и в Linux.
 
 Что проверяется:
-  1. Каждый *.en.md в репозитории (отслеживаемый или новый, не из .gitignore) несёт пометку, оригинал
+  1. Каждый *.en.md в репозитории (отслеживаемый или новый, не из .gitignore) несёт пометку
+     translation-of или summary-of (сводка, см. ниже), оригинал
      из пометки существует, отпечаток совпадает. Оригинал изменили, а перевод нет — расхождение.
   2. Код переносится байт в байт — для каждого перевода с пометкой:
      - мультисет фрагментов в `обратных кавычках` во всём документе (вне блоков ```) совпадает
@@ -35,6 +36,19 @@
      Q-API-NN / Q-UI-NN и тот же мультисет фрагментов в `обратных кавычках`; у REQ — тот же статус
      колонки «Факт» (словарь STATUSES ниже). У DISC вместо «Факта» «Последствие», у OBS в «Факте» —
      ссылки на исследование без статуса: там сверяются только ссылки и код.
+
+Сводка (summary) — не перевод, а короткий английский пересказ большого русского документа
+(журнал исследования) для читателя портфолио. Первая строка сводки — своя пометка:
+
+    <!-- summary-of: docs/requirements/research-log.md sha256:<первые 12 hex> -->
+
+Отпечаток тот же, что у переводов. Сводка пересказывает часть оригинала, поэтому сверяется
+не на равенство, а на подмножество — она не может утверждать того, чего в оригинале нет:
+  - отпечаток оригинала совпадает (правило 1): правка оригинала требует пересмотра сводки;
+  - каждая ссылка Q-API-NN / Q-UI-NN сводки есть в оригинале;
+  - каждый фрагмент в `обратных кавычках` сводки (вне блоков ```) есть среди фрагментов оригинала;
+  - кириллица — по правилу 3, как у перевода.
+Мультисет кода, блоки ``` и сверка ID и статусов (правила 2 и 4) к сводке не применяются.
 
 Сгенерированные файлы на английском (GENERATED) — не переводы: у них нет пометки, проверка их
 пропускает по имени. Их актуальность проверяет генератор (`scripts/coverage_matrix.py --check`).
@@ -82,8 +96,9 @@ STATUSES = {
 # или его «Факт» начал начинаться со статуса — расхождение
 NO_STATUS_IN_ORIGINAL = frozenset({"REQ-UI-REG-04", "REQ-UI-SEARCH-06", "REQ-UI-SEARCH-07"})
 
-MARKER = re.compile(r"^<!-- translation-of: (?P<path>\S+) sha256:(?P<hash>[0-9a-f]{12}) -->$")
-MARKER_START = "<!-- translation-of:"
+SUMMARY = "summary-of"
+MARKER = re.compile(r"^<!-- (?P<kind>translation-of|summary-of): (?P<path>\S+) sha256:(?P<hash>[0-9a-f]{12}) -->$")
+MARKER_START = ("<!-- translation-of:", "<!-- summary-of:")
 Q_REF = re.compile(r"\bQ-(?:API|UI)-\d+\b")
 CODE = re.compile(r"`([^`]*)`")
 FENCE = re.compile(r"^\s*```(?P<lang>.*)$")
@@ -126,32 +141,42 @@ def find_translations() -> list[str]:
 # ==========================================
 # Пометка и отпечаток
 # ==========================================
-def check_marker(translation: str) -> tuple[list[str], str | None]:
-    """Расхождения пометки и путь оригинала (None — оригинал не определён)."""
+def check_marker(translation: str) -> tuple[list[str], str | None, str | None]:
+    """Расхождения пометки, путь оригинала (None — не определён) и вид файла: перевод или сводка."""
     lines = (ROOT / translation).read_text(encoding="utf-8").splitlines()
     first = lines[0] if lines else ""
     if not first.startswith(MARKER_START):
-        return [
-            f"{translation}: нет пометки translation-of в первой строке — перевод без оригинала. "
-            f"Добавь первой строкой <!-- translation-of: <путь оригинала> sha256:<отпечаток> -->; "
-            "отпечаток: python scripts/check_translations.py --print-hash <путь оригинала>"
-        ], None
+        return (
+            [
+                f"{translation}: нет пометки translation-of или summary-of в первой строке — английский файл "
+                "без оригинала. Добавь первой строкой <!-- translation-of: <путь оригинала> sha256:<отпечаток> --> "
+                "(для сводки — summary-of); "
+                "отпечаток: python scripts/check_translations.py --print-hash <путь оригинала>"
+            ],
+            None,
+            None,
+        )
     match = MARKER.match(first)
     if match is None:
         raise FormatError(
             f"{translation}: пометка не по формату: {first!r}. "
-            "Нужно: <!-- translation-of: <путь от корня репозитория> sha256:<12 hex> -->"
+            "Нужно: <!-- translation-of: <путь от корня репозитория> sha256:<12 hex> --> (или summary-of)"
         )
-    original = match["path"]
+    original, kind = match["path"], match["kind"]
     if not (ROOT / original).is_file():
-        return [f"{translation}: оригинала {original} из пометки translation-of нет в репозитории"], None
+        return [f"{translation}: оригинала {original} из пометки {kind} нет в репозитории"], None, kind
     actual = fingerprint(ROOT / original)
     if actual != match["hash"]:
-        return [
-            f"{translation}: отпечаток оригинала {original} не совпал (в пометке {match['hash']}, "
-            f"у оригинала {actual}) — оригинал изменился, а перевод нет. " + FIX_HINT.format(orig=original)
-        ], original
-    return [], original
+        return (
+            [
+                f"{translation}: отпечаток оригинала {original} не совпал (в пометке {match['hash']}, "
+                f"у оригинала {actual}) — оригинал изменился, а {'сводка' if kind == SUMMARY else 'перевод'} нет. "
+                + FIX_HINT.format(orig=original)
+            ],
+            original,
+            kind,
+        )
+    return [], original, kind
 
 
 # ==========================================
@@ -215,6 +240,29 @@ def check_code(translation: str, original: str) -> list[str]:
                 f"{where}: код без комментариев отличается от оригинала: {diff[1]!r} вместо {diff[0]!r}. "
                 "Команды переносятся байт в байт, переводятся только комментарии"
             )
+    return problems
+
+
+def _prose_code(path: str) -> set[str]:
+    """Фрагменты в `обратных кавычках` вне блоков ```."""
+    return {code for _, line, in_block in split_fences(path)[0] if not in_block for code in CODE.findall(line)}
+
+
+def check_summary(summary: str, original: str) -> list[str]:
+    """Сводка не утверждает лишнего: её ссылки Q-… и код в `обратных кавычках` — подмножества оригинала."""
+    problems = []
+    ru_refs = set(Q_REF.findall((ROOT / original).read_text(encoding="utf-8")))
+    en_refs = set(Q_REF.findall((ROOT / summary).read_text(encoding="utf-8")))
+    if extra := sorted(en_refs - ru_refs):
+        problems.append(
+            f"{summary}: ссылки Q-…, которых нет в оригинале {original}: {', '.join(extra)}. "
+            "Сводка пересказывает только записанное в оригинале"
+        )
+    if extra := sorted(_prose_code(summary) - _prose_code(original)):
+        problems.append(
+            f"{summary}: код в `обратных кавычках`, которого нет в оригинале {original}: {extra}. "
+            "Код переносится из оригинала байт в байт"
+        )
     return problems
 
 
@@ -353,13 +401,15 @@ def check_all() -> int:
     for translation in find_translations():
         if translation in GENERATED:
             continue
-        marker_problems, original = check_marker(translation)
+        marker_problems, original, kind = check_marker(translation)
         problems += marker_problems
         problems += check_cyrillic(translation, original)
         if original is not None:
-            problems += check_code(translation, original)
+            problems += check_summary(translation, original) if kind == SUMMARY else check_code(translation, original)
         expected_original = REQUIREMENTS_PAIRS.get(translation)
         if expected_original is not None:
+            if kind == SUMMARY:
+                problems.append(f"{translation}: сверяется по смыслу как перевод, а помечен как сводка (summary-of)")
             if original is not None and original != expected_original:
                 problems.append(f"{translation}: пометка ссылается на {original}, а оригинал — {expected_original}")
             problems += check_requirements(translation, expected_original)
@@ -374,7 +424,9 @@ def check_all() -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
-    parser.add_argument("--print-hash", metavar="ФАЙЛ", help="напечатать отпечаток файла для пометки translation-of")
+    parser.add_argument(
+        "--print-hash", metavar="ФАЙЛ", help="напечатать отпечаток файла для пометки translation-of или summary-of"
+    )
     args = parser.parse_args()
     # Консоль Windows (cp1251) может не уметь отдельные символы: заменяем их, а не падаем
     for stream in (sys.stdout, sys.stderr):
