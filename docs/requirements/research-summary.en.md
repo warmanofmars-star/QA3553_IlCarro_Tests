@@ -1,4 +1,4 @@
-<!-- summary-of: docs/requirements/research-log.md sha256:dcc6e34b4cc4 -->
+<!-- summary-of: docs/requirements/research-log.md sha256:1625fe12cf3e -->
 # IlCarro research log: English summary
 
 > Summary of the Russian original: [research-log.md](research-log.md) *(in Russian)*. Not a translation: it retells
@@ -18,8 +18,10 @@ Q-UI-01 … Q-UI-43. The backend is shared: other users' data, such as car count
   (Q-UI-41); helpers in `research/common.py`. Q-API-19 and Q-API-20 come from a session-token probe; Q-API-21 and
   Q-UI-37 are read from Swagger and the frontend code without requests. Q-UI-42 and Q-UI-43 record two CI failures.
 - The main scripts were run twice (`--run 1`, `--run 2`) with logs matching line by line except for the run time and
-  the key order of one error body (Q-API-07); the failure probes, twice with the same behaviour (Q-UI-27 … Q-UI-40).
-- Only temporary users `probe_<uuid>@example.com`; tokens are replaced with `<hidden>`. Users cannot be deleted and
+  the key order of one error body (Q-API-07); the failure probes, twice with the same behaviour (Q-UI-28 … Q-UI-35);
+  Q-UI-38 … Q-UI-40 were added in the second run.
+- Only temporary users: `probe_<uuid>@example.com` and, for the failure probes of step 7a, one
+  `fault_<uuid>@example.com`; tokens are replaced with `<hidden>`. Users cannot be deleted and
   remain; created cars were deleted (Q-API-01 … Q-API-18). In the UI probes, requests that change data were
   intercepted (`page.route`) and did not reach the backend, except one car request with a garbage token, answered 401
   (Q-UI-15 … Q-UI-40, Q-UI-34). Screenshots and logs go to `research/evidence/`, which is not stored in git.
@@ -32,8 +34,8 @@ Q-UI-01 … Q-UI-43. The backend is shared: other users' data, such as car count
   `"User already exists"` (Q-API-06).
 - Wrong password, unknown user and `{}` on login return 401 with the same message; an empty body returns 400
   `"Wrong format Credential Object"` (Q-API-07). Registration validation errors are 400 with `message` as an object of
-  field errors (a weak password returns the password rules); `password` = `""` returns 400 without a `message` field;
-  no such request created a user (Q-API-07, Q-API-16).
+  field errors (a weak password returns the password rules); `password` = `""` returns 400 without a `message` field
+  (Q-API-07, Q-API-16); none of the Q-API-16 requests created a user (Q-API-16).
 - The registration token and the tokens of two later logins are all accepted at once (Q-API-19). Token lifetime is
   600000 s, about 6 days 22 hours; acceptance after `exp` was not checked (Q-API-20). Swagger has no profile, password
   change or logout operations (Q-API-21).
@@ -52,7 +54,7 @@ Q-UI-01 … Q-UI-43. The backend is shared: other users' data, such as car count
 - `POST /v1/cars` with `Content-Type: text/plain` returns 500 and creates nothing (Q-API-11).
 
 **Search and booking**
-- Dates do not change the result: future, past, reversed, missing and `null` dates give the same cars, including the
+- Dates do not change the result: future, past, reversed, missing and `null` dates give the same number of cars, including the
   test car (Q-API-02, Q-API-18). The city is case-sensitive: `tel aviv` and `TEL AVIV` find 0 cars (Q-API-02). The
   `page` and `size` query parameters did not change the number of cars (Q-API-02, Q-API-14). A Tel Aviv search
   returned about 18 MB; search works without a token (Q-API-02).
@@ -89,8 +91,8 @@ Q-UI-01 … Q-UI-43. The backend is shared: other users' data, such as car count
 - The city list is built into the frontend (54 cities), suggestions follow its order (Q-UI-21, Q-UI-27); a city typed
   in another case is sent as typed and finds 0 cars (Q-UI-23). An empty result has no “nothing found” message
   (Q-UI-12, Q-UI-24). Rows per page offers 10, 20 and 50, Next opens the remaining cards (Q-UI-22); `size=500` in the
-  URL shows all cards (Q-UI-12). The calendar disables days before today, and a year ahead only the first days of
-  November 2027 (Q-UI-11).
+  URL shows all cards (Q-UI-12). The calendar disables days before today; paging forward stops at November 2027,
+  where 5 days are available and 25 disabled (Q-UI-11; today + 365 days = 2027-11-05).
 
 **Session**
 - Logout is client-side only: `token` is removed, `tokenType=Bearer` stays, and the token saved before logout is still
